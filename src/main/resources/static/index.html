@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Application</title>
+    <link rel="stylesheet" type="text/css" href="quiz.css">
+</head>
+<body onload="initApp()">
+<div id="mainMenu" class="modal">
+    <form class="modal-content animate">
+        <button onclick="showQuizList()" type="button" id="mainMenu-quiz" class="dialog-button">Викторина</button>
+        <button onclick="goTo('/adm/quiz.html')" type="button" id="mainMenu-create" class="dialog-button">Новая викторина</button>
+    </form>
+</div>
+<div id="messageWindow" class="modal">
+    <span class="close" onclick="hideMessageWindow()" title="Close">&times;</span>
+    <form class="modal-content animate">
+        <div style="align-content: center; border: 1px solid #cccccc">
+            <p id="messageWindow-text">&nbsp;</p>
+        </div>
+        <button onclick="hideMessageWindow()" type="button" class="dialog-button-close">Close</button>
+    </form>
+</div>
+<div id="loginWindow" class="modal">
+    <span class="close" onclick="hideModalWindow()" title="Close">&times;</span>
+    <form class="modal-content animate">
+        <label for="loginWindow-name">Логин:</label><input type="text" id="loginWindow-name">
+        <label for="loginWindow-password">Пароль:</label><input type="password" id="loginWindow-password">
+        <button onclick="doRequestLogin()" type="button" class="dialog-button" id="loginWindow-loginButton">Войти</button>
+    </form>
+</div>
+<div id="quizListWindow" class="modal">
+    <span class="close" onclick="showMainMenu()" title="Close">&times;</span>
+    <form class="modal-content animate">
+        <label for="quizListWindow-quizName">Название:</label><input type="text" id="quizListWindow-quizName">
+        <input onclick="searchQuiz()" type="button" value="Поиск">
+        <div id="quizListWindow-quizList">
+            <button onclick="onSelectQuiz()" type="button" value="0" class="dialog-button">Викторина 1</button>
+        </div>
+        <button onclick="showMainMenu()" type="button" class="dialog-button-close">Закрыть</button>
+    </form>
+</div>
+<div id="quizWindow" class="modal">
+    <span class="close" onclick="showQuizList(false)" title="Close">&times;</span>
+    <form class="modal-content animate">
+        <div id="quizWindow-view">
+            <p>Название викторины</p>
+            <p>Тип викторины</p>
+        </div>
+        <button onclick="doRequestRegisterQuiz()" type="button" id="quizWindow-start" class="dialog-button">Старт</button>
+        <button onclick="showQuizList(false)" type="button" class="dialog-button-close">Закрыть</button>
+    </form>
+</div>
+<div id="questionWindow" class="modal">
+    <span class="close" onclick="closeQuestionWindow()" title="Close">&times;</span>
+    <form class="modal-content animate">
+        <div id="questionWindow-view">
+            <p>
+                вопрос #1
+            </p>
+            <button onclick="doRequestAnswer()" type="button" value="0" class="dialog-button">а) неверный ответ</button>
+            <button onclick="doRequestAnswer()" type="button" value="1" class="dialog-button">б) верный ответ</button>
+        </div>
+        <button onclick="closeQuestionWindow()" type="button" class="dialog-button-close">Закрыть</button>
+    </form>
+</div>
+
+</body>
+</html>
+
+<script>
+
+    class Log {
+        constructor(name) {
+            this.name = name;
+        }
+
+        log(...message) {
+            if (name === undefined) {
+                console.log(message);
+            } else {
+                console.log(name, message);
+            }
+        }
+
+        warn(...message) {
+            if (name === undefined) {
+                console.warn(message);
+            } else {
+                console.warn(name, message);
+            }
+        }
+    }
+
+    var log = new Log();
+    var webSocket = null;
+    var modalWindow = {element:null};
+    var mainMenu = {element:null, buttonQuiz:null, buttonCreate:null};
+    var messageWindow = {element:null, text:null, callback:null};
+    var loginWindow = {element:null, userName:null, userPassword:null, loginButton:null, callback:null};
+    var quizListWindow = {element:null, quizName:null, quizList:null};
+    var quizWindow = {element:null, quizId:null, view:null}
+    var questionWindow = {element:null, questionId:null, view:null, finished:false}
+    var quizList = [];
+
+    function initApp() {
+        mainMenu.element = document.getElementById("mainMenu");
+        mainMenu.buttonQuiz = document.getElementById("mainMenu-quiz");
+
+        messageWindow.element = document.getElementById("messageWindow");
+        messageWindow.text = document.getElementById("messageWindow-text");
+
+        mainMenu.buttonCreate = document.getElementById("mainMenu-create");
+        loginWindow.element = document.getElementById("loginWindow");
+        loginWindow.userName = document.getElementById("loginWindow-name");
+        loginWindow.userPassword = document.getElementById("loginWindow-password");
+        loginWindow.loginButton = document.getElementById("loginWindow-loginButton");
+
+        quizListWindow.element = document.getElementById("quizListWindow");
+        quizListWindow.quizName = document.getElementById("quizListWindow-quizName");
+        quizListWindow.quizList = document.getElementById("quizListWindow-quizList");
+
+        quizWindow.element = document.getElementById("quizWindow");
+        quizWindow.view = document.getElementById("quizWindow-view")
+
+        questionWindow.element = document.getElementById("questionWindow");
+        questionWindow.view = document.getElementById("questionWindow-view")
+        showModalWindow(mainMenu.element);
+    }
+
+    function showMessageWindow(text, afterAction) {
+        messageWindow.text.innerHTML = text;
+        messageWindow.callback = afterAction;
+        showModalWindow(messageWindow.element);
+    }
+
+    function hideMessageWindow() {
+        hideModalWindow();
+        if (messageWindow.callback !== undefined) {
+            messageWindow.callback();
+        }
+    }
+
+    function showMainMenu() {
+        mainMenu.buttonQuiz.disabled = false;
+        mainMenu.buttonCreate.disabled = false;
+        hideModalWindow();
+        showModalWindow(mainMenu.element);
+    }
+
+    function showModalWindow(element) {
+        modalWindow = {element:null}
+        if (element === undefined) {
+            modalWindow.element = mainMenu;
+        } else {
+            modalWindow.element = element;
+        }
+        modalWindow.element.style.display='block';
+    }
+
+    function hideModalWindow() {
+        if (modalWindow !== undefined) {
+            modalWindow.element.style.display='none';
+            modalWindow = undefined;
+        }
+    }
+
+    function goTo(url) {
+        document.location.href = url;
+    }
+
+    function showLoginWindow(callback) {
+        loginWindow.loginButton.disabled = false;
+        if (callback !== undefined) {
+            loginWindow.callback = callback;
+        }
+        hideModalWindow();
+        showModalWindow(loginWindow.element);
+    }
+
+    function showSelectQuiz() {
+        hideModalWindow();
+        showModalWindow(quizListWindow.element);
+    }
+
+    function showQuizWindow() {
+        hideModalWindow();
+        showModalWindow(quizWindow.element);
+    }
+
+    function searchQuiz() {
+        doRequestLoadQuizList(quizListWindow.quizName.value);
+    }
+
+    function showQuizList(reload) {
+        mainMenu.buttonQuiz.disabled = true;
+        if (reload !== undefined && !reload) {
+            showSelectQuiz();
+        } else {
+            doRequestLoadQuizList();
+        }
+    }
+
+    function showQuestionWindow(participant) {
+        questionWindow.view.innerHTML = quizWindow.view.innerHTML;
+        questionWindow.finished = false;
+
+        let url = 'ws://' + getUrl() + '/websocket';
+        webSocket = new WebSocket(url);
+        webSocket.onopen = function () {
+            webSocket.send(JSON.stringify({enter:{participantId:participant.id}}));
+        }
+        webSocket.onmessage = messageHandler;
+        webSocket.onclose = function () {
+            log.log("connection closed by server");
+            showQuizWindow();
+        }
+
+        hideModalWindow();
+        showModalWindow(questionWindow.element);
+    }
+
+    function closeQuestionWindow() {
+        if (webSocket && webSocket.readyState === WebSocket.OPEN) {
+            webSocket.onclose = null;
+            webSocket.close();
+            webSocket = null;
+            log.log("close connection");
+        }
+        if (questionWindow.finished) {
+            showQuizList(true);
+        } else {
+            showQuizWindow();
+        }
+    }
+
+    function messageHandler(event) {
+        let msg = JSON.parse(event.data);
+        if (msg.question) {
+            questionWindow.view.innerHTML = '';
+            questionWindow.view.insertAdjacentHTML("beforeend", '<p>' + msg.question.category + '</p>');
+            questionWindow.view.insertAdjacentHTML("beforeend", '<p>' + msg.question.text + '</p>');
+            msg.question.options.forEach(function (option) {
+                questionWindow.view.insertAdjacentHTML("beforeend",
+                    '<button onclick="doRequestAnswer()" type="button" value="' + option.id + '" class="dialog-button">' + option.name + '</button>');
+            })
+        } else if (msg.answer) {
+            //QuizAnswerStatus
+            if (msg.answer === 'SUCCESS') {
+                questionWindow.view.innerHTML = '';
+                questionWindow.view.insertAdjacentHTML("beforeend", '<p>Это правильный ответ</p>');
+            } else {
+                questionWindow.view.innerHTML = '';
+                questionWindow.view.insertAdjacentHTML("beforeend", '<p>Вы не правы</p>');
+            }
+            questionWindow.view.insertAdjacentHTML("beforeend",
+                '<button onclick="doRequestNext()" type="button" class="dialog-button">Дальше</button>');
+        } else if (msg.result) {
+            questionWindow.finished = true;
+            questionWindow.view.innerHTML = '';
+            questionWindow.view.insertAdjacentHTML("beforeend", '<p>Результат</p>');
+            questionWindow.view.insertAdjacentHTML("beforeend", '<p>верных ответов: ' + msg.result.right + '</p>');
+            questionWindow.view.insertAdjacentHTML("beforeend", '<p>неверных ответов: ' + msg.result.wrong + '</p>');
+            questionWindow.view.insertAdjacentHTML("beforeend", '<p>очков: ' + msg.result.value + '</p>');
+        }
+    }
+
+
+    function doRequestAnswer(event) {
+        event = event || window.event; // IE
+        let target = event.target || event.srcElement; // IE
+        let answerId = Number.parseInt(target.value);
+        if (webSocket) {
+            webSocket.send(JSON.stringify({answer:answerId}))
+        }
+    }
+
+    function doRequestNext() {
+        if (webSocket) {
+            webSocket.send(JSON.stringify({next:true}))
+        }
+    }
+
+    function getUrl() {
+        let url = window.location.hostname;
+        if (window.location.port) {
+            url += ':' + window.location.port;
+        }
+        return url;
+    }
+
+    function doRequestLogin() {
+        if (loginWindow.userName.value == null || loginWindow.userName.value === ''
+            || loginWindow.userPassword.value == null || loginWindow.userPassword.value === '') {
+            return;
+        }
+        loginWindow.loginButton.disabled = true;
+        let xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                hideModalWindow();
+                if (this.status === 200) {
+                    log.log('RAW RESP: ' + this.responseText);
+                    localStorage.setItem("login", loginWindow.userName.value);
+                    localStorage.setItem("pass", loginWindow.userPassword.value);
+                    log.log('Logged-In Successfully');
+                    if (loginWindow.callback !== undefined) {
+                        loginWindow.callback();
+                    }
+                } else {
+                    log.warn('Login Failed: ' + this.status);
+                    showMessageWindow('ERROR:\n' + this.responseText, showLoginWindow);
+                }
+            }
+        };
+        xhttp.open('POST', '/', true);
+        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xhttp.send('login=' + loginWindow.userName.value + '&password=' + loginWindow.userPassword.value);
+        loginWindow.userPassword.value = '';
+    }
+
+    function onSelectQuiz(event) {
+        event = event || window.event; // IE
+        let target = event.target || event.srcElement; // IE
+        let quizId = Number.parseInt(target.value);
+        quizWindow.quizId = quizId;
+        let quiz;
+        quizList.forEach(function (q) {
+            if (q.id === quizId) {
+                quiz = q;
+            }
+        })
+        if (quiz !== undefined) {
+            quizWindow.view.innerHTML = '';
+            quizWindow.view.insertAdjacentHTML('beforeend', '<p>' + quiz.name + '</p>');
+            quizWindow.view.insertAdjacentHTML('beforeend', '<p>' + quiz.type + '</p>');
+            quizWindow.view.insertAdjacentHTML('beforeend', '<p>' + quiz.status + '</p>');
+            hideModalWindow();
+            showModalWindow(quizWindow.element)
+        }
+    }
+
+    function doRequestRegisterQuiz() {
+        let xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                if (this.status === 200) {
+                    let participant = JSON.parse(xhttp.responseText);
+                    showQuestionWindow(participant);
+                } else if (this.status === 401) {
+                    showLoginWindow(function () {showModalWindow(quizWindow.element)});
+                }
+            }
+        };
+        xhttp.open('GET', '/quiz/' + quizWindow.quizId + '/register', true);
+        xhttp.send();
+    }
+
+    function doRequestLoadQuizList(name) {
+        let xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                if (this.status === 200) {
+                    quizList = JSON.parse(xhttp.responseText);
+                    quizListWindow.quizList.innerHTML = "";
+                    quizList.forEach(function(quiz) {
+                        quizListWindow.quizList.insertAdjacentHTML('beforeend',
+                            '<button type="button" onclick="onSelectQuiz()" value="' + quiz.id + '" class="dialog-button">' + quiz.name + '</button>');
+                    })
+                    showSelectQuiz();
+                } else if (this.status === 401) {
+                    showLoginWindow(function () {showModalWindow(quizListWindow.element)});
+                } else {
+                    log.warn('problem to load quiz list: ', xhttp.responseText);
+                    showMessageWindow(xhttp.responseText, showMainMenu);
+                }
+            }
+        };
+        if (name === undefined) {
+            xhttp.open('POST', '/quiz/list', true);
+            xhttp.send();
+        } else {
+            xhttp.open('POST', '/quiz/list', true);
+            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xhttp.send('name=' + name);
+        }
+    }
+</script>

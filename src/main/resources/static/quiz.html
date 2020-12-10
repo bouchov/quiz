@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Application</title>
+    <link rel="stylesheet" type="text/css" href="quiz.css">
+</head>
+<body onload="initApp()">
+<div id="questionWindow" class="modal">
+    <span class="close" onclick="showQuizList(false)" title="Close">&times;</span>
+    <form class="modal-content animate">
+        <div id="questionWindow-quizView">
+            <p>
+                вопрос #1
+            </p>
+            <button onclick="doRequestAnswer()" type="button" value="0" class="dialog-button">а) неверный ответ</button>
+            <button onclick="doRequestAnswer()" type="button" value="1" class="dialog-button">б) верный ответ</button>
+        </div>
+        <button onclick="showQuizList(false)" type="button" class="dialog-button-close">Закрыть</button>
+    </form>
+</div>
+</body>
+</html>
+
+<script>
+    var modalElement = null;
+    var currentQuiz = {element:null, quizId:null, quizView:null}
+    var quizParticipant = {quiz:null, user:null, status:null}
+
+    function initApp() {
+        currentQuiz.element = document.getElementById("questionWindow");
+        currentQuiz.quizView = document.getElementById("questionWindow-quizView")
+
+        showModalWindow(currentQuiz.element);
+    }
+
+    function showModalWindow(element) {
+        if (element === undefined) {
+            modalElement = mainMenu;
+        } else {
+            modalElement = element;
+        }
+        modalElement.style.display='block';
+    }
+
+    function doRequestAnswer(event) {
+
+    }
+</script>
