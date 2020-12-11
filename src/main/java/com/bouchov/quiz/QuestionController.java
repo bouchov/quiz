@@ -4,6 +4,9 @@ import com.bouchov.quiz.entities.Category;
 import com.bouchov.quiz.entities.CategoryRepository;
 import com.bouchov.quiz.entities.Question;
 import com.bouchov.quiz.entities.QuestionRepository;
+import com.bouchov.quiz.protocol.OptionBean;
+import com.bouchov.quiz.protocol.QuestionBean;
+import org.hibernate.ObjectNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -14,6 +17,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/adm/{categoryId}/questions")
@@ -53,24 +57,38 @@ class QuestionController {
     }
 
     @GetMapping
-    public List<Question> showQuestions(
+    public List<QuestionBean> showQuestions(
             @PathVariable(required = false) Long categoryId) {
-        ArrayList<Question> questions = new ArrayList<>();
+        ArrayList<QuestionBean> questions = new ArrayList<>();
         if (categoryId != null) {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new CategoryNotFoundException(categoryId));
-            return questionRepository.findAllByCategory(category);
+            questionRepository.findAllByCategory(category).forEach((e) -> questions.add(getQuestionBean(e)));
         } else {
-            questionRepository.findAll().forEach(questions::add);
+            questionRepository.findAll().forEach((e) -> questions.add(getQuestionBean(e)));
         }
         return questions;
     }
 
 
     @GetMapping("/{questionId}")
-    public Question getQuestion(
-            @PathVariable(required = false) Long questionId) {
-        return questionRepository.findQuestionById(questionId).orElse(null);
+    public QuestionBean getQuestion(
+            @PathVariable Long categoryId,
+            @PathVariable Long questionId) {
+        Question question = questionRepository.findQuestionById(questionId)
+                .orElseThrow(() -> new QuestionNotFoundException(questionId));
+        if (!Objects.equals(question.getCategory().getId(), categoryId)) {
+            throw new QuestionNotFoundException(questionId);
+        }
+        return getQuestionBean(question);
+    }
+
+    private QuestionBean getQuestionBean(Question question) {
+        ArrayList<OptionBean> options = new ArrayList<>();
+        for (int i = 0; i < question.getOptions().size(); i++) {
+            options.add(new OptionBean(i, question.getOptions().get(i)));
+        }
+        return new QuestionBean(question.getCategory().getName(), question.getText(), question.getAnswer(), options);
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -78,6 +96,14 @@ class QuestionController {
 
         public CategoryNotFoundException(Long categoryId) {
             super("could not find category '" + categoryId + "'.");
+        }
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    static class QuestionNotFoundException extends RuntimeException {
+
+        public QuestionNotFoundException(Long questionId) {
+            super("could not find question '" + questionId + "'.");
         }
     }
 }

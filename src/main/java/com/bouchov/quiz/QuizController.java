@@ -1,6 +1,8 @@
 package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.*;
+import com.bouchov.quiz.protocol.QuizBean;
+import com.bouchov.quiz.protocol.QuizResultBean;
 import com.bouchov.quiz.services.QuizService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,21 +32,23 @@ class QuizController extends AbstractController {
     }
 
     @RequestMapping("/{quizId}/register")
-    public QuizParticipant startQuiz(@PathVariable Long quizId) {
+    public QuizResultBean startQuiz(@PathVariable Long quizId) {
         checkAuthorization(session);
         User user = getUser(session, userRepository).orElseThrow();
         Quiz quiz = quizRepository.findById(quizId).orElseThrow(() -> new QuizNotException(quizId));
-        return quizService.register(quiz, user);
+        return new QuizResultBean(quizService.register(quiz, user));
     }
 
     @RequestMapping("/list")
-    public List<Quiz> list(
+    public List<QuizBean> list(
             @RequestParam(required = false) String name) {
-        var list = new ArrayList<Quiz>();
+        var list = new ArrayList<QuizBean>();
         if (name == null || name.isEmpty()) {
-            quizRepository.findAllByStatus(QuizStatus.ACTIVE, QuizStatus.STARTED).forEach(list::add);
+            quizRepository.findAllByStatus(QuizStatus.ACTIVE, QuizStatus.STARTED).forEach(
+                    (e) -> list.add(new QuizBean(e)));
         } else {
-            quizRepository.findAllByNameAndStatus(name, QuizStatus.ACTIVE, QuizStatus.STARTED).forEach(list::add);
+            quizRepository.findAllByNameAndStatus(name, QuizStatus.ACTIVE, QuizStatus.STARTED).forEach(
+                    (e) -> list.add(new QuizBean(e)));
         }
         return list;
     }

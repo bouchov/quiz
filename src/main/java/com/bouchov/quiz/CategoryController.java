@@ -2,6 +2,7 @@ package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.Category;
 import com.bouchov.quiz.entities.CategoryRepository;
+import com.bouchov.quiz.protocol.CategoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,28 +20,28 @@ class CategoryController {
     }
 
     @GetMapping
-    public List<Category> showCategory(
+    public List<CategoryBean> showCategory(
             @RequestParam(required = false) Long id,
             @RequestParam(required = false) String name) {
-        ArrayList<Category> categories = new ArrayList<>();
+        ArrayList<CategoryBean> categories = new ArrayList<>();
         if (id != null) {
-            categoryRepository.findById(id).ifPresent(categories::add);
+            categoryRepository.findById(id).ifPresent((e) -> categories.add(new CategoryBean(e)));
         } else if (name != null) {
-            categoryRepository.findByName(name).ifPresent(categories::add);
+            categoryRepository.findByName(name).ifPresent((e) -> categories.add(new CategoryBean(e)));
         } else {
-            categoryRepository.findAll().forEach(categories::add);
+            categoryRepository.findAll().forEach((e) -> categories.add(new CategoryBean(e)));
         }
         return categories;
     }
 
     @GetMapping(value = "/add")
-    public Category addCategory(@RequestParam String name) {
+    public CategoryBean addCategory(@RequestParam String name) {
         Category category = categoryRepository.findByName(name).orElse(null);
         if (category == null) {
             category = new Category();
             category.setName(name);
             categoryRepository.save(category);
         }
-        return category;
+        return new CategoryBean(category);
     }
 }

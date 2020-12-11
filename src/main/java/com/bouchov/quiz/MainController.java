@@ -2,6 +2,7 @@ package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.User;
 import com.bouchov.quiz.entities.UserRepository;
+import com.bouchov.quiz.protocol.UserBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +38,7 @@ class MainController extends AbstractController {
     }
 
     @PostMapping
-    public User login(
+    public UserBean login(
             @RequestParam String login,
             @RequestParam String password) {
         Long userId = (Long) session.getAttribute(SessionAttributes.USER_ID);
@@ -51,7 +52,7 @@ class MainController extends AbstractController {
             throw new UserNotFoundException(login);
         }
         session.setAttribute(SessionAttributes.USER_ID, user.getId());
-        return user;
+        return new UserBean(user);
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)

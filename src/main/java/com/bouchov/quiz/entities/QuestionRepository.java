@@ -8,5 +8,5 @@ import java.util.Optional;
 public interface QuestionRepository extends CrudRepository<Question,Long> {
     Optional<Question> findQuestionById(Long id);
 
-    List<Question> findAllByCategory(Category category);
+    Iterable<Question> findAllByCategory(Category category);
 }

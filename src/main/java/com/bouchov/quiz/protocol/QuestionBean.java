@@ -5,14 +5,16 @@ import java.util.List;
 public class QuestionBean {
     private String category;
     private String text;
+    private Integer answer;
     private List<OptionBean> options;
 
     public QuestionBean() {
     }
 
-    public QuestionBean(String category, String text, List<OptionBean> options) {
+    public QuestionBean(String category, String text, Integer answer, List<OptionBean> options) {
         this.category = category;
         this.text = text;
+        this.answer = answer;
         this.options = options;
     }
 
@@ -32,6 +34,14 @@ public class QuestionBean {
         this.text = text;
     }
 
+    public Integer getAnswer() {
+        return answer;
+    }
+
+    public void setAnswer(Integer answer) {
+        this.answer = answer;
+    }
+
     public List<OptionBean> getOptions() {
         return options;
     }
@@ -45,6 +55,7 @@ public class QuestionBean {
         return "QuestionBean{" +
                 "category='" + category + '\'' +
                 ", text='" + text + '\'' +
+                ", answer=" + answer +
                 ", options=" + options +
                 '}';
     }

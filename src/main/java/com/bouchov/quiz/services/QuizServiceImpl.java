@@ -1,8 +1,6 @@
 package com.bouchov.quiz.services;
 
 import com.bouchov.quiz.entities.*;
-import com.bouchov.quiz.protocol.OptionBean;
-import com.bouchov.quiz.protocol.QuestionBean;
 import com.bouchov.quiz.protocol.QuizResultBean;
 import com.bouchov.quiz.protocol.ResponseBean;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,10 +16,8 @@ import org.springframework.web.socket.WebSocketSession;
 
 import javax.transaction.Transactional;
 import java.io.IOException;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static java.util.Collections.shuffle;
 
 @Service
 class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
@@ -30,6 +26,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     private final QuizParticipantRepository quizParticipantRepository;
     private final QuizAnswerRepository quizAnswerRepository;
     private final Map<Long, WebSocketSession> sessions;
+    private final Map<Long, QuizManager> managers;
 
     @Autowired
     public QuizServiceImpl(QuizParticipantRepository quizParticipantRepository,
@@ -37,52 +34,67 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
         this.quizParticipantRepository = quizParticipantRepository;
         this.quizAnswerRepository = quizAnswerRepository;
         sessions = new ConcurrentHashMap<>();
+        managers = new ConcurrentHashMap<>();
     }
 
     @Override
     public QuizParticipant register(Quiz quiz, User user) {
+        if (quiz.getStatus() == QuizStatus.DRAFT) {
+            throw new RuntimeException("quiz is not ready");
+        }
         QuizParticipant participant = quizParticipantRepository.getByQuizAndUser(quiz, user).orElse(null);
+        if (quiz.getStatus() == QuizStatus.FINISHED) {
+            if (participant == null) {
+                throw new RuntimeException("quiz is finished");
+            } else {
+                return participant;
+            }
+        }
+        if (!managers.containsKey(quiz.getId())) {
+            managers.computeIfAbsent(quiz.getId(),
+                    (k) -> QuizManagerFactory.getInstance().createManager(this, quiz));
+        }
         if (participant == null) {
-            participant = quizParticipantRepository.save(new QuizParticipant(quiz, user, ParticipantStatus.ACTIVE));
+            participant = getManager(quiz).register(quiz, user);
+            participant = quizParticipantRepository.save(participant);
+            quiz.getParticipants().add(participant);
         }
         return participant;
     }
 
+    private QuizManager getManager(Quiz quiz) {
+        QuizManager quizManager = managers.get(quiz.getId());
+        if (quizManager == null) {
+            throw new RuntimeException("manager not found for " + quiz);
+        }
+        return quizManager;
+    }
+
     @Override
     @Transactional
-    public void start(Long participantId, WebSocketSession session) {
+    public void connect(Long participantId, WebSocketSession session) {
         log.debug("register session for {}", participantId);
         quizParticipantRepository.findById(participantId).ifPresent(quizParticipant -> {
             Quiz quiz = quizParticipant.getQuiz();
-            if (quiz.getStatus() == QuizStatus.ACTIVE) {
-                quiz.setStatus(QuizStatus.STARTED);
-            } else if (quiz.getStatus() == QuizStatus.FINISHED) {
-                sendMessage(session, new ResponseBean(toQuizResult(quizParticipant)));
+            if (quiz.getStatus() == QuizStatus.FINISHED) {
+                sendMessage(session, new ResponseBean(new QuizResultBean(quizParticipant)));
                 return;
-            } else if (quiz.getStatus() != QuizStatus.STARTED) {
+            } else if (quiz.getStatus() != QuizStatus.ACTIVE
+                    && quiz.getStatus() != QuizStatus.STARTED) {
                 throw new IllegalStateException("invalid quiz status: " + quiz.getStatus());
             }
             sessions.put(participantId, session);
-            QuizAnswer answer = findActiveAnswer(quizParticipant);
-            Question question;
-            if (answer == null) {
-                question = nextQuestion(quizParticipant);
-            } else {
-                question = answer.getQuestion();
-            }
-            selectQuestionAndSend(session, quizParticipant, question);
+            getManager(quiz).join(quizParticipant);
         });
     }
 
-    private QuizAnswer findActiveAnswer(QuizParticipant quizParticipant) {
+    QuizAnswer findActiveAnswer(QuizParticipant quizParticipant) {
         return quizAnswerRepository.findByQuizAndAnswererAndStatus(quizParticipant.getQuiz(),
                 quizParticipant.getUser(),
                 QuizAnswerStatus.ACTIVE).orElse(null);
     }
 
-    private void selectQuestionAndSend(WebSocketSession session,
-                                       QuizParticipant quizParticipant,
-                                       Question question) {
+    void addAnswer(QuizParticipant quizParticipant, Question question) {
         log.debug("select question #{} for {}", question.getId(), quizParticipant.getId());
         User user = quizParticipant.getUser();
         if (quizAnswerRepository.findByQuestionAndAnswerer(question, user).isEmpty()) {
@@ -95,7 +107,10 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
                     QuizAnswerStatus.ACTIVE));
             quizParticipant.getAnswers().add(answer);
         }
-        sendMessage(session, new ResponseBean(toQuestion(question)));
+    }
+
+    void sendMessage(QuizParticipant participant, ResponseBean bean) {
+        sendMessage(sessions.get(participant.getId()), bean);
     }
 
     private void sendMessage(WebSocketSession session, ResponseBean bean) {
@@ -104,7 +119,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
                 session.sendMessage(toMessage(bean));
             }
         } catch (IOException e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 
@@ -113,24 +128,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     public void answer(Long participantId, int answer) {
         log.debug("answer #{} for {}", answer, participantId);
         quizParticipantRepository.findById(participantId).ifPresent((quizParticipant) -> {
-            QuizAnswer quizAnswer = findActiveAnswer(quizParticipant);
-            if (quizAnswer == null) {
-                throw new IllegalStateException("no active question found for " + participantId);
-            }
-            if (quizAnswer.getQuestion().getAnswer() == answer) {
-                quizAnswer.setStatus(QuizAnswerStatus.SUCCESS);
-                quizAnswer.setValue(quizAnswer.getQuestion().getValue());
-                quizParticipant.setRightAnswers(quizParticipant.getRightAnswers() + 1);
-                quizParticipant.setValue(quizParticipant.getValue() + quizAnswer.getValue());
-            } else {
-                quizAnswer.setStatus(QuizAnswerStatus.FAILED);
-                quizAnswer.setValue(0);
-                quizParticipant.setWrongAnswers(quizParticipant.getWrongAnswers() + 1);
-                quizParticipant.setValue(quizParticipant.getValue() + quizAnswer.getValue());
-            }
-            WebSocketSession session = sessions.get(participantId);
-            sendMessage(session, new ResponseBean(quizAnswer.getStatus()));
-            // TODO: 10.12.2020 schedule next question in X secs
+            getManager(quizParticipant.getQuiz()).answer(quizParticipant, answer);
         });
     }
 
@@ -139,50 +137,8 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     public void next(Long participantId) {
         log.debug("next question for {}", participantId);
         quizParticipantRepository.findById(participantId).ifPresent(quizParticipant -> {
-            Question selectedQuestion = nextQuestion(quizParticipant);
-            WebSocketSession session = sessions.get(participantId);
-            if (selectedQuestion == null) {
-                quizParticipant.getQuiz().setStatus(QuizStatus.FINISHED);
-                quizParticipant.setStatus(ParticipantStatus.FINISHED);
-                sendMessage(session, new ResponseBean(toQuizResult(quizParticipant)));
-            } else {
-                selectQuestionAndSend(session, quizParticipant, selectedQuestion);
-            }
+            getManager(quizParticipant.getQuiz()).next(quizParticipant);
         });
-    }
-
-    private QuizResultBean toQuizResult(QuizParticipant participant) {
-        return new QuizResultBean(participant.getRightAnswers(),
-                participant.getWrongAnswers(),
-                participant.getValue(),
-                participant.getStatus());
-    }
-
-    private Question nextQuestion(QuizParticipant quizParticipant) {
-        Set<Long> used = new HashSet<>();
-        Iterable<QuizAnswer> answers = quizAnswerRepository.findAllByQuizAndAnswerer(quizParticipant.getQuiz(),
-                quizParticipant.getUser());
-        answers.forEach(quizAnswer -> used.add(quizAnswer.getQuestion().getId()));
-        Question selectedQuestion = null;
-        for (Question question : quizParticipant.getQuiz().getQuestions()) {
-            if (!used.contains(question.getId())) {
-                selectedQuestion = question;
-                break;
-            }
-        }
-        return selectedQuestion;
-    }
-
-    private QuestionBean toQuestion(Question question) {
-        QuestionBean bean = new QuestionBean();
-        bean.setCategory(question.getCategory().getName());
-        bean.setText(question.getText());
-        bean.setOptions(new ArrayList<>());
-        for (int i = 0; i < question.getOptions().size(); i++) {
-            bean.getOptions().add(new OptionBean(i, question.getOptions().get(i)));
-        }
-        shuffle(bean.getOptions());
-        return bean;
     }
 
     private TextMessage toMessage(Object bean) throws JsonProcessingException {
@@ -190,7 +146,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     }
 
     @Override
-    public void unregister(Long participantId) {
+    public void disconnect(Long participantId) {
         log.debug("unregister session for {}", participantId);
         sessions.remove(participantId);
     }
@@ -198,10 +154,12 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         log.info("INITIALIZED");
+        // TODO: 11.12.2020 load quiz and participants
     }
 
     @Override
     public void destroy() throws Exception {
         log.info("DESTROY");
+        // TODO: 11.12.2020 stop managers?
     }
 }

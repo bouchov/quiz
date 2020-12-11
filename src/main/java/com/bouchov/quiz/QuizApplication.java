@@ -22,7 +22,15 @@ public class QuizApplication {
         return (evt) -> {
             User user = userRepository.save(new User("admin", "admin", "Admin", UserRole.ADMIN));
             Category category = categoryRepository.save(new Category("General"));
-            Quiz quiz = quizRepository.save(new Quiz(user, "Test quiz #1", QuizType.SIMPLE, QuizStatus.ACTIVE));
+            Quiz quiz = quizRepository.save(
+                    new Quiz(user,
+                            "Test quiz #1",
+                            QuizType.SIMPLE,
+                            1,
+                            1,
+                            null,
+                            null,
+                            QuizStatus.ACTIVE));
             quiz.setQuestions(new ArrayList<>());
             quiz.getQuestions().add(questionRepository.save(new Question(category, quiz,
                     "question #1",

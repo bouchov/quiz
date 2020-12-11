@@ -8,9 +8,9 @@ import org.springframework.web.socket.WebSocketSession;
 public interface QuizService {
     QuizParticipant register(Quiz quiz, User user);
 
-    void start(Long participantId, WebSocketSession session);
+    void connect(Long participantId, WebSocketSession session);
 
-    void unregister(Long participantId);
+    void disconnect(Long participantId);
 
     void answer(Long participantId, int answer);
 

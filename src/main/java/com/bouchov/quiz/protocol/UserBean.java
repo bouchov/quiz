@@ -1,27 +1,24 @@
-package com.bouchov.quiz.entities;
+package com.bouchov.quiz.protocol;
 
-import javax.persistence.*;
+import com.bouchov.quiz.entities.User;
+import com.bouchov.quiz.entities.UserRole;
 
-@Entity
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+public class UserBean {
     private Long id;
-    @Column(unique = true)
     private String login;
-    @Column(unique = true)
     private String nickname;
     private String password;
     private UserRole role;
 
-    public User() {
+    public UserBean() {
     }
 
-    public User(String login, String nickname, String password, UserRole role) {
-        this.login = login;
-        this.nickname = nickname;
-        this.password = password;
-        this.role = role;
+    public UserBean(User user) {
+        this.id = user.getId();
+        this.login = user.getLogin();
+        this.nickname = user.getNickname();
+        this.password = user.getPassword();
+        this.role = user.getRole();
     }
 
     public Long getId() {
@@ -62,5 +59,16 @@ public class User {
 
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    @Override
+    public String toString() {
+        return "UserBean{" +
+                "id=" + id +
+                ", login='" + login + '\'' +
+                ", nickname='" + nickname + '\'' +
+                ", password='" + password + '\'' +
+                ", role=" + role +
+                '}';
     }
 }

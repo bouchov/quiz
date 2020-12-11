@@ -3,6 +3,7 @@ package com.bouchov.quiz.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -15,6 +16,10 @@ public class Quiz {
     private User author;
     private String name;
     private QuizType type;
+    private int minPlayers;
+    private int maxPlayers;
+    private Date startDate;
+    private Date startedDate;
     private QuizStatus status;
     @OneToMany(fetch = FetchType.LAZY)
     @JsonIgnore
@@ -26,10 +31,21 @@ public class Quiz {
     public Quiz() {
     }
 
-    public Quiz(User author, String name, QuizType type, QuizStatus status) {
+    public Quiz(User author,
+                String name,
+                QuizType type,
+                int minPlayers,
+                int maxPlayers,
+                Date startDate,
+                Date startedDate,
+                QuizStatus status) {
         this.author = author;
         this.name = name;
         this.type = type;
+        this.minPlayers = minPlayers;
+        this.maxPlayers = maxPlayers;
+        this.startDate = startDate;
+        this.startedDate = startedDate;
         this.status = status;
     }
 
@@ -63,6 +79,38 @@ public class Quiz {
 
     public void setType(QuizType type) {
         this.type = type;
+    }
+
+    public int getMinPlayers() {
+        return minPlayers;
+    }
+
+    public void setMinPlayers(int minPlayers) {
+        this.minPlayers = minPlayers;
+    }
+
+    public int getMaxPlayers() {
+        return maxPlayers;
+    }
+
+    public void setMaxPlayers(int maxPlayers) {
+        this.maxPlayers = maxPlayers;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public Date getStartedDate() {
+        return startedDate;
+    }
+
+    public void setStartedDate(Date startedDate) {
+        this.startedDate = startedDate;
     }
 
     public QuizStatus getStatus() {

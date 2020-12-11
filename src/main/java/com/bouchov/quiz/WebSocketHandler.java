@@ -30,7 +30,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         Long participantId = (Long) session.getAttributes().get(SessionAttributes.PARTICIPANT_ID);;
         if (participantId != null) {
-            service.unregister(participantId);
+            service.disconnect(participantId);
         }
     }
 
@@ -41,7 +41,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         logger.debug("received message: {}", request);
         if (request.getEnter() != null) {
             Long participantId = request.getEnter().getParticipantId();
-            service.start(participantId, session);
+            service.connect(participantId, session);
             session.getAttributes().put(SessionAttributes.PARTICIPANT_ID, participantId);
         } else if (request.getAnswer() != null) {
             Long participantId = (Long) session.getAttributes().get(SessionAttributes.PARTICIPANT_ID);
