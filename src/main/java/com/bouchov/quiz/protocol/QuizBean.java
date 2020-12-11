@@ -14,6 +14,7 @@ public class QuizBean {
     private QuizType type;
     private int minPlayers;
     private int maxPlayers;
+    private Date startDate;
     private Date startedDate;
     private QuizStatus status;
     private List<QuestionBean> questions;
@@ -28,6 +29,7 @@ public class QuizBean {
         this.type = quiz.getType();
         this.minPlayers = quiz.getMinPlayers();
         this.maxPlayers = quiz.getMaxPlayers();
+        this.startDate = quiz.getStartDate();
         this.startedDate = quiz.getStartedDate();
         this.status = quiz.getStatus();
     }
@@ -80,6 +82,14 @@ public class QuizBean {
         this.maxPlayers = maxPlayers;
     }
 
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
     public Date getStartedDate() {
         return startedDate;
     }
@@ -113,6 +123,7 @@ public class QuizBean {
                 ", type=" + type +
                 ", minPlayers=" + minPlayers +
                 ", maxPlayers=" + maxPlayers +
+                ", startDate=" + startDate +
                 ", startedDate=" + startedDate +
                 ", status=" + status +
                 ", questions=" + questions +

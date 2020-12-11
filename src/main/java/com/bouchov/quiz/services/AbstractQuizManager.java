@@ -1,9 +1,8 @@
 package com.bouchov.quiz.services;
 
+import com.bouchov.quiz.entities.Option;
 import com.bouchov.quiz.entities.Question;
-import com.bouchov.quiz.entities.QuizAnswer;
 import com.bouchov.quiz.entities.QuizParticipant;
-import com.bouchov.quiz.protocol.OptionBean;
 import com.bouchov.quiz.protocol.QuestionBean;
 
 import java.util.ArrayList;
@@ -34,11 +33,8 @@ public abstract class AbstractQuizManager implements QuizManager {
     }
 
     protected QuestionBean toQuestion(Question question) {
-        ArrayList<OptionBean> options = new ArrayList<>();
-        for (int i = 0; i < question.getOptions().size(); i++) {
-            options.add(new OptionBean(i, question.getOptions().get(i)));
-        }
+        ArrayList<Option> options = new ArrayList<>(question.getOptions());
         shuffle(options);
-        return new QuestionBean(question.getCategory().getName(), question.getText(), null, options);
+        return new QuestionBean(question, options);
     }
 }

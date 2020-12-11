@@ -1,0 +1,7 @@
+[
+  {"name": "Викторина №1", "type": "SIMPLE", "minPlayers": 1, "maxPlayers": 1},
+  {"name": "Викторина №2", "type": "SIMPLE", "minPlayers": 2, "maxPlayers": 10},
+  {"name": "Викторина №3", "type": "SIMPLE", "minPlayers": 2, "maxPlayers": 10},
+  {"name": "Викторина №4", "type": "SIMPLE", "minPlayers": 1, "maxPlayers": 1},
+  {"name": "Викторина №5", "type": "SIMPLE", "minPlayers": 1, "maxPlayers": 1}
+]

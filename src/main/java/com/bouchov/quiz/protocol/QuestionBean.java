@@ -1,20 +1,29 @@
 package com.bouchov.quiz.protocol;
 
+import com.bouchov.quiz.entities.Option;
+import com.bouchov.quiz.entities.Question;
+
 import java.util.List;
 
 public class QuestionBean {
     private String category;
     private String text;
     private Integer answer;
-    private List<OptionBean> options;
+    private int value;
+    private List<Option> options;
 
     public QuestionBean() {
     }
 
-    public QuestionBean(String category, String text, Integer answer, List<OptionBean> options) {
-        this.category = category;
-        this.text = text;
-        this.answer = answer;
+    public QuestionBean(Question question) {
+        this(question, question.getOptions());
+    }
+
+    public QuestionBean(Question question, List<Option> options) {
+        this.category = question.getCategory().getName();
+        this.text = question.getText();
+        this.answer = question.getAnswer();
+        this.value = question.getValue();
         this.options = options;
     }
 
@@ -42,11 +51,15 @@ public class QuestionBean {
         this.answer = answer;
     }
 
-    public List<OptionBean> getOptions() {
+    public int getValue() {
+        return value;
+    }
+
+    public List<Option> getOptions() {
         return options;
     }
 
-    public void setOptions(List<OptionBean> options) {
+    public void setOptions(List<Option> options) {
         this.options = options;
     }
 
@@ -56,6 +69,7 @@ public class QuestionBean {
                 "category='" + category + '\'' +
                 ", text='" + text + '\'' +
                 ", answer=" + answer +
+                ", value=" + value +
                 ", options=" + options +
                 '}';
     }

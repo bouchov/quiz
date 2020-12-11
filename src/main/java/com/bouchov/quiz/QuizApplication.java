@@ -1,6 +1,10 @@
 package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.*;
+import com.bouchov.quiz.init.CategoryLoader;
+import com.bouchov.quiz.init.QuestionLoader;
+import com.bouchov.quiz.init.QuizLoader;
+import com.bouchov.quiz.init.UserLoader;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -21,36 +25,14 @@ public class QuizApplication {
                             QuestionRepository questionRepository) {
         return (evt) -> {
             User user = userRepository.save(new User("admin", "admin", "Admin", UserRole.ADMIN));
-            Category category = categoryRepository.save(new Category("General"));
-            Quiz quiz = quizRepository.save(
-                    new Quiz(user,
-                            "Test quiz #1",
-                            QuizType.SIMPLE,
-                            1,
-                            1,
-                            null,
-                            null,
-                            QuizStatus.ACTIVE));
-            quiz.setQuestions(new ArrayList<>());
-            quiz.getQuestions().add(questionRepository.save(new Question(category, quiz,
-                    "question #1",
-                    0,
-                    1,
-                    Arrays.asList(
-                            "right answer",
-                            "wrong answer"
-                    )
-            )));
-            quiz.getQuestions().add(questionRepository.save(new Question(category, quiz,
-                    "question #2",
-                    0,
-                    1,
-                    Arrays.asList(
-                            "right answer",
-                            "wrong answer"
-                    )
-            )));
-            quizRepository.save(quiz);
+            UserLoader userLoader = new UserLoader();
+            userLoader.load(userRepository);
+            CategoryLoader categoryLoader = new CategoryLoader();
+            categoryLoader.load(categoryRepository);
+            QuizLoader quizLoader = new QuizLoader();
+            quizLoader.load(quizRepository, userRepository, user);
+            QuestionLoader questionLoader = new QuestionLoader();
+            questionLoader.load(questionRepository, categoryRepository);
         };
     }
 

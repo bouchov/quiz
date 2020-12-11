@@ -1,13 +1,13 @@
-package com.bouchov.quiz.protocol;
+package com.bouchov.quiz.entities;
 
-public class OptionBean {
+public class Option {
     private int id;
     private String name;
 
-    public OptionBean() {
+    public Option() {
     }
 
-    public OptionBean(int id, String name) {
+    public Option(int id, String name) {
         this.id = id;
         this.name = name;
     }
@@ -30,7 +30,7 @@ public class OptionBean {
 
     @Override
     public String toString() {
-        return "OptionBean{" +
+        return "Option{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
                 '}';

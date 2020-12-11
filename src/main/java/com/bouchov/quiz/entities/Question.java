@@ -1,6 +1,7 @@
 package com.bouchov.quiz.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.util.List;
@@ -13,20 +14,18 @@ public class Question {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Category category;
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    private Quiz quiz;
     private String text;
     private int answer;
     private int value;
-    @ElementCollection
-    private List<String> options;
+    @Type(type = "json")
+    @Column(columnDefinition = "json", nullable = false)
+    private List<Option> options;
 
     public Question() {
     }
 
-    public Question(Category category, Quiz quiz, String text, int answer, int value, List<String> options) {
+    public Question(Category category, String text, int answer, int value, List<Option> options) {
         this.category = category;
-        this.quiz = quiz;
         this.text = text;
         this.answer = answer;
         this.value = value;
@@ -41,14 +40,6 @@ public class Question {
         this.id = id;
     }
 
-    public Quiz getQuiz() {
-        return quiz;
-    }
-
-    public void setQuiz(Quiz quiz) {
-        this.quiz = quiz;
-    }
-
     public String getText() {
         return text;
     }
@@ -57,11 +48,11 @@ public class Question {
         this.text = text;
     }
 
-    public List<String> getOptions() {
+    public List<Option> getOptions() {
         return options;
     }
 
-    public void setOptions(List<String> options) {
+    public void setOptions(List<Option> options) {
         this.options = options;
     }
 
