@@ -1,12 +1,11 @@
 package com.bouchov.quiz.entities;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
 
 @Entity
-public class QuizAnswer {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+public class QuizAnswer extends BasicEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private Quiz quiz;
     @ManyToOne(fetch = FetchType.LAZY)
@@ -27,14 +26,6 @@ public class QuizAnswer {
         this.answer = answer;
         this.value = value;
         this.status = status;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Quiz getQuiz() {

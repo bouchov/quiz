@@ -1,14 +1,15 @@
 package com.bouchov.quiz.init;
 
-import com.bouchov.quiz.entities.*;
+import com.bouchov.quiz.entities.Category;
+import com.bouchov.quiz.entities.CategoryRepository;
+import com.bouchov.quiz.entities.Question;
+import com.bouchov.quiz.entities.QuestionRepository;
 import com.bouchov.quiz.protocol.QuestionBean;
-import com.bouchov.quiz.protocol.QuizBean;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
-import java.util.Optional;
 
 public class QuestionLoader {
     private final String fileName;
@@ -34,7 +35,7 @@ public class QuestionLoader {
                         question.getText(),
                         question.getAnswer(),
                         question.getValue(),
-                        question.getOptions()
+                        new ObjectMapper().writeValueAsString(question.getOptions())
                 ));
             }
         }

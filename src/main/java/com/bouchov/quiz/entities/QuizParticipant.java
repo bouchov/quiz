@@ -2,14 +2,14 @@ package com.bouchov.quiz.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import java.util.List;
 
 @Entity
-public class QuizParticipant {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+public class QuizParticipant extends BasicEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     private Quiz quiz;
     @ManyToOne(fetch = FetchType.EAGER)
@@ -29,14 +29,6 @@ public class QuizParticipant {
         this.quiz = quiz;
         this.user = user;
         this.status = status;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Quiz getQuiz() {

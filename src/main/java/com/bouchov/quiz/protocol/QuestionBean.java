@@ -2,7 +2,10 @@ package com.bouchov.quiz.protocol;
 
 import com.bouchov.quiz.entities.Option;
 import com.bouchov.quiz.entities.Question;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class QuestionBean {

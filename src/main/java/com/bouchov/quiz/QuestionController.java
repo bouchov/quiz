@@ -5,6 +5,8 @@ import com.bouchov.quiz.entities.CategoryRepository;
 import com.bouchov.quiz.entities.Question;
 import com.bouchov.quiz.entities.QuestionRepository;
 import com.bouchov.quiz.protocol.QuestionBean;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -34,8 +36,8 @@ class QuestionController {
             MediaType.APPLICATION_XML_VALUE})
     ResponseEntity<?> add(
             @PathVariable Long categoryId,
-            @RequestBody Question jsonQuestion
-    ) {
+            @RequestBody QuestionBean jsonQuestion
+    ) throws JsonProcessingException {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CategoryNotFoundException(categoryId));
         // TODO: 02.12.2020 check options number and answer
@@ -44,7 +46,7 @@ class QuestionController {
                 jsonQuestion.getText(),
                 jsonQuestion.getAnswer(),
                 jsonQuestion.getValue(),
-                jsonQuestion.getOptions()
+                new ObjectMapper().writeValueAsString(jsonQuestion.getOptions())
         ));
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setLocation(ServletUriComponentsBuilder

@@ -11,8 +11,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 @SpringBootApplication
 public class QuizApplication {
@@ -29,10 +27,10 @@ public class QuizApplication {
             userLoader.load(userRepository);
             CategoryLoader categoryLoader = new CategoryLoader();
             categoryLoader.load(categoryRepository);
-            QuizLoader quizLoader = new QuizLoader();
-            quizLoader.load(quizRepository, userRepository, user);
             QuestionLoader questionLoader = new QuestionLoader();
             questionLoader.load(questionRepository, categoryRepository);
+            QuizLoader quizLoader = new QuizLoader();
+            quizLoader.load(quizRepository, questionRepository, userRepository, user);
         };
     }
 

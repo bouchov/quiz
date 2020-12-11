@@ -1,43 +1,34 @@
 package com.bouchov.quiz.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.hibernate.annotations.Type;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
+import java.util.Arrays;
 import java.util.List;
 
 @Entity
-public class Question {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+public class Question extends BasicEntity {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Category category;
     private String text;
     private int answer;
     private int value;
-    @Type(type = "json")
-    @Column(columnDefinition = "json", nullable = false)
-    private List<Option> options;
+    private String optionsJson;
 
     public Question() {
     }
 
-    public Question(Category category, String text, int answer, int value, List<Option> options) {
+    public Question(Category category, String text, int answer, int value, String optionsJson) {
         this.category = category;
         this.text = text;
         this.answer = answer;
         this.value = value;
-        this.options = options;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
+        this.optionsJson = optionsJson;
     }
 
     public String getText() {
@@ -48,12 +39,27 @@ public class Question {
         this.text = text;
     }
 
-    public List<Option> getOptions() {
-        return options;
+    public String getOptionsJson() {
+        return optionsJson;
     }
 
-    public void setOptions(List<Option> options) {
-        this.options = options;
+    public void setOptionsJson(String optionsJson) {
+        this.optionsJson = optionsJson;
+    }
+
+    public List<Option> getOptions() {
+        return toOptions(optionsJson);
+    }
+
+    private static List<Option> toOptions(String json) {
+        if (json == null) {
+            return null;
+        }
+        try {
+            return Arrays.asList(new ObjectMapper().readValue(json, Option[].class));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public int getAnswer() {

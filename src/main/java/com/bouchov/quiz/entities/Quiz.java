@@ -7,10 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-public class Quiz {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+public class Quiz extends BasicEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private User author;
@@ -21,7 +18,7 @@ public class Quiz {
     private Date startDate;
     private Date startedDate;
     private QuizStatus status;
-    @OneToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Question> questions;
     @OneToMany(fetch = FetchType.LAZY)
@@ -47,14 +44,6 @@ public class Quiz {
         this.startDate = startDate;
         this.startedDate = startedDate;
         this.status = status;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public User getAuthor() {

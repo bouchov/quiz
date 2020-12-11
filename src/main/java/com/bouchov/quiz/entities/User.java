@@ -3,10 +3,7 @@ package com.bouchov.quiz.entities;
 import javax.persistence.*;
 
 @Entity
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+public class User extends BasicEntity {
     @Column(unique = true)
     private String login;
     @Column(unique = true)
@@ -22,14 +19,6 @@ public class User {
         this.nickname = nickname;
         this.password = password;
         this.role = role;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getLogin() {

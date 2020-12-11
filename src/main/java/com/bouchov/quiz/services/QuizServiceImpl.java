@@ -97,16 +97,14 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     void addAnswer(QuizParticipant quizParticipant, Question question) {
         log.debug("select question #{} for {}", question.getId(), quizParticipant.getId());
         User user = quizParticipant.getUser();
-        if (quizAnswerRepository.findByQuestionAndAnswerer(question, user).isEmpty()) {
-            QuizAnswer answer = quizAnswerRepository.save(new QuizAnswer(
-                    quizParticipant.getQuiz(),
-                    question,
-                    user,
-                    -1,
-                    0,
-                    QuizAnswerStatus.ACTIVE));
-            quizParticipant.getAnswers().add(answer);
-        }
+        QuizAnswer answer = quizAnswerRepository.save(new QuizAnswer(
+                quizParticipant.getQuiz(),
+                question,
+                user,
+                -1,
+                0,
+                QuizAnswerStatus.ACTIVE));
+        quizParticipant.getAnswers().add(answer);
     }
 
     void sendMessage(QuizParticipant participant, ResponseBean bean) {
@@ -127,18 +125,16 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     @Transactional
     public void answer(Long participantId, int answer) {
         log.debug("answer #{} for {}", answer, participantId);
-        quizParticipantRepository.findById(participantId).ifPresent((quizParticipant) -> {
-            getManager(quizParticipant.getQuiz()).answer(quizParticipant, answer);
-        });
+        quizParticipantRepository.findById(participantId).ifPresent(
+                (quizParticipant) -> getManager(quizParticipant.getQuiz()).answer(quizParticipant, answer));
     }
 
     @Override
     @Transactional
     public void next(Long participantId) {
         log.debug("next question for {}", participantId);
-        quizParticipantRepository.findById(participantId).ifPresent(quizParticipant -> {
-            getManager(quizParticipant.getQuiz()).next(quizParticipant);
-        });
+        quizParticipantRepository.findById(participantId).ifPresent(
+                quizParticipant -> getManager(quizParticipant.getQuiz()).next(quizParticipant));
     }
 
     private TextMessage toMessage(Object bean) throws JsonProcessingException {
