@@ -32,11 +32,16 @@ class QuizController extends AbstractController {
     }
 
     @RequestMapping("/{quizId}/register")
-    public QuizResultBean startQuiz(@PathVariable Long quizId) {
+    public QuizBean startQuiz(@PathVariable Long quizId) {
         checkAuthorization(session);
         User user = getUser(session, userRepository).orElseThrow();
         Quiz quiz = quizRepository.findById(quizId).orElseThrow(() -> new QuizNotException(quizId));
-        return new QuizResultBean(quizService.register(quiz, user));
+        QuizBean quizBean = new QuizBean(quiz);
+        QuizParticipant participant = quizService.register(quiz, user);
+        if (participant != null) {
+            quizBean.setResult(new QuizResultBean(participant));
+        }
+        return quizBean;
     }
 
     @RequestMapping("/list")

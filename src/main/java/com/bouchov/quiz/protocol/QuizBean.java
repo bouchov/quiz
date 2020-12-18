@@ -17,6 +17,7 @@ public class QuizBean {
     private Date startDate;
     private Date startedDate;
     private QuizStatus status;
+    private QuizResultBean result;
     private List<QuestionBean> questions;
 
     public QuizBean() {
@@ -114,6 +115,14 @@ public class QuizBean {
         this.questions = questions;
     }
 
+    public QuizResultBean getResult() {
+        return result;
+    }
+
+    public void setResult(QuizResultBean result) {
+        this.result = result;
+    }
+
     @Override
     public String toString() {
         return "QuizBean{" +
@@ -126,6 +135,7 @@ public class QuizBean {
                 ", startDate=" + startDate +
                 ", startedDate=" + startedDate +
                 ", status=" + status +
+                ", result=" + result +
                 ", questions=" + questions +
                 '}';
     }

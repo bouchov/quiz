@@ -95,3 +95,12 @@ button:disabled:hover {
 .dialog-button:disabled {
     background-color: #cccccc;
 }
+
+.color-success {
+    background-color: coral;
+}
+
+.color-fail {
+    background-color: darkgray;
+}
+

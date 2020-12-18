@@ -4,11 +4,12 @@ import com.bouchov.quiz.entities.QuizAnswerStatus;
 
 public class ResponseBean {
     private QuestionBean question;
-    private QuizAnswerStatus answer;
+    private AnswerBean answer;
     private QuizResultBean result;
+    private QuizBean quiz;
     private String message;
 
-    public ResponseBean(QuizAnswerStatus answer) {
+    public ResponseBean(AnswerBean answer) {
         this.answer = answer;
     }
 
@@ -18,6 +19,10 @@ public class ResponseBean {
 
     public ResponseBean(QuizResultBean result) {
         this.result = result;
+    }
+
+    public ResponseBean(QuizBean quiz) {
+        this.quiz = quiz;
     }
 
     public ResponseBean(String message) {
@@ -40,11 +45,11 @@ public class ResponseBean {
         this.message = message;
     }
 
-    public QuizAnswerStatus getAnswer() {
+    public AnswerBean getAnswer() {
         return answer;
     }
 
-    public void setAnswer(QuizAnswerStatus answer) {
+    public void setAnswer(AnswerBean answer) {
         this.answer = answer;
     }
 
@@ -56,12 +61,21 @@ public class ResponseBean {
         this.result = result;
     }
 
+    public QuizBean getQuiz() {
+        return quiz;
+    }
+
+    public void setQuiz(QuizBean quiz) {
+        this.quiz = quiz;
+    }
+
     @Override
     public String toString() {
         return "ResponseBean{" +
                 "question=" + question +
                 ", answer=" + answer +
                 ", result=" + result +
+                ", quiz=" + quiz +
                 ", message='" + message + '\'' +
                 '}';
     }

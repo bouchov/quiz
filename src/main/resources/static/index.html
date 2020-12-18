@@ -100,7 +100,7 @@
     var loginWindow = {element:null, userName:null, userPassword:null, loginButton:null, callback:null};
     var quizListWindow = {element:null, quizName:null, quizList:null};
     var quizWindow = {element:null, quizId:null, view:null}
-    var questionWindow = {element:null, questionId:null, view:null, finished:false}
+    var questionWindow = {element:null, questionId:null, view:null, question:null, finished:false}
     var quizList = [];
 
     function initApp() {
@@ -236,25 +236,24 @@
 
     function messageHandler(event) {
         let msg = JSON.parse(event.data);
-        if (msg.question) {
+        if (msg.quiz) {
             questionWindow.view.innerHTML = '';
-            questionWindow.view.insertAdjacentHTML("beforeend", '<p>' + msg.question.category + '</p>');
-            questionWindow.view.insertAdjacentHTML("beforeend", '<p>' + msg.question.text + '</p>');
-            msg.question.options.forEach(function (option) {
-                questionWindow.view.insertAdjacentHTML("beforeend",
-                    '<button onclick="doRequestAnswer()" type="button" value="' + option.id + '" class="dialog-button">' + option.name + '</button>');
-            })
+            questionWindow.view.insertAdjacentHTML("beforeend", '<p> Викторина ' + msg.quiz.name + '</p>');
+            questionWindow.view.insertAdjacentHTML("beforeend", '<p> начнется ' + new Date(msg.quiz.startDate) + '</p>');
+        } else if (msg.question) {
+            questionWindow.question = msg.question;
+            writeQuestion(questionWindow.view, questionWindow.question);
         } else if (msg.answer) {
             //QuizAnswerStatus
-            if (msg.answer === 'SUCCESS') {
-                questionWindow.view.innerHTML = '';
-                questionWindow.view.insertAdjacentHTML("beforeend", '<p>Это правильный ответ</p>');
+            if (msg.answer.status === 'SUCCESS') {
+                questionWindow.view.innerHTML = ''; //play success music
             } else {
-                questionWindow.view.innerHTML = '';
-                questionWindow.view.insertAdjacentHTML("beforeend", '<p>Вы не правы</p>');
+                questionWindow.view.innerHTML = ''; //play bad music
             }
-            questionWindow.view.insertAdjacentHTML("beforeend",
-                '<button onclick="doRequestNext()" type="button" class="dialog-button">Дальше</button>');
+            if (!questionWindow.question) {
+                questionWindow.question = msg.answer.question;
+            }
+            writeQuestion(questionWindow.view, questionWindow.question, msg.answer.rightAnswer, msg.answer.answer);
         } else if (msg.result) {
             questionWindow.finished = true;
             questionWindow.view.innerHTML = '';
@@ -263,6 +262,25 @@
             questionWindow.view.insertAdjacentHTML("beforeend", '<p>неверных ответов: ' + msg.result.wrong + '</p>');
             questionWindow.view.insertAdjacentHTML("beforeend", '<p>очков: ' + msg.result.value + '</p>');
         }
+    }
+
+    function writeQuestion(element, question, rightAnswer, answer) {
+        element.innerHTML = '';
+        element.insertAdjacentHTML("beforeend", '<p>' + question.category + '</p>');
+        element.insertAdjacentHTML("beforeend", '<p>' + question.text + '</p>');
+        question.options.forEach(function (option) {
+            let buttonClass = 'dialog-button';
+            if (rightAnswer !== undefined) {
+                if (option.id === rightAnswer) {
+                    buttonClass = buttonClass + ' color-success';
+                } else if (option.id === answer) {
+                    buttonClass = buttonClass + ' color-fail';
+                }
+            }
+            element.insertAdjacentHTML("beforeend",
+                '<button onclick="doRequestAnswer()" type="button" value="' + option.id + '" class="' + buttonClass + '">' + option.name + '</button>');
+        })
+
     }
 
 
@@ -324,7 +342,7 @@
         let target = event.target || event.srcElement; // IE
         let quizId = Number.parseInt(target.value);
         quizWindow.quizId = quizId;
-        let quiz;
+        let quiz = undefined;
         quizList.forEach(function (q) {
             if (q.id === quizId) {
                 quiz = q;
@@ -345,8 +363,12 @@
         xhttp.onreadystatechange = function () {
             if (this.readyState === 4) {
                 if (this.status === 200) {
-                    let participant = JSON.parse(xhttp.responseText);
-                    showQuestionWindow(participant);
+                    let quiz = JSON.parse(xhttp.responseText);
+                    if (quiz.result) {
+                        showQuestionWindow(quiz.result);
+                    } else {
+                        //todo not active
+                    }
                 } else if (this.status === 401) {
                     showLoginWindow(function () {showModalWindow(quizWindow.element)});
                 }

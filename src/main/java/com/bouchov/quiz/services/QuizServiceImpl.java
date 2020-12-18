@@ -10,14 +10,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import javax.transaction.Transactional;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 @Service
 class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
@@ -25,30 +28,36 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
 
     private final QuizParticipantRepository quizParticipantRepository;
     private final QuizAnswerRepository quizAnswerRepository;
+    private final QuizRepository quizRepository;
+    private final ThreadPoolTaskScheduler quizScheduler;
+    private final ScheduledTaskService taskService;
     private final Map<Long, WebSocketSession> sessions;
     private final Map<Long, QuizManager> managers;
 
     @Autowired
     public QuizServiceImpl(QuizParticipantRepository quizParticipantRepository,
-                           QuizAnswerRepository quizAnswerRepository) {
+                           QuizAnswerRepository quizAnswerRepository,
+                           QuizRepository quizRepository,
+                           ThreadPoolTaskScheduler quizScheduler,
+                           ScheduledTaskService taskService) {
         this.quizParticipantRepository = quizParticipantRepository;
         this.quizAnswerRepository = quizAnswerRepository;
+        this.quizRepository = quizRepository;
+        this.quizScheduler = quizScheduler;
+        this.taskService = taskService;
         sessions = new ConcurrentHashMap<>();
         managers = new ConcurrentHashMap<>();
     }
 
     @Override
+    @Transactional
     public QuizParticipant register(Quiz quiz, User user) {
         if (quiz.getStatus() == QuizStatus.DRAFT) {
             throw new RuntimeException("quiz is not ready");
         }
         QuizParticipant participant = quizParticipantRepository.getByQuizAndUser(quiz, user).orElse(null);
         if (quiz.getStatus() == QuizStatus.FINISHED) {
-            if (participant == null) {
-                throw new RuntimeException("quiz is finished");
-            } else {
-                return participant;
-            }
+            return participant;
         }
         if (!managers.containsKey(quiz.getId())) {
             managers.computeIfAbsent(quiz.getId(),
@@ -147,6 +156,10 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
         sessions.remove(participantId);
     }
 
+    public Quiz getQuiz(Long quizId) {
+        return quizRepository.findById(quizId).orElseThrow();
+    }
+
     @Override
     public void afterPropertiesSet() throws Exception {
         log.info("INITIALIZED");
@@ -157,5 +170,9 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     public void destroy() throws Exception {
         log.info("DESTROY");
         // TODO: 11.12.2020 stop managers?
+    }
+
+    public Future<?> schedule(Runnable task, Instant startTime) {
+        return quizScheduler.schedule(() -> taskService.transactional(task), startTime);
     }
 }

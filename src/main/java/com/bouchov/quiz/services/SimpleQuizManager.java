@@ -1,6 +1,7 @@
 package com.bouchov.quiz.services;
 
 import com.bouchov.quiz.entities.*;
+import com.bouchov.quiz.protocol.AnswerBean;
 import com.bouchov.quiz.protocol.QuizResultBean;
 import com.bouchov.quiz.protocol.ResponseBean;
 
@@ -43,18 +44,10 @@ public class SimpleQuizManager extends AbstractQuizManager {
         if (quizAnswer == null) {
             throw new IllegalStateException("no active question found for " + participant);
         }
-        if (quizAnswer.getQuestion().getAnswer() == answer) {
-            quizAnswer.setStatus(QuizAnswerStatus.SUCCESS);
-            quizAnswer.setValue(quizAnswer.getQuestion().getValue());
-            participant.setRightAnswers(participant.getRightAnswers() + 1);
-        } else {
-            quizAnswer.setStatus(QuizAnswerStatus.FAILED);
-            quizAnswer.setValue(0);
-            participant.setWrongAnswers(participant.getWrongAnswers() + 1);
-        }
-        participant.setValue(participant.getValue() + quizAnswer.getValue());
+        checkAnswerAndSaveResult(participant, answer, quizAnswer);
 
-        service.sendMessage(participant, new ResponseBean(quizAnswer.getStatus()));
+        service.sendMessage(participant,
+                new ResponseBean(new AnswerBean(quizAnswer, toQuestion(quizAnswer.getQuestion()))));
     }
 
     @Override
