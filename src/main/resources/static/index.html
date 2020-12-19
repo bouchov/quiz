@@ -18,7 +18,7 @@
         <div style="align-content: center; border: 1px solid #cccccc">
             <p id="messageWindow-text">&nbsp;</p>
         </div>
-        <button onclick="hideMessageWindow()" type="button" class="dialog-button-close">Close</button>
+        <button id="messageWindow-button" onclick="hideMessageWindow()" type="button" class="dialog-button-close">Close</button>
     </form>
 </div>
 <div id="loginWindow" class="modal">
@@ -62,6 +62,18 @@
             <button onclick="doRequestAnswer()" type="button" value="1" class="dialog-button">б) верный ответ</button>
         </div>
         <button onclick="closeQuestionWindow()" type="button" class="dialog-button-close">Закрыть</button>
+        <audio id="questionWindow-sound-right" preload="auto">
+            <source src="/sounds/right.mp3" type="audio/mpeg">
+            <source src="/sounds/right.wav" type="audio/wav">
+        </audio>
+        <audio id="questionWindow-sound-wrong" preload="auto">
+            <source src="/sounds/wrong.mp3" type="audio/mpeg">
+            <source src="/sounds/wrong.wav" type="audio/wav">
+        </audio>
+        <audio id="questionWindow-sound-tickTack" preload="auto" loop>
+            <source src="/sounds/tick.mp3" type="audio/mpeg">
+            <source src="/sounds/tick.wav" type="audio/wav">
+        </audio>
     </form>
 </div>
 
@@ -96,36 +108,53 @@
     var webSocket = null;
     var modalWindow = {element:null};
     var mainMenu = {element:null, buttonQuiz:null, buttonCreate:null};
-    var messageWindow = {element:null, text:null, callback:null};
+    var messageWindow = {element:null, text:null, callback:null, button:null};
     var loginWindow = {element:null, userName:null, userPassword:null, loginButton:null, callback:null};
     var quizListWindow = {element:null, quizName:null, quizList:null};
     var quizWindow = {element:null, quizId:null, view:null}
-    var questionWindow = {element:null, questionId:null, view:null, question:null, finished:false}
+    var questionWindow = {element:null, questionId:null, view:null, question:null, finished:false,
+                    sounds:{right:null, wrong:null}}
     var quizList = [];
 
     function initApp() {
-        mainMenu.element = document.getElementById("mainMenu");
-        mainMenu.buttonQuiz = document.getElementById("mainMenu-quiz");
+        mainMenu.element = document.getElementById('mainMenu');
+        mainMenu.buttonQuiz = document.getElementById('mainMenu-quiz');
 
-        messageWindow.element = document.getElementById("messageWindow");
-        messageWindow.text = document.getElementById("messageWindow-text");
+        messageWindow.element = document.getElementById('messageWindow');
+        messageWindow.text = document.getElementById('messageWindow-text');
 
-        mainMenu.buttonCreate = document.getElementById("mainMenu-create");
-        loginWindow.element = document.getElementById("loginWindow");
-        loginWindow.userName = document.getElementById("loginWindow-name");
-        loginWindow.userPassword = document.getElementById("loginWindow-password");
-        loginWindow.loginButton = document.getElementById("loginWindow-loginButton");
+        mainMenu.buttonCreate = document.getElementById('mainMenu-create');
+        loginWindow.element = document.getElementById('loginWindow');
+        loginWindow.userName = document.getElementById('loginWindow-name');
+        loginWindow.userPassword = document.getElementById('loginWindow-password');
+        loginWindow.loginButton = document.getElementById('loginWindow-loginButton');
 
-        quizListWindow.element = document.getElementById("quizListWindow");
-        quizListWindow.quizName = document.getElementById("quizListWindow-quizName");
-        quizListWindow.quizList = document.getElementById("quizListWindow-quizList");
+        quizListWindow.element = document.getElementById('quizListWindow');
+        quizListWindow.quizName = document.getElementById('quizListWindow-quizName');
+        quizListWindow.quizList = document.getElementById('quizListWindow-quizList');
 
-        quizWindow.element = document.getElementById("quizWindow");
-        quizWindow.view = document.getElementById("quizWindow-view")
+        quizWindow.element = document.getElementById('quizWindow');
+        quizWindow.view = document.getElementById('quizWindow-view')
 
-        questionWindow.element = document.getElementById("questionWindow");
-        questionWindow.view = document.getElementById("questionWindow-view")
+        questionWindow.element = document.getElementById('questionWindow');
+        questionWindow.view = document.getElementById('questionWindow-view');
+        questionWindow.sounds.right = document.getElementById('questionWindow-sound-right');
+        questionWindow.sounds.wrong = document.getElementById('questionWindow-sound-wrong');
+        questionWindow.sounds.tickTack = document.getElementById('questionWindow-sound-tickTack');
+
+        document.onkeyup = keyPressed;
         showModalWindow(mainMenu.element);
+    }
+
+    function keyPressed(event) {
+        event = !event ? window.event : event;
+        if (event.code === 'Enter') {
+            if (modalWindow.element === messageWindow.element) {
+                messageWindow.button.onclick();
+            } else if (modalWindow.element === loginWindow.element) {
+                loginWindow.loginButton.onclick();
+            }
+        }
     }
 
     function showMessageWindow(text, afterAction) {
@@ -221,6 +250,7 @@
     }
 
     function closeQuestionWindow() {
+        stopPlaySound();
         if (webSocket && webSocket.readyState === WebSocket.OPEN) {
             webSocket.onclose = null;
             webSocket.close();
@@ -243,12 +273,14 @@
         } else if (msg.question) {
             questionWindow.question = msg.question;
             writeQuestion(questionWindow.view, questionWindow.question);
+            playSound(questionWindow.sounds.tickTack);
         } else if (msg.answer) {
             //QuizAnswerStatus
+            stopPlaySound();
             if (msg.answer.status === 'SUCCESS') {
-                questionWindow.view.innerHTML = ''; //play success music
+                playSound(questionWindow.sounds.right);
             } else {
-                questionWindow.view.innerHTML = ''; //play bad music
+                playSound(questionWindow.sounds.wrong);
             }
             if (!questionWindow.question) {
                 questionWindow.question = msg.answer.question;
@@ -258,6 +290,7 @@
             questionWindow.finished = true;
             questionWindow.view.innerHTML = '';
             questionWindow.view.insertAdjacentHTML("beforeend", '<p>Результат</p>');
+            questionWindow.view.insertAdjacentHTML("beforeend", '<p>место: ' + msg.result.place + '</p>');
             questionWindow.view.insertAdjacentHTML("beforeend", '<p>верных ответов: ' + msg.result.right + '</p>');
             questionWindow.view.insertAdjacentHTML("beforeend", '<p>неверных ответов: ' + msg.result.wrong + '</p>');
             questionWindow.view.insertAdjacentHTML("beforeend", '<p>очков: ' + msg.result.value + '</p>');
@@ -283,6 +316,14 @@
 
     }
 
+    function playSound(audio) {
+        audio.volume = 0.2;
+        audio.play();
+    }
+
+    function stopPlaySound() {
+        questionWindow.sounds.tickTack.pause();
+    }
 
     function doRequestAnswer(event) {
         event = event || window.event; // IE
@@ -291,6 +332,7 @@
         if (webSocket) {
             webSocket.send(JSON.stringify({answer:answerId}))
         }
+        stopPlaySound();
     }
 
     function doRequestNext() {

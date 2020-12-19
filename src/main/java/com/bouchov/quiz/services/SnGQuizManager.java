@@ -11,9 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Future;
 
 public class SnGQuizManager extends AbstractQuizManager {
@@ -83,9 +81,13 @@ public class SnGQuizManager extends AbstractQuizManager {
 
     private void finishQuiz() {
         Quiz quiz = service.getQuiz(quizId);
-        for (QuizParticipant participant : quiz.getParticipants()) {
+        List<QuizParticipant> participants = new ArrayList<>(quiz.getParticipants());
+        participants.sort(Comparator.comparingInt(QuizParticipant::getValue));
+        int place = participants.size();
+        for (QuizParticipant participant : participants) {
             participant.getQuiz().setStatus(QuizStatus.FINISHED);
             participant.setStatus(ParticipantStatus.FINISHED);
+            participant.setPlace(place--);
             service.sendMessage(participant, new ResponseBean(new QuizResultBean(participant)));
         }
     }
@@ -115,7 +117,18 @@ public class SnGQuizManager extends AbstractQuizManager {
 
         service.sendMessage(participant,
                 new ResponseBean(new AnswerBean(quizAnswer, toQuestion(quizAnswer.getQuestion()))));
-        task = service.schedule(this::next, Instant.now().plus(Duration.of(3, ChronoUnit.SECONDS)));
+        Quiz quiz = service.getQuiz(quizId);
+        int size = quiz.getParticipants().size();
+        int answered = 0;
+        for (QuizParticipant quizParticipant : quiz.getParticipants()) {
+            if (service.findActiveAnswer(quizParticipant) == null) {
+                answered++;
+            }
+        }
+        if (size == answered) {
+            //all players answered - next question
+            task = service.schedule(this::next, Instant.now().plus(Duration.of(3, ChronoUnit.SECONDS)));
+        }
     }
 
     private void next() {

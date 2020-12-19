@@ -17,6 +17,7 @@ public class QuizParticipant extends BasicEntity {
     @OneToMany(fetch = FetchType.LAZY)
     @JsonIgnore
     private List<QuizAnswer> answers;
+    private int place;
     private int value;
     private int rightAnswers;
     private int wrongAnswers;
@@ -55,6 +56,14 @@ public class QuizParticipant extends BasicEntity {
         this.answers = answers;
     }
 
+    public int getPlace() {
+        return place;
+    }
+
+    public void setPlace(int place) {
+        this.place = place;
+    }
+
     public int getValue() {
         return value;
     }
@@ -77,6 +86,19 @@ public class QuizParticipant extends BasicEntity {
 
     public void setWrongAnswers(int wrongAnswers) {
         this.wrongAnswers = wrongAnswers;
+    }
+
+    @Override
+    public String toString() {
+        return "QuizParticipant{" +
+                "quiz=" + quiz +
+                ", user=" + user +
+                ", place=" + place +
+                ", value=" + value +
+                ", rightAnswers=" + rightAnswers +
+                ", wrongAnswers=" + wrongAnswers +
+                ", status=" + status +
+                '}';
     }
 }
 

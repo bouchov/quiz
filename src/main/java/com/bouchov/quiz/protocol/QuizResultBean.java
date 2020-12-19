@@ -5,6 +5,7 @@ import com.bouchov.quiz.entities.QuizParticipant;
 
 public class QuizResultBean {
     private Long id;
+    private int place;
     private int right;
     private int wrong;
     private ParticipantStatus status;
@@ -12,6 +13,7 @@ public class QuizResultBean {
 
     public QuizResultBean(QuizParticipant participant) {
         this.id = participant.getId();
+        this.place = participant.getPlace();
         this.right = participant.getRightAnswers();
         this.wrong = participant.getWrongAnswers();
         this.value = participant.getValue();
@@ -27,6 +29,14 @@ public class QuizResultBean {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public int getPlace() {
+        return place;
+    }
+
+    public void setPlace(int place) {
+        this.place = place;
     }
 
     public int getRight() {
@@ -64,7 +74,9 @@ public class QuizResultBean {
     @Override
     public String toString() {
         return "QuizResultBean{" +
-                "right=" + right +
+                "id=" + id +
+                ", place=" + place +
+                ", right=" + right +
                 ", wrong=" + wrong +
                 ", status=" + status +
                 ", value=" + value +
