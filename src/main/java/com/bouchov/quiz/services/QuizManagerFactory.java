@@ -15,11 +15,7 @@ public class QuizManagerFactory {
 
     public QuizManager createManager(QuizServiceImpl service, Quiz quiz) {
         if (quiz.getType() == QuizType.SIMPLE) {
-            if (quiz.getMaxPlayers() == 1) {
-                return new SimpleQuizManager(service);
-            } else {
-                return new SnGQuizManager(service, quiz);
-            }
+            return new SnGQuizManager(service, quiz);
         }
         throw new UnsupportedOperationException("createManager");
     }

@@ -14,7 +14,7 @@
                 вопрос #1
             </p>
             <button onclick="doRequestAnswer()" type="button" value="0" class="dialog-button">а) неверный ответ</button>
-            <button onclick="doRequestAnswer()" type="button" value="1" class="dialog-button">б) верный ответ</button>
+            <button onclick="doRequestAnswer()" type="button" value="1" class="dialog-button" disabled>б) верный ответ</button>
         </div>
         <button onclick="showQuizList(false)" type="button" class="dialog-button-close">Закрыть</button>
     </form>
@@ -47,6 +47,9 @@
     }
 
     function doRequestAnswer(event) {
-
+        event = event || window.event; // IE
+        let target = event.target || event.srcElement; // IE
+        let answerId = Number.parseInt(target.value);
+        alert(answerId);
     }
 </script>

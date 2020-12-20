@@ -30,13 +30,19 @@ public class SnGQuizManager extends AbstractQuizManager {
         QuizParticipant participant = null;
         if (size < quiz.getMaxPlayers()) {
             participant = new QuizParticipant(quiz, user, ParticipantStatus.ACTIVE);
-        }
-        if (size + 1 == quiz.getMinPlayers()) {
-            if (quiz.getStatus() == QuizStatus.ACTIVE) {
-                quiz.setStatus(QuizStatus.STARTED);
-                Instant startTime = Instant.now().plus(Duration.of(1L, ChronoUnit.MINUTES));
-                quiz.setStartDate(new Date(startTime.toEpochMilli()));
-                task = service.schedule(this::start, startTime);
+
+            if (size + 1 == quiz.getMinPlayers()) {
+                if (task == null) {
+                    Instant startTime;
+                    if (size + 1 == quiz.getMaxPlayers()) {
+                        startTime = Instant.now().plus(Duration.of(5L, ChronoUnit.SECONDS));
+                    } else {
+                        //wait for others 1 min
+                        startTime = Instant.now().plus(Duration.of(1L, ChronoUnit.MINUTES));
+                    }
+                    quiz.setStartDate(new Date(startTime.toEpochMilli()));
+                    task = service.schedule(this::start, startTime);
+                }
             }
         }
         return participant;
@@ -44,6 +50,7 @@ public class SnGQuizManager extends AbstractQuizManager {
 
     protected void start() {
         Quiz quiz = service.getQuiz(quizId);
+        quiz.setStatus(QuizStatus.STARTED);
         Question question = null;
         for (QuizParticipant participant : quiz.getParticipants()) {
             QuizAnswer answer = service.findActiveAnswer(participant);

@@ -4,6 +4,7 @@ import com.bouchov.quiz.entities.*;
 import com.bouchov.quiz.protocol.QuestionBean;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,7 +22,9 @@ public abstract class AbstractQuizManager implements QuizManager {
                 .map((qa) -> qa.getQuestion().getId())
                 .collect(Collectors.toSet());
         Question selectedQuestion = null;
-        for (Question question : participant.getQuiz().getQuestions()) {
+        List<Question> questions = new ArrayList<>(participant.getQuiz().getQuestions());
+        shuffle(questions);
+        for (Question question : questions) {
             if (!used.contains(question.getId())) {
                 selectedQuestion = question;
                 break;

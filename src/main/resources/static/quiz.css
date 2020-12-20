@@ -84,6 +84,15 @@ button:disabled:hover {
     border-radius: 5px;
 }
 
+.answer-button {
+    /*background-color: #4caf50;*/
+    background-color: #3B4662;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border-radius: 5px;
+}
+
 .dialog-button-close {
     background-color: #54545f;
     color: white;
