@@ -5,6 +5,7 @@ import com.bouchov.quiz.protocol.QuestionBean;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,6 +13,7 @@ import static java.util.Collections.shuffle;
 
 public abstract class AbstractQuizManager implements QuizManager {
     protected final QuizServiceImpl service;
+    protected final Random rnd = new Random();
 
     protected AbstractQuizManager(QuizServiceImpl service) {
         this.service = service;
@@ -21,22 +23,52 @@ public abstract class AbstractQuizManager implements QuizManager {
         Set<Long> used = participant.getAnswers().stream()
                 .map((qa) -> qa.getQuestion().getId())
                 .collect(Collectors.toSet());
+        Quiz quiz = participant.getQuiz();
         Question selectedQuestion = null;
-        List<Question> questions = new ArrayList<>(participant.getQuiz().getQuestions());
-        shuffle(questions);
-        for (Question question : questions) {
-            if (!used.contains(question.getId())) {
-                selectedQuestion = question;
-                break;
+        if (quiz.getSelectionStrategy() == QuestionSelectionStrategy.QUIZ) {
+            List<Question> questions = new ArrayList<>(quiz.getQuestions());
+            shuffle(questions);
+            for (Question question : questions) {
+                if (!used.contains(question.getId())) {
+                    selectedQuestion = question;
+                    break;
+                }
             }
+        } else if (quiz.getSelectionStrategy() == QuestionSelectionStrategy.SOME) {
+            if (quiz.getQuestionsNumber() > used.size()) {
+                selectedQuestion = anyNotUsedQuestion(used);
+            }
+        } else if (quiz.getSelectionStrategy() == QuestionSelectionStrategy.ALL) {
+            selectedQuestion = anyNotUsedQuestion(used);
+        } else {
+            throw new UnsupportedOperationException("nextQuestion");
+        }
+        if (selectedQuestion != null
+                && quiz.getSelectionStrategy() != QuestionSelectionStrategy.QUIZ) {
+            quiz.getQuestions().add(selectedQuestion);
         }
         return selectedQuestion;
     }
 
+    private Question anyNotUsedQuestion(Set<Long> used) {
+        List<Question> questions = service.listQuestions(used, 10);
+        if (questions.isEmpty()) {
+            return null;
+        } else if (questions.size() > 1) {
+            return questions.get(rnd.nextInt(questions.size()));
+        } else {
+            return questions.get(0);
+        }
+    }
+
     protected QuestionBean toQuestion(Question question) {
+        return toQuestion(question, null, null);
+    }
+
+    protected QuestionBean toQuestion(Question question, Integer number, Integer total) {
         ArrayList<Option> options = new ArrayList<>(question.getOptions());
         shuffle(options);
-        return new QuestionBean(question, options);
+        return new QuestionBean(question, options, number, total);
     }
 
     protected void checkAnswerAndSaveResult(QuizParticipant participant, int answer, QuizAnswer quizAnswer) {

@@ -1,5 +1,6 @@
 package com.bouchov.quiz.protocol;
 
+import com.bouchov.quiz.entities.QuestionSelectionStrategy;
 import com.bouchov.quiz.entities.Quiz;
 import com.bouchov.quiz.entities.QuizStatus;
 import com.bouchov.quiz.entities.QuizType;
@@ -14,6 +15,8 @@ public class QuizBean {
     private QuizType type;
     private int minPlayers;
     private int maxPlayers;
+    private QuestionSelectionStrategy selectionStrategy;
+    private int questionsNumber;
     private Date startDate;
     private Date startedDate;
     private QuizStatus status;
@@ -30,6 +33,8 @@ public class QuizBean {
         this.type = quiz.getType();
         this.minPlayers = quiz.getMinPlayers();
         this.maxPlayers = quiz.getMaxPlayers();
+        this.selectionStrategy = quiz.getSelectionStrategy();
+        this.questionsNumber = quiz.getQuestionsNumber();
         this.startDate = quiz.getStartDate();
         this.startedDate = quiz.getStartedDate();
         this.status = quiz.getStatus();
@@ -83,6 +88,22 @@ public class QuizBean {
         this.maxPlayers = maxPlayers;
     }
 
+    public QuestionSelectionStrategy getSelectionStrategy() {
+        return selectionStrategy;
+    }
+
+    public void setSelectionStrategy(QuestionSelectionStrategy selectionStrategy) {
+        this.selectionStrategy = selectionStrategy;
+    }
+
+    public int getQuestionsNumber() {
+        return questionsNumber;
+    }
+
+    public void setQuestionsNumber(int questionsNumber) {
+        this.questionsNumber = questionsNumber;
+    }
+
     public Date getStartDate() {
         return startDate;
     }
@@ -132,6 +153,8 @@ public class QuizBean {
                 ", type=" + type +
                 ", minPlayers=" + minPlayers +
                 ", maxPlayers=" + maxPlayers +
+                ", selectionStrategy=" + selectionStrategy +
+                ", questionsNumber=" + questionsNumber +
                 ", startDate=" + startDate +
                 ", startedDate=" + startedDate +
                 ", status=" + status +

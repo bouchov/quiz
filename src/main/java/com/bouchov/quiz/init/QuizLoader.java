@@ -30,8 +30,8 @@ public class QuizLoader {
             Objects.requireNonNull(stream, "file not found");
             ObjectMapper mapper = new ObjectMapper();
             QuizBean[] beans = mapper.readValue(stream, QuizBean[].class);
-            List<Question> questions = new ArrayList<>();
-            questionRepo.findAll().forEach(questions::add);
+            List<Question> allQuestions = new ArrayList<>();
+            questionRepo.findAll().forEach(allQuestions::add);
 
             for (QuizBean quiz : beans) {
                 User author = defaultAuthor;
@@ -40,16 +40,23 @@ public class QuizLoader {
                 }
                 QuizStatus status = quiz.getStatus() == null ?
                         QuizStatus.ACTIVE : quiz.getStatus();
-
+                int questionsNumber = quiz.getQuestionsNumber();
+                if (quiz.getSelectionStrategy() == QuestionSelectionStrategy.QUIZ) {
+                    questionsNumber = allQuestions.size();
+                }
                 Quiz entity = new Quiz(author,
                         quiz.getName(),
                         quiz.getType(),
                         quiz.getMinPlayers(),
                         quiz.getMaxPlayers(),
+                        quiz.getSelectionStrategy(),
+                        questionsNumber,
                         quiz.getStartDate(),
                         quiz.getStartedDate(),
                         status);
-                entity.setQuestions(questions);
+                if (quiz.getSelectionStrategy() == QuestionSelectionStrategy.QUIZ) {
+                    entity.setQuestions(allQuestions);
+                }
 
                 repository.save(entity);
             }

@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
@@ -18,7 +19,9 @@ import org.springframework.web.socket.WebSocketSession;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
@@ -29,6 +32,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     private final QuizParticipantRepository quizParticipantRepository;
     private final QuizAnswerRepository quizAnswerRepository;
     private final QuizRepository quizRepository;
+    private final QuestionRepository questionRepository;
     private final ThreadPoolTaskScheduler quizScheduler;
     private final ScheduledTaskService taskService;
     private final Map<Long, WebSocketSession> sessions;
@@ -36,13 +40,15 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
 
     @Autowired
     public QuizServiceImpl(QuizParticipantRepository quizParticipantRepository,
-                           QuizAnswerRepository quizAnswerRepository,
-                           QuizRepository quizRepository,
-                           ThreadPoolTaskScheduler quizScheduler,
-                           ScheduledTaskService taskService) {
+            QuizAnswerRepository quizAnswerRepository,
+            QuizRepository quizRepository,
+            QuestionRepository questionRepository,
+            ThreadPoolTaskScheduler quizScheduler,
+            ScheduledTaskService taskService) {
         this.quizParticipantRepository = quizParticipantRepository;
         this.quizAnswerRepository = quizAnswerRepository;
         this.quizRepository = quizRepository;
+        this.questionRepository = questionRepository;
         this.quizScheduler = quizScheduler;
         this.taskService = taskService;
         sessions = new ConcurrentHashMap<>();
@@ -146,7 +152,8 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
                 quizParticipant -> getManager(quizParticipant.getQuiz()).next(quizParticipant));
     }
 
-    private TextMessage toMessage(Object bean) throws JsonProcessingException {
+    private TextMessage toMessage(Object bean)
+            throws JsonProcessingException {
         return new TextMessage(new ObjectMapper().writeValueAsString(bean));
     }
 
@@ -161,18 +168,24 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet()
+            throws Exception {
         log.info("INITIALIZED");
         // TODO: 11.12.2020 load quiz and participants
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy()
+            throws Exception {
         log.info("DESTROY");
         // TODO: 11.12.2020 stop managers?
     }
 
     public Future<?> schedule(Runnable task, Instant startTime) {
         return quizScheduler.schedule(() -> taskService.transactional(task), startTime);
+    }
+
+    public List<Question> listQuestions(Set<Long> used, int limit) {
+        return questionRepository.findAllBut(used, PageRequest.of(0, limit));
     }
 }

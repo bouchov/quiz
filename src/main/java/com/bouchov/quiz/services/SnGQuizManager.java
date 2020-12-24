@@ -73,11 +73,16 @@ public class SnGQuizManager extends AbstractQuizManager {
                 if (answer.isEmpty()) {
                     service.addAnswer(participant, question);
                 }
+                int number = participant.getAnswers().size();
+                Integer total = null;
+                if (quiz.getSelectionStrategy() != QuestionSelectionStrategy.ALL) {
+                    total = quiz.getQuestionsNumber();
+                }
                 if (answer.isEmpty() || answer.get().getStatus() == QuizAnswerStatus.ACTIVE) {
-                    service.sendMessage(participant, new ResponseBean(toQuestion(question)));
+                    service.sendMessage(participant, new ResponseBean(toQuestion(question, number, total)));
                 } else {
                     service.sendMessage(participant,
-                            new ResponseBean(new AnswerBean(answer.get(), toQuestion(question))));
+                            new ResponseBean(new AnswerBean(answer.get(), toQuestion(question, number, total))));
                 }
             }
         }
@@ -103,11 +108,17 @@ public class SnGQuizManager extends AbstractQuizManager {
     public void join(QuizParticipant participant) {
         QuizAnswer answer = service.findActiveAnswer(participant);
         if (answer != null) {
+            int number = participant.getAnswers().size();
+            Integer total = null;
+            Quiz quiz = participant.getQuiz();
+            if (quiz.getSelectionStrategy() != QuestionSelectionStrategy.ALL) {
+                total = quiz.getQuestionsNumber();
+            }
             if (answer.getStatus() == QuizAnswerStatus.ACTIVE) {
-                service.sendMessage(participant, new ResponseBean(toQuestion(answer.getQuestion())));
+                service.sendMessage(participant, new ResponseBean(toQuestion(answer.getQuestion(), number, total)));
             } else {
                 service.sendMessage(participant,
-                        new ResponseBean(new AnswerBean(answer, toQuestion(answer.getQuestion()))));
+                        new ResponseBean(new AnswerBean(answer, toQuestion(answer.getQuestion(), number, total))));
             }
         } else {
             service.sendMessage(participant, new ResponseBean(new QuizBean(participant.getQuiz())));
@@ -122,9 +133,14 @@ public class SnGQuizManager extends AbstractQuizManager {
         }
         checkAnswerAndSaveResult(participant, answer, quizAnswer);
 
-        service.sendMessage(participant,
-                new ResponseBean(new AnswerBean(quizAnswer, toQuestion(quizAnswer.getQuestion()))));
+        int number = participant.getAnswers().size();
+        Integer total = null;
         Quiz quiz = service.getQuiz(quizId);
+        if (quiz.getSelectionStrategy() != QuestionSelectionStrategy.ALL) {
+            total = quiz.getQuestionsNumber();
+        }
+        service.sendMessage(participant,
+                new ResponseBean(new AnswerBean(quizAnswer, toQuestion(quizAnswer.getQuestion(), number, total))));
         int size = quiz.getParticipants().size();
         int answered = 0;
         for (QuizParticipant quizParticipant : quiz.getParticipants()) {
@@ -150,7 +166,12 @@ public class SnGQuizManager extends AbstractQuizManager {
                 break;
             } else {
                 service.addAnswer(participant, selectedQuestion);
-                service.sendMessage(participant, new ResponseBean(toQuestion(selectedQuestion)));
+                int number = participant.getAnswers().size();
+                Integer total = null;
+                if (quiz.getSelectionStrategy() != QuestionSelectionStrategy.ALL) {
+                    total = quiz.getQuestionsNumber();
+                }
+                service.sendMessage(participant, new ResponseBean(toQuestion(selectedQuestion, number, total)));
             }
         }
     }

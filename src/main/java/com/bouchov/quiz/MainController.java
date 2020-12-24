@@ -25,16 +25,7 @@ class MainController extends AbstractController {
 
     @GetMapping
     public ModelAndView get() {
-        Long userId = (Long) session.getAttribute(SessionAttributes.USER_ID);
-        if (userId == null) {
-            return new ModelAndView("forward:/login");
-        }
-        return new ModelAndView("forward:/quiz");
-    }
-
-    @GetMapping("/login")
-    public ModelAndView login() {
-        return new ModelAndView("redirect:/login.html");
+        return new ModelAndView("redirect:/index.html");
     }
 
     @PostMapping

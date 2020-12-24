@@ -186,6 +186,11 @@ function messageHandler(event) {
 function writeQuestion(element, question, rightAnswer, answer) {
     element.innerHTML = '';
     element.insertAdjacentHTML("beforeend", '<p>' + question.category + '</p>');
+    if (question.total !== undefined) {
+        element.insertAdjacentHTML("beforeend", '<p>Вопрос №' + question.number + ' из ' + question.total + '</p>');
+    } else {
+        element.insertAdjacentHTML("beforeend", '<p>Вопрос №' + question.number + '</p>');
+    }
     element.insertAdjacentHTML("beforeend", '<p>' + question.text + '</p>');
     question.options.forEach(function (option) {
         let buttonClass = 'answer-button';
@@ -293,8 +298,12 @@ function onSelectQuiz(event) {
     if (quiz !== undefined) {
         quizWindow.view.innerHTML = '';
         quizWindow.view.insertAdjacentHTML('beforeend', '<p>' + quiz.name + '</p>');
-        quizWindow.view.insertAdjacentHTML('beforeend', '<p>' + quiz.type + '</p>');
-        quizWindow.view.insertAdjacentHTML('beforeend', '<p>' + quiz.status + '</p>');
+        quizWindow.view.insertAdjacentHTML('beforeend', '<p>Игроков: ' + quiz.minPlayers + ' - ' + quiz.maxPlayers + '</p>');
+        if (quiz.selectionStrategy === 'ALL') {
+            quizWindow.view.insertAdjacentHTML('beforeend', '<p>Все вопросы</p>');
+        } else {
+            quizWindow.view.insertAdjacentHTML('beforeend', '<p>Вопросов: ' + quiz.questionsNumber + '</p>');
+        }
         hideModalWindow();
         showModalWindow(quizWindow.element)
     }

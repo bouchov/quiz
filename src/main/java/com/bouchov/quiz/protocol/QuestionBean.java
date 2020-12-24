@@ -2,10 +2,7 @@ package com.bouchov.quiz.protocol;
 
 import com.bouchov.quiz.entities.Option;
 import com.bouchov.quiz.entities.Question;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class QuestionBean {
@@ -13,21 +10,25 @@ public class QuestionBean {
     private String text;
     private Integer answer;
     private int value;
+    private Integer number;
+    private Integer total;
     private List<Option> options;
 
     public QuestionBean() {
     }
 
     public QuestionBean(Question question) {
-        this(question, question.getOptions());
+        this(question, question.getOptions(), null, null);
     }
 
-    public QuestionBean(Question question, List<Option> options) {
+    public QuestionBean(Question question, List<Option> options, Integer number, Integer total) {
         this.category = question.getCategory().getName();
         this.text = question.getText();
         this.answer = question.getAnswer();
         this.value = question.getValue();
         this.options = options;
+        this.number = number;
+        this.total = total;
     }
 
     public String getCategory() {
@@ -56,6 +57,22 @@ public class QuestionBean {
 
     public int getValue() {
         return value;
+    }
+
+    public Integer getNumber() {
+        return number;
+    }
+
+    public void setNumber(Integer number) {
+        this.number = number;
+    }
+
+    public Integer getTotal() {
+        return total;
+    }
+
+    public void setTotal(Integer total) {
+        this.total = total;
     }
 
     public List<Option> getOptions() {

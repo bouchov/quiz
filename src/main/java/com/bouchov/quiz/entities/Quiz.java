@@ -15,6 +15,8 @@ public class Quiz extends BasicEntity {
     private QuizType type;
     private int minPlayers;
     private int maxPlayers;
+    private QuestionSelectionStrategy selectionStrategy;
+    private int questionsNumber;
     private Date startDate;
     private Date startedDate;
     private QuizStatus status;
@@ -29,18 +31,22 @@ public class Quiz extends BasicEntity {
     }
 
     public Quiz(User author,
-                String name,
-                QuizType type,
-                int minPlayers,
-                int maxPlayers,
-                Date startDate,
-                Date startedDate,
-                QuizStatus status) {
+            String name,
+            QuizType type,
+            int minPlayers,
+            int maxPlayers,
+            QuestionSelectionStrategy selectionStrategy,
+            int questionsNumber,
+            Date startDate,
+            Date startedDate,
+            QuizStatus status) {
         this.author = author;
         this.name = name;
         this.type = type;
         this.minPlayers = minPlayers;
         this.maxPlayers = maxPlayers;
+        this.selectionStrategy = selectionStrategy;
+        this.questionsNumber = questionsNumber;
         this.startDate = startDate;
         this.startedDate = startedDate;
         this.status = status;
@@ -84,6 +90,22 @@ public class Quiz extends BasicEntity {
 
     public void setMaxPlayers(int maxPlayers) {
         this.maxPlayers = maxPlayers;
+    }
+
+    public QuestionSelectionStrategy getSelectionStrategy() {
+        return selectionStrategy;
+    }
+
+    public void setSelectionStrategy(QuestionSelectionStrategy selectionStrategy) {
+        this.selectionStrategy = selectionStrategy;
+    }
+
+    public int getQuestionsNumber() {
+        return questionsNumber;
+    }
+
+    public void setQuestionsNumber(int questionsNumber) {
+        this.questionsNumber = questionsNumber;
     }
 
     public Date getStartDate() {

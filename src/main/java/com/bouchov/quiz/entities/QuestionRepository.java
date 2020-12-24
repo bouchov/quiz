@@ -1,10 +1,16 @@
 package com.bouchov.quiz.entities;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
-public interface QuestionRepository extends CrudRepository<Question,Long> {
+public interface QuestionRepository extends PagingAndSortingRepository<Question,Long> {
     Iterable<Question> findAllByCategory(Category category);
+
+    @Query("select Q from Question Q where Q.id not in :ids")
+    List<Question> findAllBut(@Param("ids") Collection<Long> ids, Pageable pageable);
 }
