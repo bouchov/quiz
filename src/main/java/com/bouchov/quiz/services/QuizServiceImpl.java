@@ -186,6 +186,10 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     }
 
     public List<Question> listQuestions(Set<Long> used, int limit) {
-        return questionRepository.findAllBut(used, PageRequest.of(0, limit));
+        if (used.isEmpty()) {
+            return questionRepository.findAll(PageRequest.of(0, limit)).getContent();
+        } else {
+            return questionRepository.findAllBut(used, PageRequest.of(0, limit));
+        }
     }
 }

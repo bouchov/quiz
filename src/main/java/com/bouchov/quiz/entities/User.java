@@ -1,7 +1,10 @@
 package com.bouchov.quiz.entities;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 
+@Table(name = "users")
 @Entity
 public class User extends BasicEntity {
     @Column(unique = true)
