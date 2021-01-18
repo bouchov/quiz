@@ -29,7 +29,9 @@ function keyPressed(event) {
         if (modalWindow.element === messageWindow.element) {
             messageWindow.button.onclick();
         } else if (modalWindow.element === loginWindow.element) {
-            loginWindow.loginButton.onclick();
+            loginWindow.submit.onclick();
+        } else if (modalWindow.element === registerWindow.element) {
+            registerWindow.submit.onclick();
         }
     }
 }
@@ -48,11 +50,13 @@ function hideMessageWindow() {
 }
 
 function showMainMenu() {
-    mainMenu.buttonQuiz.disabled = false;
-    mainMenu.buttonCreate.disabled = false;
+    mainMenu.quiz.disabled = false;
+    mainMenu.create.disabled = true;//not implemented yet
+    mainMenu.login.disabled = false;
+
     hideModalWindow();
     showModalWindow(mainMenu.element);
-    mainMenu.buttonQuiz.focus();
+    mainMenu.quiz.focus();
 }
 
 function showModalWindow(element) {
@@ -77,9 +81,12 @@ function goTo(url) {
 }
 
 function showLoginWindow(callback) {
-    loginWindow.loginButton.disabled = false;
+    mainMenu.login.disabled = true;
+    loginWindow.submit.disabled = false;
     if (callback !== undefined) {
         loginWindow.callback = callback;
+    } else {
+        loginWindow.callback = showMainMenu;
     }
     loginWindow.userName.value = localStorage.getItem("login");
     hideModalWindow();
@@ -88,6 +95,23 @@ function showLoginWindow(callback) {
         loginWindow.userName.focus();
     } else {
         loginWindow.userPassword.focus();
+    }
+}
+
+function showRegisterWindow() {
+    registerWindow.submit.disabled = false;
+    registerWindow.callback = loginWindow.callback;
+
+    hideModalWindow();
+    if (registerWindow.userName.value === ''
+        && loginWindow.userName.value !== '') {
+        registerWindow.userName.value = loginWindow.userName.value;
+    }
+    showModalWindow(registerWindow.element);
+    if (!registerWindow.userName.value) {
+        registerWindow.userName.focus();
+    } else {
+        registerWindow.userPassword.focus();
     }
 }
 
@@ -107,7 +131,7 @@ function searchQuiz() {
 }
 
 function showQuizList(reload) {
-    mainMenu.buttonQuiz.disabled = true;
+    mainMenu.quiz.disabled = true;
     if (reload !== undefined && !reload) {
         showSelectQuiz();
     } else {
@@ -216,6 +240,41 @@ function stopPlaySound() {
     questionWindow.sounds.tickTack.pause();
 }
 
+function doRequestRegister() {
+    if (registerWindow.userName.value == null || registerWindow.userName.value === ''
+        || registerWindow.nickname.value == null || registerWindow.nickname.value === ''
+        || registerWindow.userPassword.value == null || registerWindow.userPassword.value === '') {
+        return;
+    }
+    registerWindow.submit.disabled = true;
+    let xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+        if (this.readyState === 4) {
+            hideModalWindow();
+            if (this.status === 200) {
+                log.log('RAW RESP: ' + this.responseText);
+                let user = JSON.parse(this.responseText);
+                localStorage.setItem("login", user.login);
+                log.log('Register Successfully');
+                personalInfo.element.innerHTML='';
+                personalInfo.element.insertAdjacentHTML('beforeend', '<p>' + user.nickname + '</p>')
+                if (registerWindow.callback !== undefined) {
+                    registerWindow.callback();
+                }
+            } else {
+                log.warn('Registration Failed: ' + this.status);
+                showMessageWindow('ERROR:\n' + this.responseText, showRegisterWindow);
+            }
+        }
+    };
+    xhttp.open('POST', '/register', true);
+    xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    xhttp.send('login=' + registerWindow.userName.value +
+        '&password=' + registerWindow.userPassword.value +
+        '&nickname=' + registerWindow.nickname.value);
+    registerWindow.userPassword.value = '';
+}
+
 function doRequestAnswer(event) {
     event = event || window.event; // IE
     let target = event.target || event.srcElement; // IE
@@ -257,7 +316,7 @@ function doRequestLogin() {
         || loginWindow.userPassword.value == null || loginWindow.userPassword.value === '') {
         return;
     }
-    loginWindow.loginButton.disabled = true;
+    loginWindow.submit.disabled = true;
     let xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
         if (this.readyState === 4) {
@@ -267,8 +326,9 @@ function doRequestLogin() {
                 let user = JSON.parse(this.responseText);
                 localStorage.setItem("login", user.login);
                 log.log('Logged-In Successfully');
+                personalInfo.user = user;
                 personalInfo.element.innerHTML='';
-                personalInfo.element.insertAdjacentHTML('beforeend', '<p>' + user.nickname + '</p>')
+                personalInfo.element.insertAdjacentHTML('beforeend', '<p>' + user.nickname + '</p>');
                 if (loginWindow.callback !== undefined) {
                     loginWindow.callback();
                 }

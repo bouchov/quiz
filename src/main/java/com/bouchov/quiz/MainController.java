@@ -2,6 +2,7 @@ package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.User;
 import com.bouchov.quiz.entities.UserRepository;
+import com.bouchov.quiz.entities.UserRole;
 import com.bouchov.quiz.protocol.UserBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -46,11 +47,39 @@ class MainController extends AbstractController {
         return new UserBean(user);
     }
 
+    @PostMapping("/register")
+    public UserBean register(
+            @RequestParam String login,
+            @RequestParam String nickname,
+            @RequestParam String password) {
+        User user = userRepository.findByLogin(login).orElse(null);
+        if (user != null) {
+            throw new UserAlreadyExistsException(login);
+        }
+        user = userRepository.findByNickname(nickname).orElse(null);
+        if (user != null) {
+            throw new UserAlreadyExistsException(nickname);
+        }
+        user = new User(login, nickname, password, UserRole.PLAYER);
+        user = userRepository.save(user);
+
+        session.setAttribute(SessionAttributes.USER_ID, user.getId());
+        return new UserBean(user);
+    }
+
     @ResponseStatus(HttpStatus.NOT_FOUND)
     static class UserNotFoundException extends RuntimeException {
 
         public UserNotFoundException(String login) {
             super("could not find user '" + login + "'.");
+        }
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    static class UserAlreadyExistsException extends RuntimeException {
+
+        public UserAlreadyExistsException(String login) {
+            super("user '" + login + "' already exists.");
         }
     }
 

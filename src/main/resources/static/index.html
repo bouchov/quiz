@@ -10,6 +10,7 @@
     <form class="modal-content animate">
         <button onclick="showQuizList()" type="button" id="mainMenu-quiz" class="dialog-button">Викторина</button>
         <button onclick="goTo('/adm/quiz.html')" type="button" id="mainMenu-create" class="dialog-button">Новая викторина</button>
+        <button onclick="showLoginWindow()" type="button" id="mainMenu-login" class="dialog-button">Войти</button>
     </form>
 </div>
 <div id="messageWindow" class="modal">
@@ -22,18 +23,99 @@
     </form>
 </div>
 <div id="loginWindow" class="modal">
-    <span class="close" onclick="hideModalWindow()" title="Close">&times;</span>
+    <span class="close" onclick="showMainMenu()" title="Close">&times;</span>
     <form class="modal-content animate">
-        <label for="loginWindow-name">Логин:</label><input type="text" id="loginWindow-name">
-        <label for="loginWindow-password">Пароль:</label><input type="password" id="loginWindow-password">
-        <button onclick="doRequestLogin()" type="button" class="dialog-button" id="loginWindow-loginButton">Войти</button>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="loginWindow-name">Логин:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 80%">
+                <div class="table-cell-content">
+                    <input type="text" id="loginWindow-name">
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="loginWindow-password">Пароль:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 80%">
+                <div class="table-cell-content">
+                    <input type="password" id="loginWindow-password">
+                </div>
+            </div>
+        </div>
+        <button onclick="doRequestLogin()" type="button" class="dialog-button" id="loginWindow-submit">Войти</button>
+        <button onclick="showRegisterWindow()" type="button" class="dialog-button">Регистрация</button>
+    </form>
+</div>
+<div id="registerWindow" class="modal">
+    <span class="close" onclick="showMainMenu()" title="Close">&times;</span>
+    <form class="modal-content animate">
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="registerWindow-name">Логин:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 80%">
+                <div class="table-cell-content">
+                    <input type="text" id="registerWindow-name">
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="registerWindow-nickname">Никнейм:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 80%">
+                <div class="table-cell-content">
+                    <input type="text" id="registerWindow-nickname">
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="registerWindow-password">Пароль:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 80%">
+                <div class="table-cell-content">
+                    <input type="password" id="registerWindow-password">
+                </div>
+            </div>
+        </div>
+        <button onclick="doRequestRegister()" type="button" class="dialog-button" id="registerWindow-submit">Зарегистрироваться</button>
     </form>
 </div>
 <div id="quizListWindow" class="modal">
     <span class="close" onclick="showMainMenu()" title="Close">&times;</span>
     <form class="modal-content animate">
-        <label for="quizListWindow-quizName">Название:</label><input type="text" id="quizListWindow-quizName">
-        <input onclick="searchQuiz()" type="button" value="Поиск">
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="quizListWindow-quizName">Название:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 60%">
+                <div class="table-cell-content">
+                    <input type="text" id="quizListWindow-quizName">
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="searchQuiz()" type="button" class="search-button">Поиск</button>
+                </div>
+            </div>
+        </div>
+
         <div id="quizListWindow-quizList">
             <button onclick="onSelectQuiz()" type="button" value="0" class="dialog-button">Викторина 1</button>
         </div>
@@ -85,10 +167,11 @@
 <script>
     var webSocket = null;
     var modalWindow = {element:null};
-    var mainMenu = {element:null, buttonQuiz:null, buttonCreate:null};
-    var personalInfo = {element:null};
+    var mainMenu = {element:null, quiz:null, create:null, login:null};
+    var personalInfo = {element:null, user:null};
     var messageWindow = {element:null, text:null, callback:null, button:null};
-    var loginWindow = {element:null, userName:null, userPassword:null, loginButton:null, callback:null};
+    var loginWindow = {element:null, userName:null, userPassword:null, submit:null, callback:null};
+    var registerWindow = {element:null, userName:null, nickname:null, userPassword:null, submit:null, callback:null};
     var quizListWindow = {element:null, quizName:null, quizList:null};
     var quizWindow = {element:null, quizId:null, view:null, startButton:null};
     var questionWindow = {element:null, questionId:null, view:null, question:null, finished:false,
@@ -97,17 +180,24 @@
 
     function initApp() {
         mainMenu.element = document.getElementById('mainMenu');
-        mainMenu.buttonQuiz = document.getElementById('mainMenu-quiz');
+        mainMenu.quiz = document.getElementById('mainMenu-quiz');
+        mainMenu.login = document.getElementById('mainMenu-login');
 
         messageWindow.element = document.getElementById('messageWindow');
         messageWindow.text = document.getElementById('messageWindow-text');
 
-        mainMenu.buttonCreate = document.getElementById('mainMenu-create');
+        mainMenu.create = document.getElementById('mainMenu-create');
         personalInfo.element = document.getElementById("personalInfo");
         loginWindow.element = document.getElementById('loginWindow');
         loginWindow.userName = document.getElementById('loginWindow-name');
         loginWindow.userPassword = document.getElementById('loginWindow-password');
-        loginWindow.loginButton = document.getElementById('loginWindow-loginButton');
+        loginWindow.submit = document.getElementById('loginWindow-submit');
+
+        registerWindow.element = document.getElementById('registerWindow');
+        registerWindow.userName = document.getElementById('registerWindow-name');
+        registerWindow.nickname = document.getElementById('registerWindow-nickname');
+        registerWindow.userPassword = document.getElementById('registerWindow-password');
+        registerWindow.submit = document.getElementById('registerWindow-submit');
 
         quizListWindow.element = document.getElementById('quizListWindow');
         quizListWindow.quizName = document.getElementById('quizListWindow-quizName');
