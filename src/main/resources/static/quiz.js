@@ -143,7 +143,7 @@ function showQuestionWindow(participant) {
     questionWindow.view.innerHTML = quizWindow.view.innerHTML;
     questionWindow.finished = false;
 
-    let url = 'ws://' + getUrl() + '/websocket';
+    let url = getWebsocketProtocol() + '://' + getUrl() + '/websocket';
     webSocket = new WebSocket(url);
     webSocket.onopen = function () {
         webSocket.send(JSON.stringify({enter:{participantId:participant.id}}));
@@ -300,6 +300,15 @@ function disableAllButtons(element) {
 function doRequestNext() {
     if (webSocket) {
         webSocket.send(JSON.stringify({next:true}))
+    }
+}
+
+function getWebsocketProtocol() {
+    let protocol = window.location.protocol;
+    if (protocol.startsWith('https')) {
+        return 'wss';
+    } else {
+        return 'ws';
     }
 }
 
