@@ -70,7 +70,7 @@ function showModalWindow(element) {
 }
 
 function hideModalWindow() {
-    if (modalWindow !== undefined) {
+    if (modalWindow !== undefined && modalWindow.element != null) {
         modalWindow.element.style.display='none';
         modalWindow = undefined;
     }
