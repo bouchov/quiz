@@ -60,7 +60,7 @@ class PersonalInfo extends WebForm {
         super('personalInfo');
 
         let jsonUser = localStorage.getItem(this.KEY_USER)
-        if (jsonUser === undefined) {
+        if (!jsonUser) {
             this.user = {nickname: 'Гость'};
         } else {
             this.user = JSON.parse(jsonUser);
