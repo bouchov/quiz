@@ -6,10 +6,105 @@
     <link rel="stylesheet" type="text/css" href="quiz.css">
 </head>
 <body onload="initApp()">
+
+<div id="editQuizWindow" class="modal">
+    <span class="close" onclick="showQuizList(false)" title="Close">&times;</span>
+    <form class="modal-content animate">
+        <h1>Редактор викторины</h1>
+        <div class="table-row">
+            <div class="table-cell" style="width: 30%">
+                <div class="table-cell-content, right_label">
+                    <label for="editQuizWindow-name">Название:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 70%">
+                <div class="table-cell-content,tooltip">
+                    <div class="tooltip" style="width: 100%">
+                        <input type="text" id="editQuizWindow-name" name="name" required>
+                        <span class="tooltip-text" id="editQuizWindow-nameTooltip">Введите имя викторины</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 30%">
+                <div class="table-cell-content, right_label">
+                    <label for="editQuizWindow-minPlayers">Минимум игроков:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 70%">
+                <div class="table-cell-content">
+                    <input type="number" id="editQuizWindow-minPlayers" name="minPlayers" min="0">
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 30%">
+                <div class="table-cell-content, right_label">
+                    <label for="editQuizWindow-maxPlayers">Максимум игроков:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 70%">
+                <div class="table-cell-content">
+                    <input type="number" id="editQuizWindow-maxPlayers" name="maxPlayers" min="0">
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 30%">
+                <div class="table-cell-content, right_label">
+                    <label for="editQuizWindow-questionType">Выбор вопросов:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 70%">
+                <div class="table-cell-content">
+                    <select id="editQuizWindow-questionType" name="questionType" required>
+                        <option disabled selected value="EMPTY">Выберите тип</option>
+                        <option value="QUIZ">Из списка</option>
+                        <option value="SOME">Случайно</option>
+                        <option value="ALL">Все вопросы</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 30%">
+                <div class="table-cell-content, right_label">
+                    <label for="editQuizWindow-questionNumber">Количество вопросов:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 70%">
+                <div class="table-cell-content">
+                    <input type="number" id="editQuizWindow-questionNumber" name="questionNumber" min="0">
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 30%">
+                <div class="table-cell-content, right_label">
+                    <label for="editQuizWindow-status">Статус:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 70%">
+                <div class="table-cell-content">
+                    <select id="editQuizWindow-status" name="status" required>
+                        <option value="DRAFT" selected>Черновик</option>
+                        <option value="ACTIVE">Активная</option>
+                        <option value="STARTED">Начата</option>
+                        <option value="FINISHED">Окончена</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <button onclick="saveQuiz()" type="button" id="editQuizWindow-submit" class="dialog-button">Сохранить</button>
+        <button onclick="showQuizList(false)" type="button" class="dialog-button-close">Закрыть</button>
+    </form>
+</div>
+
 <div id="questionWindow" class="modal">
     <span class="close" onclick="showQuizList(false)" title="Close">&times;</span>
     <form class="modal-content animate">
-        <div id="questionWindow-quizView">
+        <div id="questionWindow-view">
             <p>
                 вопрос #1
             </p>
@@ -24,26 +119,27 @@
 </div>
 </body>
 </html>
-
+<script type="text/javascript" src="common.js"></script>
 <script>
-    var modalElement = null;
-    var currentQuiz = {element:null, quizId:null, quizView:null}
+    var currentQuiz = {element:null, quizId:null, view:null}
+    var editQuizWindow = {element:null, quizId:null, name:null, minPlayers:null, maxPlayers:null, questionType:null,
+                          questionNumber:null, status:null, selectQuestions:null, submit:null}
     var quizParticipant = {quiz:null, user:null, status:null}
 
     function initApp() {
         currentQuiz.element = document.getElementById("questionWindow");
-        currentQuiz.quizView = document.getElementById("questionWindow-quizView")
+        currentQuiz.view = document.getElementById("questionWindow-view")
 
-        showModalWindow(currentQuiz.element);
-    }
+        editQuizWindow.element = document.getElementById("editQuizWindow");
+        editQuizWindow.name = document.getElementById("editQuizWindow-name")
+        editQuizWindow.minPlayers = document.getElementById("editQuizWindow-minPlayers")
+        editQuizWindow.maxPlayers = document.getElementById("editQuizWindow-maxPlayers")
+        editQuizWindow.questionType = document.getElementById("editQuizWindow-questionType")
+        editQuizWindow.questionNumber = document.getElementById("editQuizWindow-questionNumber")
+        editQuizWindow.status = document.getElementById("editQuizWindow-status")
+        editQuizWindow.submit = document.getElementById("editQuizWindow-submit")
 
-    function showModalWindow(element) {
-        if (element === undefined) {
-            modalElement = mainMenu;
-        } else {
-            modalElement = element;
-        }
-        modalElement.style.display='block';
+        showModalWindow(editQuizWindow.element);
     }
 
     function doRequestAnswer(event) {
@@ -51,5 +147,21 @@
         let target = event.target || event.srcElement; // IE
         let answerId = Number.parseInt(target.value);
         alert(answerId);
+    }
+
+    function saveQuiz() {
+        let valid = true;
+        if (!editQuizWindow.name.checkValidity()) {
+            setLabelClass(editQuizWindow.name, 'label_wrong');
+            valid = false;
+        } else {
+            setLabelClass(editQuizWindow.name, '');
+        }
+        // editQuizWindow.minPlayers
+        // editQuizWindow.maxPlayers
+        // editQuizWindow.questionType
+        // editQuizWindow.questionsNumber
+        // editQuizWindow.status
+        // editQuizWindow.submit
     }
 </script>
