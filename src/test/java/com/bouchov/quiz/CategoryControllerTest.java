@@ -27,7 +27,7 @@ public class CategoryControllerTest {
     @BeforeEach
     public void setUp() {
         Category category = new Category();
-        category.setName("Test category " + System.currentTimeMillis());
+        category.setName(UniqSource.uniqueString("Test category"));
         testCategory = categoryRepository.save(category);
     }
     @AfterEach

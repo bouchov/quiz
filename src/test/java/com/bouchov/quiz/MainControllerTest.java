@@ -25,8 +25,8 @@ public class MainControllerTest {
 
     @BeforeEach
     public void setUp() {
-        User user = new User("login" + System.currentTimeMillis(),
-                "nickname" + System.currentTimeMillis(),
+        User user = new User(UniqSource.uniqueString("login"),
+                UniqSource.uniqueString("nickname"),
                 "pwd", UserRole.PLAYER);
         testUser = userRepository.save(user);
     }

@@ -2,6 +2,7 @@ package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.User;
 import com.bouchov.quiz.entities.UserRepository;
+import com.bouchov.quiz.entities.UserRole;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -12,6 +13,14 @@ public class AbstractController {
     protected void checkAuthorization(HttpSession session) {
         Long userId = (Long) session.getAttribute(SessionAttributes.USER_ID);
         if (userId == null) {
+            throw new AuthorizationRequiredException();
+        }
+    }
+
+    protected void checkAdmin(HttpSession session, UserRepository repository) {
+        checkAuthorization(session);
+        Optional<User> optional = getUser(session, repository);
+        if (optional.orElseThrow(AuthorizationRequiredException::new).getRole() != UserRole.ADMIN) {
             throw new AuthorizationRequiredException();
         }
     }

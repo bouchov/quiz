@@ -11,6 +11,7 @@ public class Quiz extends BasicEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private User author;
+    @Column(unique = true)
     private String name;
     private QuizType type;
     private int minPlayers;

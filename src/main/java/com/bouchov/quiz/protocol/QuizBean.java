@@ -28,7 +28,7 @@ public class QuizBean {
 
     public QuizBean(Quiz quiz) {
         this.id = quiz.getId();
-        this.author = quiz.getAuthor().getNickname();
+        this.author = quiz.getAuthor() == null ? null : quiz.getAuthor().getNickname();
         this.name = quiz.getName();
         this.type = quiz.getType();
         this.minPlayers = quiz.getMinPlayers();

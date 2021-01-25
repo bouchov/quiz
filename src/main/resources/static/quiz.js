@@ -250,8 +250,12 @@ class QuizListWindow extends WebForm {
                     form.quizArray = JSON.parse(xhttp.responseText);
                     form.quizList.innerHTML = '';
                     form.quizArray.forEach(function(quiz) {
+                        let quizName = quiz.name;
+                        if (quiz.status === 'DRAFT') {
+                            quizName += ' *';
+                        }
                         form.quizList.insertAdjacentHTML('beforeend',
-                            '<button type="button" onclick="onSelectQuiz()" value="' + quiz.id + '" class="dialog-button">' + quiz.name + '</button>');
+                            '<button type="button" onclick="onSelectQuiz()" value="' + quiz.id + '" class="dialog-button">' + quizName + '</button>');
                     })
                     form.show();
                 } else if (this.status === 401) {
@@ -297,6 +301,7 @@ class QuizWindow extends WebForm {
     setQuiz(quiz) {
         if (quiz !== undefined) {
             this.quizId = quiz.id;
+            this.quiz = quiz;
             this.view.innerHTML = '';
             this.view.insertAdjacentHTML('beforeend', '<p>' + quiz.name + '</p>');
             this.view.insertAdjacentHTML('beforeend', '<p>Игроков: ' + quiz.minPlayers + ' - ' + quiz.maxPlayers + '</p>');
@@ -406,7 +411,9 @@ class EditQuizWindow extends WebForm {
                     form.log.log('WEB: <<< ' + xhttp.responseText);
                     let quiz = JSON.parse(xhttp.responseText);
                     form.setQuiz(quiz);
-                    form.show();
+                    log.log('quiz saved: ', xhttp.responseText);
+                    quizListWindow.reload = true;
+                    messageWindow.showMessage('Викторина успешно сохранена', function () {form.show()});
                 } else {
                     log.warn('error save quiz: ', xhttp.responseText);
                     messageWindow.showMessage(xhttp.responseText, function () {form.show()});
