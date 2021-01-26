@@ -4,18 +4,18 @@ class Log {
     }
 
     log(...message) {
-        if (!name) {
+        if (!this.name) {
             console.log(message);
         } else {
-            console.log(name, message);
+            console.log(this.name, message);
         }
     }
 
     warn(...message) {
-        if (!name) {
+        if (!this.name) {
             console.warn(message);
         } else {
-            console.warn(name, message);
+            console.warn(this.name, message);
         }
     }
 }
@@ -33,6 +33,7 @@ class WebForm {
     }
 
     beforeShow() {
+        this.log.log("beforeShow");
     }
 
     show(callback) {
@@ -49,6 +50,7 @@ class WebForm {
 
     hide() {
         if (modalWindow === this) {
+            this.log.log("hide");
             modalWindow = undefined;
             this.element.style.display='none';
             return true;
@@ -78,6 +80,31 @@ function disableAllButtons(element) {
     do {
         if (node.tagName === 'BUTTON') {
             node.disabled = true;
+        }
+        node = node.nextSibling;
+    } while (node);
+}
+
+function onSelectAll(id) {
+    forInputs(id, 'checkbox', function(checkbox) {checkbox.checked = true})
+}
+
+function onInvertAll(id) {
+    forInputs(id, 'checkbox', function(checkbox) {checkbox.checked = !checkbox.checked})
+}
+
+function forInputs(id, inputType, callback) {
+    let element = document.getElementById(id);
+    let node = element.firstChild;
+    do {
+        if (node.tagName === 'FORM') {
+            let form = node;
+            for (let i = 0; i < form.length; i++) {
+                if (form[i].type === inputType) {
+                    let input = form[i];
+                    callback(input);
+                }
+            }
         }
         node = node.nextSibling;
     } while (node);

@@ -203,6 +203,7 @@ public class QuizControllerTest {
             throws Exception {
         return mvc.perform(MockMvcRequestBuilders.post(url)
                 .sessionAttr(SessionAttributes.USER_ID, admin.getId())
+                .sessionAttr(SessionAttributes.USER_ROLE, UserRole.ADMIN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(bean))
                 .accept(MediaType.APPLICATION_JSON))

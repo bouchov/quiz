@@ -7,113 +7,104 @@
 </head>
 <body onload="initApp()">
 
-<div id="editQuizWindow" class="modal">
-    <span class="close" onclick="showQuizList(false)" title="Close">&times;</span>
-    <form class="modal-content animate">
-        <h1>Редактор викторины</h1>
+<div id="questionListWindow" class="modal">
+    <span class="close" onclick="showEditQuizWindow()" title="Close">&times;</span>
+    <form class="modal-content animate" onsubmit="return doSubmitQuestionListWindow()">
+        <h1>Список вопросов</h1>
         <div class="table-row">
-            <div class="table-cell" style="width: 30%">
+            <div class="table-cell" style="width: 20%">
                 <div class="table-cell-content, right_label">
-                    <label for="editQuizWindow-name">Название:</label>
+                    <label for="questionListWindow-category">Категория:</label>
                 </div>
             </div>
-            <div class="table-cell" style="width: 70%">
-                <div class="table-cell-content,tooltip">
-                    <div class="tooltip" style="width: 100%">
-                        <input type="text" id="editQuizWindow-name" name="name" required>
-                        <span class="tooltip-text" id="editQuizWindow-nameTooltip">Введите имя викторины</span>
+            <div class="table-cell" style="width: 60%">
+                <div class="table-cell-content">
+                    <select id="questionListWindow-category" name="category">
+                        <option selected value="0">Все категории</option>
+                        <option value="1">Концертный зал</option>
+                        <option value="2">Библиотека</option>
+                        <option value="3">Лаборатория</option>
+                        <option value="4">Мастерская</option>
+                        <option value="5">Музей</option>
+                    </select>
+
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="doLoadQuestionList()" type="button" class="search-button">Выбрать</button>
+                </div>
+            </div>
+        </div>
+        <div id="questionListWindow-view">
+            <div class="table-row">
+                <div class="table-cell" style="width: 2em">
+                    <div class="table-cell-content">
+                        <input type="checkbox" name="questions" value="1" id="questionListWindow-question1">
+                    </div>
+                </div>
+                <div class="table-cell">
+                    <div class="table-cell-content">
+                        <label for="questionListWindow-question1">вопрос №1 о самом важном?</label>
+                    </div>
+                </div>
+            </div>
+            <div class="table-row">
+                <div class="table-cell" style="width: 2em">
+                    <div class="table-cell-content">
+                        <input type="checkbox" name="questions" value="2" id="questionListWindow-question2">
+                    </div>
+                </div>
+                <div class="table-cell">
+                    <div class="table-cell-content">
+                        <label for="questionListWindow-question2">вопрос №2 о менее важном?</label>
+                    </div>
+                </div>
+            </div>
+            <div class="table-row">
+                <div class="table-cell" style="width: 2em">
+                    <div class="table-cell-content">
+                        <input type="checkbox" name="questions" value="3" id="questionListWindow-question3">
+                    </div>
+                </div>
+                <div class="table-cell">
+                    <div class="table-cell-content">
+                        <label for="questionListWindow-question3">вопрос №3 о вообще не важном?</label>
                     </div>
                 </div>
             </div>
         </div>
         <div class="table-row">
-            <div class="table-cell" style="width: 30%">
-                <div class="table-cell-content, right_label">
-                    <label for="editQuizWindow-minPlayers">Минимум игроков:</label>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="onPrevPage()" type="button" id="questionListWindow-prevPage" class="dialog-button" title="Назад">&lt;&lt;</button>
                 </div>
             </div>
-            <div class="table-cell" style="width: 70%">
+            <div class="table-cell" style="width: 20%">
                 <div class="table-cell-content">
-                    <input type="number" id="editQuizWindow-minPlayers" name="minPlayers" min="0">
+                    <button onclick="onSelectAll('questionListWindow')" type="button" id="questionListWindow-selectAll" class="dialog-button" title="Выделить всё">V</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="doSubmitQuestionListWindow()" type="button" id="questionListWindow-submit" class="dialog-button">Сохранить</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="onInvertAll('questionListWindow')" type="button" id="questionListWindow-invertAll" class="dialog-button" title="Инвертировать выделение">$</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="onNextPage()" type="button" id="questionListWindow-nextPage" class="dialog-button" title="Вперёд">&gt;&gt;</button>
                 </div>
             </div>
         </div>
-        <div class="table-row">
-            <div class="table-cell" style="width: 30%">
-                <div class="table-cell-content, right_label">
-                    <label for="editQuizWindow-maxPlayers">Максимум игроков:</label>
-                </div>
-            </div>
-            <div class="table-cell" style="width: 70%">
-                <div class="table-cell-content">
-                    <input type="number" id="editQuizWindow-maxPlayers" name="maxPlayers" min="0">
-                </div>
-            </div>
-        </div>
-        <div class="table-row">
-            <div class="table-cell" style="width: 30%">
-                <div class="table-cell-content, right_label">
-                    <label for="editQuizWindow-questionType">Выбор вопросов:</label>
-                </div>
-            </div>
-            <div class="table-cell" style="width: 70%">
-                <div class="table-cell-content">
-                    <select id="editQuizWindow-questionType" name="questionType" required>
-                        <option disabled selected value="EMPTY">Выберите тип</option>
-                        <option value="QUIZ">Из списка</option>
-                        <option value="SOME">Случайно</option>
-                        <option value="ALL">Все вопросы</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-        <div class="table-row">
-            <div class="table-cell" style="width: 30%">
-                <div class="table-cell-content, right_label">
-                    <label for="editQuizWindow-questionNumber">Количество вопросов:</label>
-                </div>
-            </div>
-            <div class="table-cell" style="width: 70%">
-                <div class="table-cell-content">
-                    <input type="number" id="editQuizWindow-questionNumber" name="questionNumber" min="0">
-                </div>
-            </div>
-        </div>
-        <div class="table-row">
-            <div class="table-cell" style="width: 30%">
-                <div class="table-cell-content, right_label">
-                    <label for="editQuizWindow-status">Статус:</label>
-                </div>
-            </div>
-            <div class="table-cell" style="width: 70%">
-                <div class="table-cell-content">
-                    <select id="editQuizWindow-status" name="status" required>
-                        <option value="DRAFT" selected>Черновик</option>
-                        <option value="ACTIVE">Активная</option>
-                        <option value="STARTED">Начата</option>
-                        <option value="FINISHED">Окончена</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-        <button onclick="saveQuiz()" type="button" id="editQuizWindow-submit" class="dialog-button">Сохранить</button>
-        <button onclick="showQuizList(false)" type="button" class="dialog-button-close">Закрыть</button>
+        <button onclick="showEditQuizWindow()" type="button" class="dialog-button-close">Закрыть</button>
     </form>
 </div>
 
-<div id="questionWindow" class="modal">
-    <span class="close" onclick="showQuizList(false)" title="Close">&times;</span>
-    <form class="modal-content animate">
-        <div id="questionWindow-view">
-            <p>
-                вопрос #1
-            </p>
-            <button onclick="doRequestAnswer()" type="button" value="0" class="dialog-button">а) неверный ответ</button>
-            <button onclick="doRequestAnswer()" type="button" value="1" class="dialog-button" disabled>б) верный ответ</button>
-        </div>
-        <button onclick="showQuizList(false)" type="button" class="dialog-button-close">Закрыть</button>
-    </form>
-</div>
 <div style="right: 100px; position: absolute;">
 <p>Nickname: Lox</p>
 </div>
@@ -121,47 +112,16 @@
 </html>
 <script type="text/javascript" src="common.js"></script>
 <script>
-    var currentQuiz = {element:null, quizId:null, view:null}
-    var editQuizWindow = {element:null, quizId:null, name:null, minPlayers:null, maxPlayers:null, questionType:null,
-                          questionNumber:null, status:null, selectQuestions:null, submit:null}
-    var quizParticipant = {quiz:null, user:null, status:null}
+    var questionListWindow = {element: null}
 
     function initApp() {
-        currentQuiz.element = document.getElementById("questionWindow");
-        currentQuiz.view = document.getElementById("questionWindow-view")
+        questionListWindow.element = document.getElementById('questionListWindow');
 
-        editQuizWindow.element = document.getElementById("editQuizWindow");
-        editQuizWindow.name = document.getElementById("editQuizWindow-name")
-        editQuizWindow.minPlayers = document.getElementById("editQuizWindow-minPlayers")
-        editQuizWindow.maxPlayers = document.getElementById("editQuizWindow-maxPlayers")
-        editQuizWindow.questionType = document.getElementById("editQuizWindow-questionType")
-        editQuizWindow.questionNumber = document.getElementById("editQuizWindow-questionNumber")
-        editQuizWindow.status = document.getElementById("editQuizWindow-status")
-        editQuizWindow.submit = document.getElementById("editQuizWindow-submit")
-
-        showModalWindow(editQuizWindow.element);
+        showModalWindow(questionListWindow.element);
     }
 
-    function doRequestAnswer(event) {
-        event = event || window.event; // IE
-        let target = event.target || event.srcElement; // IE
-        let answerId = Number.parseInt(target.value);
-        alert(answerId);
+    function showModalWindow(element) {
+        element.style.display='block';
     }
 
-    function saveQuiz() {
-        let valid = true;
-        if (!editQuizWindow.name.checkValidity()) {
-            setLabelClass(editQuizWindow.name, 'label_wrong');
-            valid = false;
-        } else {
-            setLabelClass(editQuizWindow.name, '');
-        }
-        // editQuizWindow.minPlayers
-        // editQuizWindow.maxPlayers
-        // editQuizWindow.questionType
-        // editQuizWindow.questionsNumber
-        // editQuizWindow.status
-        // editQuizWindow.submit
-    }
 </script>

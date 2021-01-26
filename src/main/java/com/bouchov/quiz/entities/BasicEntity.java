@@ -1,6 +1,7 @@
 package com.bouchov.quiz.entities;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @MappedSuperclass
 public class BasicEntity {
@@ -28,5 +29,18 @@ public class BasicEntity {
 
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BasicEntity)) return false;
+        BasicEntity that = (BasicEntity) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

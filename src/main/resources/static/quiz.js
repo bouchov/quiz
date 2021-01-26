@@ -414,6 +414,8 @@ class EditQuizWindow extends WebForm {
                     log.log('quiz saved: ', xhttp.responseText);
                     quizListWindow.reload = true;
                     messageWindow.showMessage('Викторина успешно сохранена', function () {form.show()});
+                } else if (this.status === 401) {
+                    loginWindow.show(function () {form.show()});
                 } else {
                     log.warn('error save quiz: ', xhttp.responseText);
                     messageWindow.showMessage(xhttp.responseText, function () {form.show()});
@@ -439,6 +441,198 @@ class EditQuizWindow extends WebForm {
             this.selectQuestions.disabled = true;
             this.selectQuestions.style.display = 'none';
         }
+    }
+}
+
+class QuestionListWindow extends WebForm {
+    constructor() {
+        super('questionListWindow');
+        this.category = document.getElementById('questionListWindow-category');
+        this.view = document.getElementById('questionListWindow-view');
+        this.nextPage = document.getElementById('questionListWindow-nextPage');
+        this.prevPage = document.getElementById('questionListWindow-prevPage');
+        this.submit = document.getElementById('questionListWindow-submit');
+
+        this.pageNumber = 0;
+        this.total = undefined;
+        this.pageSize = 10;
+        this.quizId = undefined;
+
+        this.view.innerHTML = 'Список пуст';
+    }
+
+    resetPage() {
+        this.pageNumber = 0;
+        this.total = undefined;
+    }
+
+    setQuizId(quizId) {
+        this.quizId = quizId;
+        this.view.innerHTML = 'Список пуст';
+        this.resetPage();
+        this.loadCategoryList();
+    }
+
+    beforeShow() {
+        super.beforeShow();
+        if (this.pageNumber <= 0) {
+            this.prevPage.disabled = true;
+        } else {
+            this.prevPage.disabled = false;
+        }
+        if (this.total !== undefined) {
+            this.submit.disabled = false;
+            if (this.pageNumber + 1 >= this.total) {
+                this.nextPage.disabled = true;
+            } else {
+                this.nextPage.disabled = false;
+            }
+        } else {
+            this.submit.disabled = true;
+            this.nextPage.disabled = false;
+            this.loadQuestionList();
+        }
+    }
+
+    saveQuestionList() {
+        let addedQuestions = [];
+        let removedQuestions = [];
+        forInputs(this.element.id, 'checkbox', function(checkbox){
+            if (checkbox.checked) {
+                addedQuestions.push(checkbox.value);
+            } else {
+                removedQuestions.push(checkbox.value);
+            }
+        });
+        this.submit.disabled = true;
+        let form = this;
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                form.hide();
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    let questionIds = JSON.parse(xhttp.responseText);
+                    form.updateQuestionListData(questionIds);
+                    form.show();
+                } else if (this.status === 401) {
+                    loginWindow.show(function () {form.show()});
+                } else {
+                    form.log.warn('error save questions: ', xhttp.responseText);
+                    messageWindow.showMessage(xhttp.responseText, function () {form.show()});
+                }
+            }
+        };
+        let query = {added: addedQuestions, removed: removedQuestions}
+        xhttp.open('POST', '/quiz/' + this.quizId + '/questions', true);
+        xhttp.setRequestHeader("Content-type", "application/json");
+        xhttp.send(JSON.stringify(query));
+    }
+
+    loadNextPage(inc) {
+        let nextPage = this.pageNumber + inc;
+        if (nextPage >= 0) {
+            if (this.total !== undefined) {
+                if (nextPage < this.total) {
+                    this.pageNumber = nextPage;
+                    this.loadQuestionList();
+                }
+            }
+        }
+    }
+
+    loadCategoryList() {
+        let form = this;
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    let categories = JSON.parse(xhttp.responseText);
+                    form.loadCategoryListData(categories);
+                } else {
+                    form.log.warn('error load categories: ', xhttp.responseText);
+                }
+            }
+        };
+        xhttp.open('POST', '/categories/list', true);
+        xhttp.setRequestHeader("Content-type", "application/json");
+        xhttp.send();
+    }
+
+    loadCategoryListData(categories) {
+        this.category.innerHTML = '<option selected value="0">Все категории</option>';
+        let form = this;
+        categories.forEach(function(category){
+            form.category.insertAdjacentHTML('beforeend',
+                '<option value="' + category.id + '">' + category.name + '</option>');
+        });
+    }
+
+    loadQuestionList() {
+        this.submit.disabled = true;
+        let form = this;
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                form.hide();
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    let questionsPage = JSON.parse(xhttp.responseText);
+                    form.loadQuestionListData(questionsPage);
+                    form.show();
+                } else if (this.status === 401) {
+                    loginWindow.show(function () {form.show()});
+                } else {
+                    form.log.warn('error load questions: ', xhttp.responseText);
+                    messageWindow.showMessage(xhttp.responseText, function () {form.show()});
+                }
+            }
+        };
+        let categoryId = null;
+        if (this.category.value > 0) {
+            categoryId = Number.parseInt(this.category.value);
+        }
+        let query = {categoryId: categoryId, quizId: this.quizId, page: this.pageNumber, size: this.pageSize}
+        xhttp.open('POST', '/questions/list', true);
+        xhttp.setRequestHeader("Content-type", "application/json");
+        xhttp.send(JSON.stringify(query));
+    }
+
+    loadQuestionListData(page) {
+        this.view.innerHTML = '';
+        this.total = page.total;
+        this.pageNumber = page.page;
+        if (!page.elements || page.elements.length === 0) {
+            this.view.innerHTML = 'Список пуст';
+        } else {
+            let form = this;
+            page.elements.forEach(function (question) {
+                let checked = '';
+                if (question.selected) {
+                    checked = 'checked';
+                }
+                form.view.insertAdjacentHTML('beforeend',
+                    '<div class="table-row">' +
+                    '  <div class="table-cell" style="width: 2em"><div class="table-cell-content">' +
+                    '    <input type="checkbox" name="questions" ' + checked + ' value="' + question.id + '" id="questionListWindow-question' + question.id + '">' +
+                    '  </div></div>' +
+                    '  <div class="table-cell"><div class="table-cell-content">' +
+                    '    <label for="questionListWindow-question' + question.id + '">' + question.category + ':' + question.text + '</label>' +
+                    '  </div></div>' +
+                    '</div>');
+            })
+        }
+    }
+
+    updateQuestionListData(questionIds) {
+        forInputs(this.element.id, 'checkbox', function(checkbox) {
+            let id = Number.parseInt(checkbox.value);
+            checkbox.checked = questionIds.indexOf(id) >= 0;
+        });
     }
 }
 
@@ -601,3 +795,4 @@ var quizListWindow = new QuizListWindow();
 var quizWindow = new QuizWindow();
 var editQuizWindow = new EditQuizWindow();
 var questionWindow = new QuestionWindow();
+var questionListWindow = new QuestionListWindow();

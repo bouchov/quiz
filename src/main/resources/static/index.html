@@ -15,12 +15,12 @@
     </form>
 </div>
 <div id="messageWindow" class="modal">
-    <span class="close" onclick="hideMessageWindow()" title="Close">&times;</span>
-    <form class="modal-content animate">
+    <span class="close" onclick="doHideMessageWindow()" title="Close">&times;</span>
+    <form class="modal-content animate" onsubmit="return doHideMessageWindow()">
         <div style="align-content: center; border: 1px solid #cccccc">
             <p id="messageWindow-text">&nbsp;</p>
         </div>
-        <button onclick="hideMessageWindow()" type="button" class="dialog-button-close">Close</button>
+        <button type="submit" class="dialog-button-close">Close</button>
     </form>
 </div>
 <div id="loginWindow" class="modal">
@@ -51,7 +51,7 @@
                 </div>
             </div>
         </div>
-        <button onclick="doSubmitLogin()" type="submit" class="dialog-button" id="loginWindow-submit">Войти</button>
+        <button type="submit" class="dialog-button" id="loginWindow-submit">Войти</button>
         <button onclick="showRegisterWindow()" type="button" class="dialog-button">Регистрация</button>
     </form>
 </div>
@@ -95,7 +95,7 @@
                 </div>
             </div>
         </div>
-        <button onclick="doSubmitRegister()" type="submit" class="dialog-button" id="registerWindow-submit">Зарегистрироваться</button>
+        <button type="submit" class="dialog-button" id="registerWindow-submit">Зарегистрироваться</button>
     </form>
 </div>
 <div id="quizListWindow" class="modal">
@@ -153,7 +153,7 @@
             </div>
             <div class="table-cell" style="width: 70%">
                 <div class="table-cell-content">
-                    <input type="number" id="editQuizWindow-minPlayers" name="minPlayers" min="0">
+                    <input type="number" id="editQuizWindow-minPlayers" name="minPlayers" min="1">
                 </div>
             </div>
         </div>
@@ -165,7 +165,7 @@
             </div>
             <div class="table-cell" style="width: 70%">
                 <div class="table-cell-content">
-                    <input type="number" id="editQuizWindow-maxPlayers" name="maxPlayers" min="0">
+                    <input type="number" id="editQuizWindow-maxPlayers" name="maxPlayers" min="1">
                 </div>
             </div>
         </div>
@@ -258,6 +258,103 @@
         </audio>
     </form>
 </div>
+<div id="questionListWindow" class="modal">
+    <span class="close" onclick="showEditQuizWindow()" title="Close">&times;</span>
+    <form class="modal-content animate" onsubmit="return doSubmitQuestionListWindow()">
+        <h1>Список вопросов</h1>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="questionListWindow-category">Категория:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 60%">
+                <div class="table-cell-content">
+                    <select id="questionListWindow-category" name="category">
+                        <option selected value="0">Все категории</option>
+                        <option value="1">Концертный зал</option>
+                        <option value="2">Библиотека</option>
+                        <option value="3">Лаборатория</option>
+                        <option value="4">Мастерская</option>
+                        <option value="5">Музей</option>
+                    </select>
+
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="doLoadQuestionList()" type="button" class="search-button">Выбрать</button>
+                </div>
+            </div>
+        </div>
+        <div id="questionListWindow-view">
+            <div class="table-row">
+                <div class="table-cell" style="width: 2em">
+                    <div class="table-cell-content">
+                        <input type="checkbox" name="questions" value="1" id="questionListWindow-question1">
+                    </div>
+                </div>
+                <div class="table-cell">
+                    <div class="table-cell-content">
+                        <label for="questionListWindow-question1">вопрос №1 о самом важном?</label>
+                    </div>
+                </div>
+            </div>
+            <div class="table-row">
+                <div class="table-cell" style="width: 2em">
+                    <div class="table-cell-content">
+                        <input type="checkbox" name="questions" value="2" id="questionListWindow-question2">
+                    </div>
+                </div>
+                <div class="table-cell">
+                    <div class="table-cell-content">
+                        <label for="questionListWindow-question2">вопрос №2 о менее важном?</label>
+                    </div>
+                </div>
+            </div>
+            <div class="table-row">
+                <div class="table-cell" style="width: 2em">
+                    <div class="table-cell-content">
+                        <input type="checkbox" name="questions" value="3" id="questionListWindow-question3">
+                    </div>
+                </div>
+                <div class="table-cell">
+                    <div class="table-cell-content">
+                        <label for="questionListWindow-question3">вопрос №3 о вообще не важном?</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="onPrevPage()" type="button" id="questionListWindow-prevPage" class="dialog-button" title="Назад">&lt;&lt;</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="onSelectAll('questionListWindow')" type="button" id="questionListWindow-selectAll" class="dialog-button" title="Выделить всё">V</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="doSubmitQuestionListWindow()" type="button" id="questionListWindow-submit" class="dialog-button">Сохранить</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="onInvertAll('questionListWindow')" type="button" id="questionListWindow-invertAll" class="dialog-button" title="Инвертировать выделение">$</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="onNextPage()" type="button" id="questionListWindow-nextPage" class="dialog-button" title="Вперёд">&gt;&gt;</button>
+                </div>
+            </div>
+        </div>
+        <button onclick="showEditQuizWindow()" type="button" class="dialog-button-close">Закрыть</button>
+    </form>
+</div>
 <div id="personalInfo" style="right: 100px; position: absolute;">
     <p>Гость</p>
 </div>
@@ -267,21 +364,7 @@
 <script type="text/javascript" src="quiz.js"></script>
 <script>
     function initApp() {
-        document.onkeyup = keyPressed;
         mainMenu.show();
-    }
-
-    function keyPressed(event) {
-        event = !event ? window.event : event;
-        if (event.code === 'Enter') {
-            if (modalWindow === messageWindow) {
-                messageWindow.dismiss();
-            } else if (modalWindow === loginWindow) {
-                loginWindow.doSubmit();
-            } else if (modalWindow === registerWindow) {
-                registerWindow.doSubmit();
-            }
-        }
     }
 
     function showLoginWindow() {
@@ -297,8 +380,9 @@
         return false;
     }
 
-    function hideMessageWindow() {
+    function doHideMessageWindow() {
         messageWindow.dismiss();
+        return false;
     }
 
     function doSubmitRegister() {
@@ -338,9 +422,36 @@
         editQuizWindow.show();
     }
 
+    function showEditQuizWindow() {
+        editQuizWindow.show();
+    }
+
     function doSubmitEditQuiz() {
         editQuizWindow.saveQuiz();
         return false;
+    }
+
+    function showSelectQuestionsWindow() {
+        questionListWindow.setQuizId(editQuizWindow.quizId);
+        questionListWindow.show();
+    }
+
+    function doSubmitQuestionListWindow() {
+        questionListWindow.saveQuestionList();
+        return false;
+    }
+
+    function doLoadQuestionList() {
+        questionListWindow.resetPage();
+        questionListWindow.loadQuestionList();
+    }
+
+    function onPrevPage() {
+        questionListWindow.loadNextPage(-1);
+    }
+
+    function onNextPage() {
+        questionListWindow.loadNextPage(1);
     }
 
     function showCreateQuizWindow() {

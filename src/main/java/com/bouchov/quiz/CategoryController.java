@@ -4,23 +4,31 @@ import com.bouchov.quiz.entities.Category;
 import com.bouchov.quiz.entities.CategoryRepository;
 import com.bouchov.quiz.protocol.CategoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("/adm/category")
-class CategoryController {
+@RequestMapping("/categories")
+class CategoryController extends AbstractController {
+    private final HttpSession session;
     private final CategoryRepository categoryRepository;
 
     @Autowired
-    CategoryController(CategoryRepository categoryRepository) {
+    CategoryController(
+            HttpSession session,
+            CategoryRepository categoryRepository) {
+        this.session = session;
         this.categoryRepository = categoryRepository;
     }
 
-    @GetMapping
-    public List<CategoryBean> showCategory(
+    @PostMapping("/list")
+    public List<CategoryBean> list(
             @RequestParam(required = false) Long id,
             @RequestParam(required = false) String name) {
         ArrayList<CategoryBean> categories = new ArrayList<>();
@@ -34,8 +42,9 @@ class CategoryController {
         return categories;
     }
 
-    @GetMapping(value = "/add")
+    @PostMapping("/add")
     public CategoryBean addCategory(@RequestParam String name) {
+        checkAdmin(session);
         Category category = categoryRepository.findByName(name).orElse(null);
         if (category == null) {
             category = new Category();

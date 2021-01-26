@@ -44,6 +44,7 @@ class MainController extends AbstractController {
             throw new UserNotFoundException(login);
         }
         session.setAttribute(SessionAttributes.USER_ID, user.getId());
+        session.setAttribute(SessionAttributes.USER_ROLE, user.getRole());
         return new UserBean(user);
     }
 
@@ -64,6 +65,7 @@ class MainController extends AbstractController {
         user = userRepository.save(user);
 
         session.setAttribute(SessionAttributes.USER_ID, user.getId());
+        session.setAttribute(SessionAttributes.USER_ROLE, user.getRole());
         return new UserBean(user);
     }
 

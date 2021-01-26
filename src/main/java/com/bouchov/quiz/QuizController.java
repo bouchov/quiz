@@ -1,6 +1,7 @@
 package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.*;
+import com.bouchov.quiz.protocol.ChangedCollectionBean;
 import com.bouchov.quiz.protocol.QuizBean;
 import com.bouchov.quiz.protocol.QuizResultBean;
 import com.bouchov.quiz.services.QuizService;
@@ -23,16 +24,19 @@ class QuizController extends AbstractController {
     private final HttpSession session;
     private final UserRepository userRepository;
     private final QuizRepository quizRepository;
+    private final QuestionRepository questionRepository;
     private final QuizService quizService;
 
     @Autowired
     public QuizController(HttpSession session,
-                          UserRepository userRepository,
-                          QuizRepository quizRepository,
-                          QuizService quizService) {
+            UserRepository userRepository,
+            QuizRepository quizRepository,
+            QuestionRepository questionRepository,
+            QuizService quizService) {
         this.session = session;
         this.userRepository = userRepository;
         this.quizRepository = quizRepository;
+        this.questionRepository = questionRepository;
         this.quizService = quizService;
     }
 
@@ -70,7 +74,7 @@ class QuizController extends AbstractController {
 
     @PostMapping("/create")
     public QuizBean createQuiz(@RequestBody QuizBean quiz) {
-        checkAdmin(session, userRepository);
+        checkAdmin(session);
         validate(quiz);
         if (quiz.getStatus() == null
                 || quiz.getStatus() != QuizStatus.DRAFT
@@ -110,16 +114,20 @@ class QuizController extends AbstractController {
     @PostMapping("/{quizId}/edit")
     public QuizBean editQuiz(@PathVariable Long quizId,
             @RequestBody QuizBean quiz) {
-        checkAdmin(session, userRepository);
+        checkAdmin(session);
         Quiz entity = quizRepository.findById(quizId).orElseThrow(() -> new QuizNotFoundException(quizId));
         if (entity.getStatus() != QuizStatus.DRAFT) {
             throw new InvalidQuizParameterException("status");
         }
         validate(quiz);
+
         if (quiz.getSelectionStrategy() == QuestionSelectionStrategy.QUIZ
-                && quiz.getStatus() == QuizStatus.ACTIVE
-                && entity.getQuestions().isEmpty()) {
-            throw new InvalidQuizParameterException("status");
+                && quiz.getStatus() == QuizStatus.ACTIVE) {
+            if (entity.getQuestions().isEmpty()) {
+                throw new InvalidQuizParameterException("status");
+            } else {
+                quiz.setQuestionsNumber(entity.getQuestions().size());
+            }
         }
 
         fillParams(quiz, entity);
@@ -131,6 +139,38 @@ class QuizController extends AbstractController {
         }
 
         return new QuizBean(entity);
+    }
+
+    @PostMapping("/{quizId}/questions")
+    public long[] changeQuestions(
+            @PathVariable Long quizId,
+            @RequestBody ChangedCollectionBean changes) {
+        checkAdmin(session);
+        Quiz entity = quizRepository.findById(quizId).orElseThrow(() -> new QuizNotFoundException(quizId));
+        if (entity.getStatus() != QuizStatus.DRAFT) {
+            throw new InvalidQuizParameterException("status");
+        }
+        if (changes.getAdded() != null && !changes.getAdded().isEmpty()) {
+            for (Long id : changes.getAdded()) {
+                questionRepository.findById(id).ifPresent((question) -> addQuestion(entity, question));
+            }
+        }
+        if (changes.getRemoved() != null && !changes.getRemoved().isEmpty()) {
+            for (Long id : changes.getRemoved()) {
+                questionRepository.findById(id).ifPresent((question) -> entity.getQuestions().remove(question));
+            }
+        }
+        quizRepository.save(entity);
+        return entity.getQuestions().stream().mapToLong(BasicEntity::getId).toArray();
+    }
+
+    private void addQuestion(Quiz entity, Question question) {
+        for (Question q : entity.getQuestions()) {
+            if (q.getId().equals(question.getId())) {
+                return;
+            }
+        }
+        entity.getQuestions().add(question);
     }
 
     private void validate(QuizBean quiz) {
@@ -157,7 +197,7 @@ class QuizController extends AbstractController {
         }
     }
 
-    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     static class QuizNotFoundException extends RuntimeException {
         public QuizNotFoundException(Long id) {
             super("quiz " + id + " not found");

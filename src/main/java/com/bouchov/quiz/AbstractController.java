@@ -17,10 +17,10 @@ public class AbstractController {
         }
     }
 
-    protected void checkAdmin(HttpSession session, UserRepository repository) {
+    protected void checkAdmin(HttpSession session) {
         checkAuthorization(session);
-        Optional<User> optional = getUser(session, repository);
-        if (optional.orElseThrow(AuthorizationRequiredException::new).getRole() != UserRole.ADMIN) {
+        UserRole role = (UserRole) session.getAttribute(SessionAttributes.USER_ROLE);
+        if (role != UserRole.ADMIN) {
             throw new AuthorizationRequiredException();
         }
     }

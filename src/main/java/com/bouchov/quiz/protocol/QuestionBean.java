@@ -6,12 +6,14 @@ import com.bouchov.quiz.entities.Question;
 import java.util.List;
 
 public class QuestionBean {
+    private Long id;
     private String category;
     private String text;
     private Integer answer;
     private int value;
     private Integer number;
     private Integer total;
+    private boolean selected;
     private List<Option> options;
 
     public QuestionBean() {
@@ -22,6 +24,7 @@ public class QuestionBean {
     }
 
     public QuestionBean(Question question, List<Option> options, Integer number, Integer total) {
+        this.id = question.getId();
         this.category = question.getCategory().getName();
         this.text = question.getText();
         this.answer = question.getAnswer();
@@ -29,6 +32,14 @@ public class QuestionBean {
         this.options = options;
         this.number = number;
         this.total = total;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getCategory() {
@@ -59,6 +70,10 @@ public class QuestionBean {
         return value;
     }
 
+    public void setValue(int value) {
+        this.value = value;
+    }
+
     public Integer getNumber() {
         return number;
     }
@@ -83,14 +98,26 @@ public class QuestionBean {
         this.options = options;
     }
 
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
     @Override
     public String toString() {
-        return "QuestionBean{" +
-                "category='" + category + '\'' +
+        return "[QuestionBean " +
+                "id=" + id +
+                ", category='" + category + '\'' +
                 ", text='" + text + '\'' +
                 ", answer=" + answer +
                 ", value=" + value +
+                ", number=" + number +
+                ", total=" + total +
+                ", selected=" + selected +
                 ", options=" + options +
-                '}';
+                ']';
     }
 }
