@@ -326,7 +326,7 @@ class QuizWindow extends WebForm {
                 }
             }
         };
-        this.sendGet( '/quiz/' + this.quizId + '/register');
+        this.sendGet( xhttp, '/quiz/' + this.quizId + '/register');
     }
 
     beforeShow() {

@@ -33,7 +33,7 @@ class WebForm {
     }
 
     beforeShow() {
-        this.log.log("beforeShow");
+        this.log.log('beforeShow');
     }
 
     show(callback) {
@@ -50,7 +50,7 @@ class WebForm {
 
     hide() {
         if (modalWindow === this) {
-            this.log.log("hide");
+            this.log.log('hide');
             modalWindow = undefined;
             this.element.style.display='none';
             return true;
@@ -71,32 +71,32 @@ class WebForm {
 
     sendJson(xhttp, url, value) {
         xhttp.open('POST', url, true);
-        xhttp.setRequestHeader("Content-type", "application/json");
+        xhttp.setRequestHeader('Content-type', 'application/json');
         if (value !== undefined) {
             let body = JSON.stringify(value);
-            this.log.log("POST", url, body)
+            this.log.log('POST', url, body)
             xhttp.send(body);
         } else {
-            this.log.log("POST", url)
+            this.log.log('POST', url)
             xhttp.send();
         }
     }
 
     sendPost(xhttp, url, content) {
         xhttp.open('POST', url, true);
-        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         if (content !== undefined) {
-            this.log.log("POST", url, content)
+            this.log.log('POST', url, content)
             xhttp.send(content);
         } else {
-            this.log.log("POST", url)
+            this.log.log('POST', url)
             xhttp.send();
         }
     }
 
     sendGet(xhttp, url) {
         xhttp.open('GET', url, true);
-        this.log.log("GET", url)
+        this.log.log('GET', url)
         xhttp.send();
     }
 }
