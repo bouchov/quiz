@@ -7,6 +7,7 @@ import java.util.List;
 
 public class QuestionBean {
     private Long id;
+    private Long categoryId;
     private String category;
     private String text;
     private Integer answer;
@@ -25,6 +26,7 @@ public class QuestionBean {
 
     public QuestionBean(Question question, List<Option> options, Integer number, Integer total) {
         this.id = question.getId();
+        this.categoryId = question.getCategory().getId();
         this.category = question.getCategory().getName();
         this.text = question.getText();
         this.answer = question.getAnswer();
@@ -40,6 +42,14 @@ public class QuestionBean {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
     }
 
     public String getCategory() {
@@ -110,6 +120,7 @@ public class QuestionBean {
     public String toString() {
         return "[QuestionBean " +
                 "id=" + id +
+                ", categoryId=" + categoryId +
                 ", category='" + category + '\'' +
                 ", text='" + text + '\'' +
                 ", answer=" + answer +

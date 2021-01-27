@@ -149,9 +149,7 @@ class LoginWindow extends WebForm {
                 }
             }
         };
-        xhttp.open('POST', '/', true);
-        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        xhttp.send('login=' + this.userName.value + '&password=' + this.userPassword.value);
+        this.sendPost(xhttp, '/', 'login=' + this.userName.value + '&password=' + this.userPassword.value);
         this.userPassword.value = '';
     }
 }
@@ -209,9 +207,8 @@ class RegisterWindow extends WebForm {
                 }
             }
         };
-        xhttp.open('POST', '/register', true);
-        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        xhttp.send('login=' + this.userName.value +
+        this.sendPost(xhttp, '/register',
+            'login=' + this.userName.value +
             '&password=' + this.userPassword.value +
             '&nickname=' + this.nickname.value);
         this.userPassword.value = '';
@@ -267,12 +264,9 @@ class QuizListWindow extends WebForm {
             }
         };
         if (!name) {
-            xhttp.open('POST', '/quiz/list', true);
-            xhttp.send();
+            this.sendPost(xhttp, '/quiz/list');
         } else {
-            xhttp.open('POST', '/quiz/list', true);
-            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            xhttp.send('name=' + name);
+            this.sendPost(xhttp, '/quiz/list', 'name=' + name);
         }
     }
 
@@ -332,8 +326,7 @@ class QuizWindow extends WebForm {
                 }
             }
         };
-        xhttp.open('GET', '/quiz/' + this.quizId + '/register', true);
-        xhttp.send();
+        this.sendGet( '/quiz/' + this.quizId + '/register');
     }
 
     beforeShow() {
@@ -411,24 +404,24 @@ class EditQuizWindow extends WebForm {
                     form.log.log('WEB: <<< ' + xhttp.responseText);
                     let quiz = JSON.parse(xhttp.responseText);
                     form.setQuiz(quiz);
-                    log.log('quiz saved: ', xhttp.responseText);
+                    form.log.log('quiz saved: ', xhttp.responseText);
                     quizListWindow.reload = true;
                     messageWindow.showMessage('Викторина успешно сохранена', function () {form.show()});
                 } else if (this.status === 401) {
                     loginWindow.show(function () {form.show()});
                 } else {
-                    log.warn('error save quiz: ', xhttp.responseText);
+                    form.log.warn('error save quiz: ', xhttp.responseText);
                     messageWindow.showMessage(xhttp.responseText, function () {form.show()});
                 }
             }
         };
+        let url;
         if (quiz.id) {
-            xhttp.open('POST', '/quiz/' + quiz.id + '/edit', true);
+            url =  '/quiz/' + quiz.id + '/edit';
         } else {
-            xhttp.open('POST', '/quiz/create', true);
+            url =  '/quiz/create';
         }
-        xhttp.setRequestHeader("Content-type", "application/json");
-        xhttp.send(JSON.stringify(quiz));
+        this.sendJson(xhttp, url, quiz);
     }
 
     beforeShow() {
@@ -444,10 +437,48 @@ class EditQuizWindow extends WebForm {
     }
 }
 
-class QuestionListWindow extends WebForm {
+class WebFormWithCategory extends WebForm {
+    constructor(id) {
+        super(id);
+        this.category = document.getElementById(id + '-category');
+        this.categoryLoaded = false;
+    }
+
+    loadCategoryList() {
+        if (this.categoryLoaded) {
+            return;
+        }
+        let form = this;
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    let categories = JSON.parse(xhttp.responseText);
+                    form.categoryLoaded = true;
+                    form.loadCategoryListData(categories);
+                } else {
+                    form.log.warn('error load categories: ', xhttp.responseText);
+                }
+            }
+        };
+        this.sendJson(xhttp, '/categories/list');
+    }
+
+    loadCategoryListData(categories) {
+        this.category.innerHTML = '<option selected value="0">Все категории</option>';
+        let form = this;
+        categories.forEach(function(category){
+            form.category.insertAdjacentHTML('beforeend',
+                '<option value="' + category.id + '">' + category.name + '</option>');
+        });
+    }
+}
+
+class QuestionListWindow extends WebFormWithCategory {
     constructor() {
         super('questionListWindow');
-        this.category = document.getElementById('questionListWindow-category');
         this.view = document.getElementById('questionListWindow-view');
         this.nextPage = document.getElementById('questionListWindow-nextPage');
         this.prevPage = document.getElementById('questionListWindow-prevPage');
@@ -524,10 +555,8 @@ class QuestionListWindow extends WebForm {
                 }
             }
         };
-        let query = {added: addedQuestions, removed: removedQuestions}
-        xhttp.open('POST', '/quiz/' + this.quizId + '/questions', true);
-        xhttp.setRequestHeader("Content-type", "application/json");
-        xhttp.send(JSON.stringify(query));
+        this.sendJson(xhttp, '/quiz/' + this.quizId + '/questions',
+            {added: addedQuestions, removed: removedQuestions});
     }
 
     loadNextPage(inc) {
@@ -540,35 +569,6 @@ class QuestionListWindow extends WebForm {
                 }
             }
         }
-    }
-
-    loadCategoryList() {
-        let form = this;
-        let xhttp = new XMLHttpRequest();
-
-        xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let categories = JSON.parse(xhttp.responseText);
-                    form.loadCategoryListData(categories);
-                } else {
-                    form.log.warn('error load categories: ', xhttp.responseText);
-                }
-            }
-        };
-        xhttp.open('POST', '/categories/list', true);
-        xhttp.setRequestHeader("Content-type", "application/json");
-        xhttp.send();
-    }
-
-    loadCategoryListData(categories) {
-        this.category.innerHTML = '<option selected value="0">Все категории</option>';
-        let form = this;
-        categories.forEach(function(category){
-            form.category.insertAdjacentHTML('beforeend',
-                '<option value="' + category.id + '">' + category.name + '</option>');
-        });
     }
 
     loadQuestionList() {
@@ -596,10 +596,12 @@ class QuestionListWindow extends WebForm {
         if (this.category.value > 0) {
             categoryId = Number.parseInt(this.category.value);
         }
-        let query = {categoryId: categoryId, quizId: this.quizId, page: this.pageNumber, size: this.pageSize}
-        xhttp.open('POST', '/questions/list', true);
-        xhttp.setRequestHeader("Content-type", "application/json");
-        xhttp.send(JSON.stringify(query));
+        this.sendJson(xhttp, '/questions/list', {
+            categoryId: categoryId,
+            quizId: this.quizId,
+            page: this.pageNumber,
+            size: this.pageSize
+        });
     }
 
     loadQuestionListData(page) {
@@ -636,6 +638,152 @@ class QuestionListWindow extends WebForm {
     }
 }
 
+class EditQuestionWindow extends WebFormWithCategory {
+    constructor() {
+        super('editQuestionWindow');
+        this.category = document.getElementById('editQuestionWindow-category');
+        this.text = document.getElementById('editQuestionWindow-text');
+        this.value = document.getElementById('editQuestionWindow-value');
+        this.options = document.getElementById('editQuestionWindow-options');
+        this.submit = document.getElementById('editQuestionWindow-submit');
+
+        this.questionId = null;
+        this.question = {id:null, categoryId:0, text:'', value:1, answer:undefined, options:[{id:0, name:'текст ответа 0'}]};
+    }
+
+    setNewQuestion() {
+        this.setQuestion({id:null, categoryId:0, text:'', value:1, answer:undefined, options:[{id:0, name:'текст ответа 0'}]});
+    }
+
+    setQuestion(question) {
+        this.questionId = question.id;
+        this.question = question;
+        this.loadCategoryList();
+        this.category.value = question.categoryId;
+        this.text.value = question.text;
+        this.value.value = question.value;
+        this.writeOptions();
+    }
+
+    beforeShow() {
+        super.beforeShow();
+        this.submit.disabled = false;
+    }
+
+    writeOptions() {
+        this.options.innerHTML = '';
+        let form = this;
+        this.question.options.forEach(function (option) {form.addOptionTag(option);});
+    }
+
+    addOption() {
+        let maxId = -1;
+        forInputs(this.element.id, 'radio', function (radio) {
+            if (radio.name === 'options') {
+                maxId = Math.max(radio.value, maxId);
+            }
+        })
+        let id = maxId + 1;
+        this.addOptionTag({id:id, name:'текст ответа ' + id});
+    }
+
+    addOptionTag(option) {
+        let id = option.id;
+        let idPrefix = this.element.id;
+        let checked = '';
+        if (id === this.question.answer) {
+            checked = ' checked';
+        }
+        this.options.insertAdjacentHTML('beforeend',
+            '<div class="table-row" id="' + idPrefix + '-option' + id + '-row">' +
+            '  <div class="table-cell" style="width: 20%"><div class="table-cell-content, right_label">' +
+            '    <input type="radio" name="options" value="' + id + '"' + checked + '>' +
+            '  </div></div>' +
+            '  <div class="table-cell" style="width: 70%"><div class="table-cell-content">' +
+            '    <input type="text" name="option-text' + id + '" required>' +
+            '  </div></div>' +
+            '  <div class="table-cell" style="width: 10%"><div class="table-cell-content">' +
+            '    <button onclick="onRemoveQuestionOption(' + id + ')" type="button" class="remove-button">&times;</button>' +
+            '  </div></div>' +
+            '</div>');
+        let textName = 'option-text' + id;
+        forInputs(this.element.id, 'text', function (text) {
+            if (text.name === textName) {
+                text.value = option.name;
+            }
+        })
+    }
+
+    removeOption(id) {
+        let element = document.getElementById(this.element.id + '-option' + id + '-row');
+        if (element) {
+            element.remove();
+        }
+    }
+
+    doSubmit() {
+        if (this.category.value <= 0
+            || this.text.value.length <= 0
+            || this.value.value <= 0) {
+            return false;
+        }
+        let answer = undefined;
+        forInputs(this.element.id, 'radio', function (radio) {
+            if (radio.name === 'options' && radio.checked) {
+                answer = radio.value;
+            }
+        });
+        if (answer === undefined) {
+            return false;
+        }
+        let categoryId = Number.parseInt(this.category.value);
+        let options = [];
+        forInputs(this.element.id, 'text', function (text) {
+            if (text.name.startsWith('option-text')) {
+                let id = Number.parseInt(text.name.substr('option-text'.length));
+                options.push({id:id, name:text.value});
+            }
+        });
+        let value = Number.parseInt(this.value.value);
+
+        let query = {
+            id: this.questionId,
+            categoryId: categoryId,
+            text: this.text.value,
+            value: value,
+            answer: answer,
+            options: options};
+
+        this.submit.disabled = true;
+        let form = this;
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                form.hide();
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    let question = JSON.parse(xhttp.responseText);
+                    form.setQuestion(question);
+                    messageWindow.showMessage('Вопрос успешно сохранён', function () {form.show()});
+                } else if (this.status === 401) {
+                    loginWindow.show(function () {form.show()});
+                } else {
+                    form.log.warn('error save question: ', xhttp.responseText);
+                    messageWindow.showMessage(xhttp.responseText, function () {form.show()});
+                }
+            }
+        };
+        let url;
+        if (query.id) {
+            url = '/questions/' + query.id + '/edit';
+        } else {
+            url = '/questions/create';
+        }
+        this.sendJson(xhttp, url, query);
+    }
+}
+
 class QuestionWindow extends WebForm {
     constructor() {
         super('questionWindow');
@@ -667,7 +815,7 @@ class QuestionWindow extends WebForm {
         this.webSocket.onopen = function () {
             form.webSocket.send(JSON.stringify({enter: {participantId: form.participant.id}}));
         }
-        this.webSocket.onmessage = questionWindowMessageHandler;
+        this.webSocket.onmessage = playQuizWebsocketMessageHandler;
         this.webSocket.onclose = function () {
             form.log.log("connection closed by server");
             quizWindow.show();
@@ -772,7 +920,7 @@ class QuestionWindow extends WebForm {
     }
 }
 
-function questionWindowMessageHandler(event) {
+function playQuizWebsocketMessageHandler(event) {
     log.log('WEBSOCKET: <<< ' + event.data);
     let msg = JSON.parse(event.data);
     if (msg.quiz) {
@@ -796,3 +944,4 @@ var quizWindow = new QuizWindow();
 var editQuizWindow = new EditQuizWindow();
 var questionWindow = new QuestionWindow();
 var questionListWindow = new QuestionListWindow();
+var editQuestionWindow = new EditQuestionWindow();

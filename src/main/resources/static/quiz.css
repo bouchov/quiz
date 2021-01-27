@@ -10,6 +10,8 @@ html, body {
 input[type=text], input[type=password], input[type=number], select {
     width: 100%;
     box-sizing: border-box;
+    padding: 4px;
+    border-radius: 12px;
 }
 
 label {
@@ -96,6 +98,13 @@ button:disabled:hover {
 }
 
 .search-button {
+    background-color: #54545f;
+    color: white;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.remove-button {
     background-color: #54545f;
     color: white;
     padding: 4px;

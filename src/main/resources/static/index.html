@@ -140,7 +140,7 @@
                 <div class="table-cell-content,tooltip">
                     <div class="tooltip" style="width: 100%">
                         <input type="text" id="editQuizWindow-name" name="name" required>
-                        <span class="tooltip-text" id="editQuizWindow-nameTooltip">Введите имя викторины</span>
+                        <span class="tooltip-text">Введите имя викторины</span>
                     </div>
                 </div>
             </div>
@@ -216,7 +216,7 @@
             </div>
         </div>
         <button onclick="showSelectQuestionsWindow()" type="button" id="editQuizWindow-selectQuestions" class="dialog-button">Список вопросов</button>
-        <button onclick="doSubmitEditQuiz()" type="button" id="editQuizWindow-submit" class="dialog-button">Сохранить</button>
+        <button type="submit" id="editQuizWindow-submit" class="dialog-button">Сохранить</button>
         <button onclick="showQuizListWindow()" type="button" class="dialog-button-close">Закрыть</button>
     </form>
 </div>
@@ -274,9 +274,8 @@
                         <option selected value="0">Все категории</option>
                         <option value="1">Концертный зал</option>
                         <option value="2">Библиотека</option>
-                        <option value="3">Лаборатория</option>
-                        <option value="4">Мастерская</option>
-                        <option value="5">Музей</option>
+                        <option value="3">Мастерская</option>
+                        <option value="4">Музей</option>
                     </select>
 
                 </div>
@@ -353,6 +352,97 @@
             </div>
         </div>
         <button onclick="showEditQuizWindow()" type="button" class="dialog-button-close">Закрыть</button>
+    </form>
+</div>
+<div id="editQuestionWindow" class="modal">
+    <span class="close" onclick="showMainMenu()" title="Close">&times;</span>
+    <form class="modal-content animate" onsubmit="return doSubmitQuestionWindow()">
+        <h1>Редактор вопросов</h1>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="editQuestionWindow-category">Категория:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 80%">
+                <div class="table-cell-content">
+                    <select id="editQuestionWindow-category" name="category" required>
+                        <option disabled selected value="0">Выберите категорию</option>
+                        <option value="1">Концертный зал</option>
+                        <option value="2">Библиотека</option>
+                        <option value="3">Лаборатория</option>
+                        <option value="4">Мастерская</option>
+                        <option value="5">Музей</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="editQuestionWindow-text">Текст:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 80%">
+                <div class="table-cell-content,tooltip">
+                    <div class="tooltip" style="width: 100%">
+                        <input type="text" id="editQuestionWindow-text" name="text" required>
+                        <span class="tooltip-text">Введите текст вопроса</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="editQuestionWindow-value">Стоимость:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 80%">
+                <div class="table-cell-content">
+                    <input type="number" id="editQuestionWindow-value" name="value" min="1" value="1">
+                </div>
+            </div>
+        </div>
+        <div id="editQuestionWindow-options">
+            <div class="table-row" id="editQuestionWindow-option1-row">
+                <div class="table-cell" style="width: 20%">
+                    <div class="table-cell-content, right_label">
+                        <input type="radio" name="options" value="1">
+                    </div>
+                </div>
+                <div class="table-cell" style="width: 70%">
+                    <div class="table-cell-content">
+                        <input type="text" name="option-text1" required value="текст ответа 1">
+                    </div>
+                </div>
+                <div class="table-cell" style="width: 10%">
+                    <div class="table-cell-content">
+                        <button onclick="onRemoveQuestionOption(1)" type="button" class="remove-button">&times;</button>
+                    </div>
+                </div>
+            </div>
+            <div class="table-row" id="editQuestionWindow-option2-row">
+                <div class="table-cell" style="width: 20%">
+                    <div class="table-cell-content, right_label">
+                        <input type="radio" name="options" value="2">
+                    </div>
+                </div>
+                <div class="table-cell" style="width: 70%">
+                    <div class="table-cell-content">
+                        <input type="text" name="option-text2" required value="текст ответа 2">
+                    </div>
+                </div>
+                <div class="table-cell" style="width: 10%">
+                    <div class="table-cell-content">
+                        <button onclick="onRemoveQuestionOption(2)" type="button" class="remove-button">&times;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button onclick="onAddQuestionOption()" type="button" class="dialog-button">Добавить ответ</button>
+        <button type="submit" id="editQuestionWindow-submit" class="dialog-button">Сохранить</button>
+        <button onclick="showMainMenu()" type="button" class="dialog-button-close">Закрыть</button>
     </form>
 </div>
 <div id="personalInfo" style="right: 100px; position: absolute;">
@@ -472,5 +562,23 @@
         let target = event.target || event.srcElement; // IE
         let answerId = Number.parseInt(target.value);
         questionWindow.sendAnswer(answerId);
+    }
+
+    function showCreateQuestion() {
+        editQuestionWindow.setNewQuestion();
+        editQuestionWindow.show();
+    }
+
+    function onAddQuestionOption() {
+        editQuestionWindow.addOption();
+    }
+
+    function onRemoveQuestionOption(id) {
+        editQuestionWindow.removeOption(id);
+    }
+
+    function doSubmitQuestionWindow() {
+        editQuestionWindow.doSubmit();
+        return false;
     }
 </script>
