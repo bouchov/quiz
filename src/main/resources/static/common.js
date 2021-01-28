@@ -23,8 +23,46 @@ class Log {
 var log = new Log();
 var modalWindow;
 
-class WebForm {
+class HttpCommunicator {
     constructor(name) {
+        this.log = new Log(name);
+    }
+
+    sendJson(xhttp, url, value) {
+        xhttp.open('POST', url, true);
+        xhttp.setRequestHeader('Content-type', 'application/json');
+        if (value !== undefined) {
+            let body = JSON.stringify(value);
+            this.log.log('POST', url, body)
+            xhttp.send(body);
+        } else {
+            this.log.log('POST', url)
+            xhttp.send();
+        }
+    }
+
+    sendPost(xhttp, url, content) {
+        xhttp.open('POST', url, true);
+        xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        if (content !== undefined) {
+            this.log.log('POST', url, content)
+            xhttp.send(content);
+        } else {
+            this.log.log('POST', url)
+            xhttp.send();
+        }
+    }
+
+    sendGet(xhttp, url) {
+        xhttp.open('GET', url, true);
+        this.log.log('GET', url)
+        xhttp.send();
+    }
+}
+
+class WebForm extends HttpCommunicator {
+    constructor(name) {
+        super(name);
         this.name = name;
         this.log = new Log(name);
         this.element = document.getElementById(name);
@@ -69,35 +107,29 @@ class WebForm {
         return this.element.style.display === 'block';
     }
 
-    sendJson(xhttp, url, value) {
-        xhttp.open('POST', url, true);
-        xhttp.setRequestHeader('Content-type', 'application/json');
-        if (value !== undefined) {
-            let body = JSON.stringify(value);
-            this.log.log('POST', url, body)
-            xhttp.send(body);
-        } else {
-            this.log.log('POST', url)
-            xhttp.send();
-        }
+}
+
+class WebControl extends HttpCommunicator {
+    constructor(name) {
+        super(name)
+        this.control = document.getElementById(name);
+        this.log = new Log(name);
+        this.loaded = false;
     }
 
-    sendPost(xhttp, url, content) {
-        xhttp.open('POST', url, true);
-        xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-        if (content !== undefined) {
-            this.log.log('POST', url, content)
-            xhttp.send(content);
-        } else {
-            this.log.log('POST', url)
-            xhttp.send();
+    load() {
+        if (!this.loaded) {
+            this.log.log('loadData');
+            this.loadData();
         }
+        this.loaded = true;
     }
 
-    sendGet(xhttp, url) {
-        xhttp.open('GET', url, true);
-        this.log.log('GET', url)
-        xhttp.send();
+    reset() {
+        this.loaded = false;
+    }
+
+    loadData() {
     }
 }
 

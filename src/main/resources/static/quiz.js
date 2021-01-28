@@ -2,6 +2,7 @@ class MessageWindow extends WebForm {
     constructor() {
         super('messageWindow');
         this.text = document.getElementById('messageWindow-text');
+        this.submit = document.getElementById('messageWindow-submit');
     }
 
     showMessage(text, callback) {
@@ -12,6 +13,10 @@ class MessageWindow extends WebForm {
         this.show(callback);
     }
 
+    show(callback) {
+        super.show(callback);
+        this.submit.focus();
+    }
 
     dismiss() {
         if (this.hide()) {
@@ -304,6 +309,9 @@ class QuizWindow extends WebForm {
             } else {
                 this.view.insertAdjacentHTML('beforeend', '<p>Вопросов: ' + quiz.questionsNumber + '</p>');
             }
+            if (quiz.status === 'FINISHED') {
+                this.view.insertAdjacentHTML('beforeend', '<p>Викторина окончена</p>');
+            }
         }
     }
 
@@ -335,6 +343,11 @@ class QuizWindow extends WebForm {
             this.editButton.style.display = 'inline';
         } else {
             this.editButton.style.display = 'none';
+        }
+        if (this.quiz.status === 'ACTIVE') {
+            this.startButton.style.display = 'inline';
+        } else {
+            this.startButton.style.display = 'none';
         }
     }
 }
@@ -437,17 +450,20 @@ class EditQuizWindow extends WebForm {
     }
 }
 
-class WebFormWithCategory extends WebForm {
-    constructor(id) {
-        super(id);
-        this.category = document.getElementById(id + '-category');
-        this.categoryLoaded = false;
+class CategoryControl extends WebControl {
+    constructor(name) {
+        super(name);
     }
 
-    loadCategoryList() {
-        if (this.categoryLoaded) {
-            return;
-        }
+    setCategory(categoryId) {
+        this.control.value = categoryId;
+    }
+
+    getCategory() {
+        return Number.parseInt(this.control.value);
+    }
+
+    loadData() {
         let form = this;
         let xhttp = new XMLHttpRequest();
 
@@ -456,9 +472,9 @@ class WebFormWithCategory extends WebForm {
                 if (this.status === 200) {
                     form.log.log('WEB: <<< ' + xhttp.responseText);
                     let categories = JSON.parse(xhttp.responseText);
-                    form.categoryLoaded = true;
                     form.loadCategoryListData(categories);
                 } else {
+                    form.reset();
                     form.log.warn('error load categories: ', xhttp.responseText);
                 }
             }
@@ -467,18 +483,19 @@ class WebFormWithCategory extends WebForm {
     }
 
     loadCategoryListData(categories) {
-        this.category.innerHTML = '<option selected value="0">Все категории</option>';
+        this.control.innerHTML = '<option selected value="0">Все категории</option>';
         let form = this;
         categories.forEach(function(category){
-            form.category.insertAdjacentHTML('beforeend',
+            form.control.insertAdjacentHTML('beforeend',
                 '<option value="' + category.id + '">' + category.name + '</option>');
         });
     }
 }
 
-class QuestionListWindow extends WebFormWithCategory {
+class QuestionListWindow extends WebForm {
     constructor() {
         super('questionListWindow');
+        this.category = new CategoryControl('questionListWindow-category')
         this.view = document.getElementById('questionListWindow-view');
         this.nextPage = document.getElementById('questionListWindow-nextPage');
         this.prevPage = document.getElementById('questionListWindow-prevPage');
@@ -501,7 +518,7 @@ class QuestionListWindow extends WebFormWithCategory {
         this.quizId = quizId;
         this.view.innerHTML = 'Список пуст';
         this.resetPage();
-        this.loadCategoryList();
+        this.category.load();
     }
 
     beforeShow() {
@@ -593,8 +610,8 @@ class QuestionListWindow extends WebFormWithCategory {
             }
         };
         let categoryId = null;
-        if (this.category.value > 0) {
-            categoryId = Number.parseInt(this.category.value);
+        if (this.category.getCategory() > 0) {
+            categoryId = this.category.getCategory();
         }
         this.sendJson(xhttp, '/questions/list', {
             categoryId: categoryId,
@@ -638,10 +655,10 @@ class QuestionListWindow extends WebFormWithCategory {
     }
 }
 
-class EditQuestionWindow extends WebFormWithCategory {
+class EditQuestionWindow extends WebForm {
     constructor() {
         super('editQuestionWindow');
-        this.category = document.getElementById('editQuestionWindow-category');
+        this.category = new CategoryControl('editQuestionWindow-category');
         this.text = document.getElementById('editQuestionWindow-text');
         this.value = document.getElementById('editQuestionWindow-value');
         this.options = document.getElementById('editQuestionWindow-options');
@@ -658,8 +675,8 @@ class EditQuestionWindow extends WebFormWithCategory {
     setQuestion(question) {
         this.questionId = question.id;
         this.question = question;
-        this.loadCategoryList();
-        this.category.value = question.categoryId;
+        this.category.load();
+        this.category.setCategory(question.categoryId);
         this.text.value = question.text;
         this.value.value = question.value;
         this.writeOptions();
@@ -722,7 +739,7 @@ class EditQuestionWindow extends WebFormWithCategory {
     }
 
     doSubmit() {
-        if (this.category.value <= 0
+        if (this.category.getCategory() <= 0
             || this.text.value.length <= 0
             || this.value.value <= 0) {
             return false;
@@ -736,7 +753,7 @@ class EditQuestionWindow extends WebFormWithCategory {
         if (answer === undefined) {
             return false;
         }
-        let categoryId = Number.parseInt(this.category.value);
+        let categoryId = this.category.getCategory();
         let options = [];
         forInputs(this.element.id, 'text', function (text) {
             if (text.name.startsWith('option-text')) {
