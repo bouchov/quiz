@@ -1,18 +1,17 @@
 package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.*;
-import com.bouchov.quiz.protocol.ChangedCollectionBean;
-import com.bouchov.quiz.protocol.QuizBean;
-import com.bouchov.quiz.protocol.QuizResultBean;
+import com.bouchov.quiz.protocol.*;
 import com.bouchov.quiz.services.QuizService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -54,22 +53,26 @@ class QuizController extends AbstractController {
     }
 
     @RequestMapping("/list")
-    public List<QuizBean> list(
-            @RequestParam(required = false) String name) {
+    public PageBean<QuizBean> list(
+            @RequestBody QuizFilterBean filter) {
         Optional<User> optional = getUser(session, userRepository);
         QuizStatus[] statuses = STATUS_FOR_PLAY;
         if (optional.isPresent() && optional.get().getRole() == UserRole.ADMIN) {
             statuses = STATUS_FOR_EDIT;
         }
-        var list = new ArrayList<QuizBean>();
-        if (name == null || name.isEmpty()) {
-            quizRepository.findAllByStatus(statuses).forEach(
-                    (e) -> list.add(new QuizBean(e)));
+        int pageNumber = filter.getPage() == null ? 0 : filter.getPage();
+        int pageSize = filter.getSize() == null ? 10 : filter.getSize();
+        Sort sort = Sort.by("name");
+        PageRequest pageable = PageRequest.of(pageNumber, pageSize, sort);
+        Page<Quiz> page;
+        if (filter.getName() == null || filter.getName().isEmpty()) {
+            page = quizRepository.findAllByStatus(pageable, statuses);
         } else {
-            quizRepository.findAllByNameAndStatus(name, statuses).forEach(
-                    (e) -> list.add(new QuizBean(e)));
+            page  = quizRepository.findAllByNameAndStatus(filter.getName(), pageable, statuses);
         }
-        return list;
+        PageBean<QuizBean> bean = new PageBean<>(page.getNumber(), page.getSize(), page.getTotalPages());
+        bean.setElements(page.map(QuizBean::new).getContent());
+        return bean;
     }
 
     @PostMapping("/create")

@@ -220,45 +220,94 @@ class RegisterWindow extends WebForm {
     }
 }
 
-class QuizListWindow extends WebForm {
+class PagedWebForm extends WebForm {
+    constructor(id) {
+        super(id);
+        this.nextPage = document.getElementById(id + '-nextPage');
+        this.prevPage = document.getElementById(id + '-prevPage');
+        this.submit = document.getElementById(id + '-submit');
+
+        this.pageNumber = 0;
+        this.total = undefined;
+        this.pageSize = 10;
+    }
+
+    reset() {
+        this.pageNumber = 0;
+        this.total = undefined;
+    }
+
+    beforeShow() {
+        super.beforeShow();
+
+        if (this.pageNumber <= 0) {
+            this.prevPage.disabled = true;
+        } else {
+            this.prevPage.disabled = false;
+        }
+        if (this.total !== undefined) {
+            if (this.submit) {
+                this.submit.disabled = false;
+            }
+            if (this.pageNumber + 1 >= this.total) {
+                this.nextPage.disabled = true;
+            } else {
+                this.nextPage.disabled = false;
+            }
+        } else {
+            if (this.submit) {
+                this.submit.disabled = true;
+            }
+            this.nextPage.disabled = true;
+            this.loadPage();
+        }
+    }
+
+    loadPage() {
+    }
+
+    loadNextPage(inc) {
+        let nextPage = this.pageNumber + inc;
+        if (nextPage >= 0) {
+            if (this.total !== undefined) {
+                if (nextPage < this.total) {
+                    this.pageNumber = nextPage;
+                    this.loadPage();
+                }
+            }
+        }
+    }
+}
+
+class QuizListWindow extends PagedWebForm {
     constructor() {
         super('quizListWindow');
         this.quizName = document.getElementById('quizListWindow-quizName');
-        this.quizList = document.getElementById('quizListWindow-quizList');
+        this.view = document.getElementById('quizListWindow-view');
+
         this.quizArray = [];
-        this.reload = true;
+
+        this.view.innerHTML = 'Список пуст';
     }
 
     beforeShow() {
         super.beforeShow();
         mainMenu.quiz.disabled = true;
-        if (this.reload) {
-            this.loadQuizList(this.quizName.value);
-        }
     }
 
-    show(callback) {
-        super.show(callback);
-    }
 
-    loadQuizList(name) {
+    loadPage() {
+        let name = this.quizName.value;
         let form = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState === 4) {
+                form.hide();
                 if (this.status === 200) {
                     form.log.log('WEB: <<< ' + xhttp.responseText);
                     form.reload = false;
-                    form.quizArray = JSON.parse(xhttp.responseText);
-                    form.quizList.innerHTML = '';
-                    form.quizArray.forEach(function(quiz) {
-                        let quizName = quiz.name;
-                        if (quiz.status === 'DRAFT') {
-                            quizName += ' *';
-                        }
-                        form.quizList.insertAdjacentHTML('beforeend',
-                            '<button type="button" onclick="onSelectQuiz()" value="' + quiz.id + '" class="dialog-button">' + quizName + '</button>');
-                    })
+                    let data = JSON.parse(xhttp.responseText);
+                    form.loadQuizListData(data);
                     form.show();
                 } else if (this.status === 401) {
                     loginWindow.show(function () {form.show()});
@@ -268,10 +317,33 @@ class QuizListWindow extends WebForm {
                 }
             }
         };
-        if (!name) {
-            this.sendPost(xhttp, '/quiz/list');
+
+        this.sendJson(xhttp, '/quiz/list',
+            {
+                name: name,
+                page: this.pageNumber,
+                size: this.pageSize
+            });
+    }
+
+    loadQuizListData(page) {
+        this.view.innerHTML = '';
+        this.total = page.total;
+        this.pageNumber = page.page;
+        if (!page.elements || page.elements.length === 0) {
+            this.view.innerHTML = 'Список пуст';
         } else {
-            this.sendPost(xhttp, '/quiz/list', 'name=' + name);
+            let form = this;
+            this.quizArray = page.elements;
+            this.view.innerHTML = '';
+            this.quizArray.forEach(function(quiz) {
+                let quizName = quiz.name;
+                if (quiz.status === 'DRAFT') {
+                    quizName += ' *';
+                }
+                form.view.insertAdjacentHTML('beforeend',
+                    '<button type="button" onclick="onSelectQuiz()" value="' + quiz.id + '" class="dialog-button">' + quizName + '</button>');
+            })
         }
     }
 
@@ -418,7 +490,7 @@ class EditQuizWindow extends WebForm {
                     let quiz = JSON.parse(xhttp.responseText);
                     form.setQuiz(quiz);
                     form.log.log('quiz saved: ', xhttp.responseText);
-                    quizListWindow.reload = true;
+                    quizListWindow.reset();
                     messageWindow.showMessage('Викторина успешно сохранена', function () {form.show()});
                 } else if (this.status === 401) {
                     loginWindow.show(function () {form.show()});
@@ -492,54 +564,22 @@ class CategoryControl extends WebControl {
     }
 }
 
-class QuestionListWindow extends WebForm {
+class QuestionListWindow extends PagedWebForm {
     constructor() {
         super('questionListWindow');
         this.category = new CategoryControl('questionListWindow-category')
         this.view = document.getElementById('questionListWindow-view');
-        this.nextPage = document.getElementById('questionListWindow-nextPage');
-        this.prevPage = document.getElementById('questionListWindow-prevPage');
-        this.submit = document.getElementById('questionListWindow-submit');
 
-        this.pageNumber = 0;
-        this.total = undefined;
-        this.pageSize = 10;
         this.quizId = undefined;
 
         this.view.innerHTML = 'Список пуст';
     }
 
-    resetPage() {
-        this.pageNumber = 0;
-        this.total = undefined;
-    }
-
     setQuizId(quizId) {
         this.quizId = quizId;
         this.view.innerHTML = 'Список пуст';
-        this.resetPage();
+        this.reset();
         this.category.load();
-    }
-
-    beforeShow() {
-        super.beforeShow();
-        if (this.pageNumber <= 0) {
-            this.prevPage.disabled = true;
-        } else {
-            this.prevPage.disabled = false;
-        }
-        if (this.total !== undefined) {
-            this.submit.disabled = false;
-            if (this.pageNumber + 1 >= this.total) {
-                this.nextPage.disabled = true;
-            } else {
-                this.nextPage.disabled = false;
-            }
-        } else {
-            this.submit.disabled = true;
-            this.nextPage.disabled = false;
-            this.loadQuestionList();
-        }
     }
 
     saveQuestionList() {
@@ -576,19 +616,7 @@ class QuestionListWindow extends WebForm {
             {added: addedQuestions, removed: removedQuestions});
     }
 
-    loadNextPage(inc) {
-        let nextPage = this.pageNumber + inc;
-        if (nextPage >= 0) {
-            if (this.total !== undefined) {
-                if (nextPage < this.total) {
-                    this.pageNumber = nextPage;
-                    this.loadQuestionList();
-                }
-            }
-        }
-    }
-
-    loadQuestionList() {
+    loadPage() {
         this.submit.disabled = true;
         let form = this;
         let xhttp = new XMLHttpRequest();
@@ -856,7 +884,7 @@ class QuestionWindow extends WebForm {
             this.log.log("close connection");
         }
         if (this.finished) {
-            quizListWindow.reload = true;
+            quizListWindow.reset();
             quizListWindow.show();
         } else {
             quizWindow.show();

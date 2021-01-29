@@ -6,11 +6,9 @@ package com.bouchov.quiz.protocol;
  * Time: 9:25
  * Copyright 2014 ConnectiveGames LLC. All rights reserved.
  */
-public class QuestionFilterBean {
+public class QuestionFilterBean extends FilterBean {
     private Long categoryId;
     private Long quizId;
-    private Integer page;
-    private Integer size;
 
     public QuestionFilterBean() {
     }
@@ -31,29 +29,12 @@ public class QuestionFilterBean {
         this.quizId = quizId;
     }
 
-    public Integer getPage() {
-        return page;
-    }
-
-    public void setPage(Integer page) {
-        this.page = page;
-    }
-
-    public Integer getSize() {
-        return size;
-    }
-
-    public void setSize(Integer size) {
-        this.size = size;
-    }
-
     @Override
     public String toString() {
-        return "[QuestionFilterBean " +
-                "categoryId=" + categoryId +
+        return "[QuestionFilterBean" +
+                " super=" + super.toString() +
+                ", categoryId=" + categoryId +
                 ", quizId=" + quizId +
-                ", page=" + page +
-                ", size=" + size +
                 ']';
     }
 }
