@@ -125,12 +125,12 @@
         <div class="table-row">
             <div class="table-cell" style="width: 50%">
                 <div class="table-cell-content">
-                    <button onclick="onPrevPage()" type="button" id="quizListWindow-prevPage" class="dialog-button" title="Назад">&lt;&lt;</button>
+                    <button onclick="onQuizListWindowPrevPage()" type="button" id="quizListWindow-prevPage" class="dialog-button" title="Назад">&lt;&lt;</button>
                 </div>
             </div>
             <div class="table-cell" style="width: 50%">
                 <div class="table-cell-content">
-                    <button onclick="onNextPage()" type="button" id="quizListWindow-nextPage" class="dialog-button" title="Вперёд">&gt;&gt;</button>
+                    <button onclick="onQuizListWindowNextPage()" type="button" id="quizListWindow-nextPage" class="dialog-button" title="Вперёд">&gt;&gt;</button>
                 </div>
             </div>
         </div>
@@ -338,7 +338,7 @@
         <div class="table-row">
             <div class="table-cell" style="width: 20%">
                 <div class="table-cell-content">
-                    <button onclick="onPrevPage()" type="button" id="questionListWindow-prevPage" class="dialog-button" title="Назад">&lt;&lt;</button>
+                    <button onclick="onQuestionListWindowPrevPage()" type="button" id="questionListWindow-prevPage" class="dialog-button" title="Назад">&lt;&lt;</button>
                 </div>
             </div>
             <div class="table-cell" style="width: 20%">
@@ -358,7 +358,7 @@
             </div>
             <div class="table-cell" style="width: 20%">
                 <div class="table-cell-content">
-                    <button onclick="onNextPage()" type="button" id="questionListWindow-nextPage" class="dialog-button" title="Вперёд">&gt;&gt;</button>
+                    <button onclick="onQuestionListWindowNextPage()" type="button" id="questionListWindow-nextPage" class="dialog-button" title="Вперёд">&gt;&gt;</button>
                 </div>
             </div>
         </div>
@@ -518,6 +518,14 @@
         quizWindow.show();
     }
 
+    function onQuizListWindowPrevPage() {
+        quizListWindow.loadNextPage(-1);
+    }
+
+    function onQuizListWindowNextPage() {
+        quizListWindow.loadNextPage(1);
+    }
+
     function showEditQuizWindowFromView() {
         let quiz = quizListWindow.getQuiz(quizWindow.quizId);
         editQuizWindow.setQuiz(quiz);
@@ -548,11 +556,11 @@
         questionListWindow.loadPage();
     }
 
-    function onPrevPage() {
+    function onQuestionListWindowPrevPage() {
         questionListWindow.loadNextPage(-1);
     }
 
-    function onNextPage() {
+    function onQuestionListWindowNextPage() {
         questionListWindow.loadNextPage(1);
     }
 

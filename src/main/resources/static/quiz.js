@@ -282,6 +282,7 @@ class PagedWebForm extends WebForm {
 class QuizListWindow extends PagedWebForm {
     constructor() {
         super('quizListWindow');
+        this.pageSize = 3;
         this.quizName = document.getElementById('quizListWindow-quizName');
         this.view = document.getElementById('quizListWindow-view');
 
