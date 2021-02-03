@@ -86,18 +86,20 @@ class WebForm extends HttpCommunicator {
 
     beforeShow() {
         this.log.log('beforeShow');
+        return true;
     }
 
     show(callback) {
         if (callback !== undefined) {
             this.callback = callback;
         }
-        this.beforeShow();
-        if (modalWindow !== undefined) {
-            modalWindow.hide();
+        if (this.beforeShow()) {
+            if (modalWindow !== undefined) {
+                modalWindow.hide();
+            }
+            modalWindow = this;
+            this.element.style.display='block';
         }
-        modalWindow = this;
-        this.element.style.display='block';
     }
 
     hide() {

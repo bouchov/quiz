@@ -50,7 +50,6 @@ class MainMenu extends WebForm {
     }
 
     beforeShow() {
-        super.beforeShow();
         this.quiz.disabled = false;
         if (personalInfo.user && personalInfo.user.role === 'ADMIN') {
             this.createQuiz.disabled = false;
@@ -65,6 +64,7 @@ class MainMenu extends WebForm {
             this.createQuestion.style.display = 'none';
         }
         this.login.disabled = false;
+        return super.beforeShow();
     }
 
     show() {
@@ -128,8 +128,8 @@ class LoginWindow extends WebForm {
     }
 
     beforeShow() {
-        super.beforeShow();
         this.submitButton.disabled = false;
+        return super.beforeShow();
     }
 
 
@@ -184,12 +184,12 @@ class RegisterWindow extends WebForm {
     }
 
     beforeShow() {
-        super.beforeShow();
         this.submit.disabled = false;
         this.callback = loginWindow.callback;
         if (this.userName.value === '') {
             this.userName.value = loginWindow.userName.value;
         }
+        return super.beforeShow();
     }
 
 
@@ -253,8 +253,6 @@ class PagedWebForm extends WebForm {
     }
 
     beforeShow() {
-        super.beforeShow();
-
         if (this.pageNumber <= 0) {
             this.prevPage.disabled = true;
         } else {
@@ -275,7 +273,9 @@ class PagedWebForm extends WebForm {
             }
             this.nextPage.disabled = true;
             this.loadPage();
+            return false;
         }
+        return super.beforeShow();
     }
 
     loadPage() {
@@ -307,8 +307,8 @@ class QuizListWindow extends PagedWebForm {
     }
 
     beforeShow() {
-        super.beforeShow();
         mainMenu.quiz.disabled = true;
+        return super.beforeShow();
     }
 
 
@@ -426,7 +426,6 @@ class QuizWindow extends WebForm {
     }
 
     beforeShow() {
-        super.beforeShow();
         if (personalInfo.isAdmin() && this.quiz.status === 'DRAFT') {
             this.editButton.style.display = 'inline';
         } else {
@@ -437,6 +436,7 @@ class QuizWindow extends WebForm {
         } else {
             this.startButton.style.display = 'none';
         }
+        return super.beforeShow();
     }
 }
 
@@ -526,7 +526,6 @@ class EditQuizWindow extends WebForm {
     }
 
     beforeShow() {
-        super.beforeShow();
         this.submit.disabled = false;
         if (this.quiz.id && this.quiz.selectionStrategy === 'QUIZ' && this.quiz.status === 'DRAFT') {
             this.selectQuestions.disabled = false;
@@ -535,6 +534,7 @@ class EditQuizWindow extends WebForm {
             this.selectQuestions.disabled = true;
             this.selectQuestions.style.display = 'none';
         }
+        return super.beforeShow();
     }
 }
 
@@ -727,8 +727,8 @@ class EditQuestionWindow extends WebForm {
     }
 
     beforeShow() {
-        super.beforeShow();
         this.submit.disabled = false;
+        return super.beforeShow();
     }
 
     writeOptions() {
@@ -866,7 +866,6 @@ class QuestionWindow extends WebForm {
 
 
     beforeShow() {
-        super.beforeShow();
         this.view.innerHTML = quizWindow.view.innerHTML;
         this.finished = false;
 
@@ -881,6 +880,7 @@ class QuestionWindow extends WebForm {
             form.log.log("connection closed by server");
             quizWindow.show();
         }
+        return super.beforeShow();
     }
 
     sendAnswer(answerId) {
