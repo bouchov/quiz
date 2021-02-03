@@ -6,6 +6,9 @@
     <link rel="stylesheet" type="text/css" href="quiz.css">
 </head>
 <body onload="initApp()">
+<div id="loadingWindow" class="loading">
+    <div class="center loading-spin"></div>
+</div>
 <div id="mainMenu" class="modal">
     <form class="modal-content animate">
         <button onclick="showQuizListWindow(true)" type="button" id="mainMenu-quiz" class="dialog-button">Викторина</button>
@@ -13,11 +16,6 @@
         <button onclick="showCreateQuestion()" type="button" id="mainMenu-createQuestion" class="dialog-button">Новый вопрос</button>
         <button onclick="showLoginWindow()" type="button" id="mainMenu-login" class="dialog-button">Войти</button>
     </form>
-</div>
-<div id="loadingWindow" class="loading" onclick="hideLoadingWindow()">
-    <div class="loading-content">
-        <div class="loading-spin"></div>
-    </div>
 </div>
 <div id="messageWindow" class="modal">
     <span class="close" onclick="doHideMessageWindow()" title="Close">&times;</span>
@@ -469,6 +467,16 @@
 <script type="text/javascript" src="common.js"></script>
 <script type="text/javascript" src="quiz.js"></script>
 <script>
+    document.onreadystatechange = function() {
+        if (document.readyState !== "complete") {
+            document.querySelector("body").style.visibility = "hidden";
+            loadingWindow.show();
+        } else {
+            loadingWindow.hide();
+            document.querySelector("body").style.visibility = "visible";
+        }
+    };
+
     function initApp() {
         mainMenu.show();
     }
