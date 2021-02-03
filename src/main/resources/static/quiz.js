@@ -25,6 +25,21 @@ class MessageWindow extends WebForm {
     }
 }
 
+class LoadingWindow extends WebForm {
+    constructor() {
+        super('loadingWindow');
+    }
+
+    show(callback) {
+        this.element.style.display='block';
+    }
+
+    hide() {
+        this.element.style.display='none';
+        return true;
+    }
+}
+
 class MainMenu extends WebForm {
     constructor() {
         super('mainMenu');
@@ -981,6 +996,7 @@ function playQuizWebsocketMessageHandler(event) {
 }
 
 var mainMenu = new MainMenu();
+var loadingWindow = new LoadingWindow();
 var personalInfo = new PersonalInfo();
 var messageWindow = new MessageWindow();
 var loginWindow = new LoginWindow();

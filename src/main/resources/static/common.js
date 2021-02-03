@@ -28,7 +28,19 @@ class HttpCommunicator {
         this.log = new Log(name);
     }
 
+    overrideRequest(xhttp) {
+        let callback = xhttp.onreadystatechange;
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                loadingWindow.hide();
+                callback.call(xhttp);
+            }
+        }
+        loadingWindow.show();
+    }
+
     sendJson(xhttp, url, value) {
+        this.overrideRequest(xhttp);
         xhttp.open('POST', url, true);
         xhttp.setRequestHeader('Content-type', 'application/json');
         if (value !== undefined) {
@@ -42,6 +54,7 @@ class HttpCommunicator {
     }
 
     sendPost(xhttp, url, content) {
+        this.overrideRequest(xhttp);
         xhttp.open('POST', url, true);
         xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         if (content !== undefined) {
@@ -54,6 +67,7 @@ class HttpCommunicator {
     }
 
     sendGet(xhttp, url) {
+        this.overrideRequest(xhttp);
         xhttp.open('GET', url, true);
         this.log.log('GET', url)
         xhttp.send();

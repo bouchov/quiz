@@ -1,12 +1,18 @@
 <!DOCTYPE html>
 <html lang="ru">
+<style>
+</style>
 <head>
     <meta charset="UTF-8">
     <title>Quiz Application</title>
     <link rel="stylesheet" type="text/css" href="quiz.css">
 </head>
 <body onload="initApp()">
-
+<div id="loadingWindow" class="loading" onclick="hideLoadingWindow()">
+    <div class="loading-content">
+        <div class="loading-spin"></div>
+    </div>
+</div>
 <div id="editQuestionWindow" class="modal">
     <span class="close" onclick="showMainMenu()" title="Close">&times;</span>
     <form class="modal-content animate" onsubmit="return doSubmitQuestionWindow()">
@@ -95,7 +101,7 @@
         </div>
         <button onclick="onAddQuestionOption()" type="button" class="dialog-button">Добавить ответ</button>
         <button type="submit" id="editQuestionWindow-submit" class="dialog-button">Сохранить</button>
-        <button onclick="showMainMenu()" type="button" class="dialog-button-close">Закрыть</button>
+        <button onclick="showLoadingWindow()" type="button" class="dialog-button-close">Закрыть</button>
     </form>
 </div>
 
@@ -125,5 +131,13 @@
 
     function onRemoveQuestionOption(id) {
         editQuestionWindow.removeOption(id);
+    }
+
+    function showLoadingWindow() {
+        loadingWindow.show();
+    }
+
+    function hideLoadingWindow() {
+        loadingWindow.hide();
     }
 </script>

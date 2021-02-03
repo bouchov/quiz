@@ -14,6 +14,11 @@
         <button onclick="showLoginWindow()" type="button" id="mainMenu-login" class="dialog-button">Войти</button>
     </form>
 </div>
+<div id="loadingWindow" class="loading" onclick="hideLoadingWindow()">
+    <div class="loading-content">
+        <div class="loading-spin"></div>
+    </div>
+</div>
 <div id="messageWindow" class="modal">
     <span class="close" onclick="doHideMessageWindow()" title="Close">&times;</span>
     <form class="modal-content animate" onsubmit="return doHideMessageWindow()">
