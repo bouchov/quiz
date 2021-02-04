@@ -33,7 +33,9 @@ class HttpCommunicator {
         xhttp.onreadystatechange = function () {
             if (this.readyState === 4) {
                 loadingWindow.hide();
-                callback.call(xhttp);
+                if (callback) {
+                    callback.call(xhttp);
+                }
             }
         }
         loadingWindow.show();
