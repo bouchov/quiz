@@ -100,18 +100,22 @@ label {
 }
 
 .animate {
-    -webkit-animation: animatezoom 0.2s;
-    animation: animatezoom 0.2s
+    -webkit-animation: animatezoom 0.4s ease-out;
+    animation: animatezoom 0.4s ease-out;
 }
 
 @-webkit-keyframes animatezoom {
-    from {-webkit-transform: scale(0)}
-    to {-webkit-transform: scale(1)}
+    /*from {-webkit-transform: scale(0); opacity: 0;}*/
+    /*to {-webkit-transform: scale(1); opacity: 1;}*/
+    0% {opacity: 0;}
+    100% {opacity: 1;}
 }
 
 @keyframes animatezoom {
-    from {transform: scale(0)}
-    to {transform: scale(1)}
+    /*from {transform: scale(0); opacity: 0;}*/
+    /*to {transform: scale(1);  opacity: 1;}*/
+    0% {opacity: 0;}
+    100% {opacity: 1;}
 }
 
 .close {
