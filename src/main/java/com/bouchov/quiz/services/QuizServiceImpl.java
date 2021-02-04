@@ -65,6 +65,9 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
         if (quiz.getStatus() == QuizStatus.FINISHED) {
             return participant;
         }
+        if (quiz.getStatus() != QuizStatus.ACTIVE) {
+            throw new RuntimeException("quiz is not active");
+        }
         if (!managers.containsKey(quiz.getId())) {
             managers.computeIfAbsent(quiz.getId(),
                     (k) -> QuizManagerFactory.getInstance().createManager(this, quiz));
