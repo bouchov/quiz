@@ -12,6 +12,8 @@ public class QuizBean {
     private Long id;
     private String author;
     private String name;
+    private String clubName;
+    private Long clubId;
     private QuizType type;
     private int minPlayers;
     private int maxPlayers;
@@ -30,6 +32,8 @@ public class QuizBean {
         this.id = quiz.getId();
         this.author = quiz.getAuthor() == null ? null : quiz.getAuthor().getNickname();
         this.name = quiz.getName();
+        this.clubName = quiz.getClub().getName();
+        this.clubId = quiz.getClub().getId();
         this.type = quiz.getType();
         this.minPlayers = quiz.getMinPlayers();
         this.maxPlayers = quiz.getMaxPlayers();
@@ -62,6 +66,22 @@ public class QuizBean {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getClubName() {
+        return clubName;
+    }
+
+    public void setClubName(String clubName) {
+        this.clubName = clubName;
+    }
+
+    public Long getClubId() {
+        return clubId;
+    }
+
+    public void setClubId(Long clubId) {
+        this.clubId = clubId;
     }
 
     public QuizType getType() {
@@ -146,10 +166,12 @@ public class QuizBean {
 
     @Override
     public String toString() {
-        return "QuizBean{" +
-                "id=" + id +
+        return "[QuizBean" +
+                " id=" + id +
                 ", author='" + author + '\'' +
                 ", name='" + name + '\'' +
+                ", clubName='" + clubName + '\'' +
+                ", clubId=" + clubId +
                 ", type=" + type +
                 ", minPlayers=" + minPlayers +
                 ", maxPlayers=" + maxPlayers +
@@ -160,6 +182,6 @@ public class QuizBean {
                 ", status=" + status +
                 ", result=" + result +
                 ", questions=" + questions +
-                '}';
+                ']';
     }
 }

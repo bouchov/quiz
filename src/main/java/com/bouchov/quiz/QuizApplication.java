@@ -24,6 +24,7 @@ public class QuizApplication {
     @Transactional
     CommandLineRunner init(CategoryRepository categoryRepository,
                             UserRepository userRepository,
+                            ClubRepository clubRepository,
                             QuizRepository quizRepository,
                             QuestionRepository questionRepository) {
         return (evt) -> {
@@ -33,15 +34,16 @@ public class QuizApplication {
                 logger.info("server already initialized");
                 return;
             }
-            User user = userRepository.save(new User("admin", "admin", "Admin", UserRole.ADMIN));
+            admin = userRepository.save(new User("admin", "admin", "Admin", UserRole.ADMIN));
+            Club club = clubRepository.save(new Club("Club of " + admin.getNickname(), IdGenerator.generate(), admin));
             UserLoader userLoader = new UserLoader();
-            userLoader.load(userRepository);
+            userLoader.load(userRepository, club);
             CategoryLoader categoryLoader = new CategoryLoader();
             categoryLoader.load(categoryRepository);
             QuestionLoader questionLoader = new QuestionLoader();
             questionLoader.load(questionRepository, categoryRepository);
             QuizLoader quizLoader = new QuizLoader();
-            quizLoader.load(quizRepository, questionRepository, userRepository, user);
+            quizLoader.load(quizRepository, questionRepository, userRepository, admin, club);
             logger.info("service successfully initialized");
         };
     }

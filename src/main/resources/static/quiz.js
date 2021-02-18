@@ -46,7 +46,6 @@ class MainMenu extends WebForm {
         this.quiz = document.getElementById('mainMenu-quiz');
         this.createQuiz = document.getElementById('mainMenu-createQuiz');
         this.createQuestion = document.getElementById('mainMenu-createQuestion');
-        this.login = document.getElementById('mainMenu-login');
     }
 
     beforeShow() {
@@ -63,7 +62,6 @@ class MainMenu extends WebForm {
             this.createQuiz.style.display = 'none';
             this.createQuestion.style.display = 'none';
         }
-        this.login.disabled = false;
         return super.beforeShow();
     }
 
@@ -92,6 +90,30 @@ class PersonalInfo extends WebForm {
         this.user = user;
         localStorage.setItem(this.KEY_USER, JSON.stringify(user));
         this.element.innerHTML='<p>' + user.nickname + '</p>';
+    }
+
+    initApplication() {
+        if (this.user.id) {
+            let form = this;
+            let xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState === 4) {
+                    if (this.status === 200) {
+                        form.log.log('WEB: <<< ' + xhttp.responseText);
+                        let user = JSON.parse(this.responseText);
+                        form.log.log('user is logged in', user);
+                        mainMenu.show();
+                    } else {
+                        form.log.warn('Session expired');
+                        loginWindow.show();
+                    }
+                }
+            };
+            this.sendGet(xhttp, '/ping');
+        } else {
+            this.log.log('user is not logged in')
+            loginWindow.show();
+        }
     }
 
     isAdmin() {
@@ -440,9 +462,54 @@ class QuizWindow extends WebForm {
     }
 }
 
+class ClubControl extends WebControl {
+    constructor(name) {
+        super(name);
+    }
+
+    setClub(clubId) {
+        this.control.value = clubId;
+    }
+
+    getClub() {
+        return Number.parseInt(this.control.value);
+    }
+
+    loadData() {
+        let form = this;
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    let page = JSON.parse(xhttp.responseText);
+                    form.loadClubListData(page);
+                } else {
+                    form.reset();
+                    form.log.warn('error load clubs: ', xhttp.responseText);
+                }
+            }
+        };
+        this.sendJson(xhttp, '/club/list');
+    }
+
+    loadClubListData(page) {
+        this.control.innerHTML = '<option selected value="0">Выберите клуб</option>';
+        if (page.elements) {
+            let form = this;
+            page.elements.forEach(function(club){
+                form.control.insertAdjacentHTML('beforeend',
+                    '<option value="' + club.id + '">' + club.name + '</option>');
+            });
+        }
+    }
+}
+
 class EditQuizWindow extends WebForm {
     constructor() {
         super('editQuizWindow');
+        this.club = new ClubControl('editQuizWindow-club');
         this.name = document.getElementById('editQuizWindow-name')
         this.minPlayers = document.getElementById('editQuizWindow-minPlayers')
         this.maxPlayers = document.getElementById('editQuizWindow-maxPlayers')
@@ -457,6 +524,7 @@ class EditQuizWindow extends WebForm {
 
     setNewQuiz() {
         let quiz = {id: null,
+            clubId: 0,
             name: '',
             minPlayers: 1,
             maxPlayers: 2,
@@ -469,7 +537,8 @@ class EditQuizWindow extends WebForm {
     setQuiz(quiz) {
         this.quizId = quiz.id;
         this.quiz = quiz;
-
+        this.club.load();
+        this.club.setClub(quiz.clubId);
         this.name.value = quiz.name;
         this.minPlayers.value = quiz.minPlayers;
         this.maxPlayers.value = quiz.maxPlayers;
@@ -483,10 +552,12 @@ class EditQuizWindow extends WebForm {
         let minPlayers = Number.parseInt(this.minPlayers.value);
         let maxPlayers = Number.parseInt(this.maxPlayers.value);
         let questionsNumber = Number.parseInt(this.questionsNumber.value);
+        let clubId = this.club.getClub();
 
         this.submit.disabled = true;
         let quiz = {
             id               :this.quizId,
+            clubId           :clubId,
             name             :this.name.value,
             type             :'SIMPLE',
             minPlayers       :minPlayers,
@@ -583,7 +654,7 @@ class CategoryControl extends WebControl {
 class QuestionListWindow extends PagedWebForm {
     constructor() {
         super('questionListWindow');
-        this.category = new CategoryControl('questionListWindow-category')
+        this.category = new CategoryControl('questionListWindow-category');
         this.view = document.getElementById('questionListWindow-view');
 
         this.quizId = undefined;

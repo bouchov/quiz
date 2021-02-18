@@ -14,7 +14,6 @@
         <button onclick="showQuizListWindow(true)" type="button" id="mainMenu-quiz" class="dialog-button">Викторина</button>
         <button onclick="showCreateQuizWindow()" type="button" id="mainMenu-createQuiz" class="dialog-button">Новая викторина</button>
         <button onclick="showCreateQuestion()" type="button" id="mainMenu-createQuestion" class="dialog-button">Новый вопрос</button>
-        <button onclick="showLoginWindow()" type="button" id="mainMenu-login" class="dialog-button">Войти</button>
     </form>
 </div>
 <div id="messageWindow" class="modal">
@@ -144,6 +143,23 @@
     <span class="close" onclick="showQuizListWindow()" title="Close">&times;</span>
     <form class="modal-content animate" onsubmit="return doSubmitEditQuiz()">
         <h1>Редактор викторины</h1>
+        <div class="table-row">
+            <div class="table-cell" style="width: 30%">
+                <div class="table-cell-content, right_label">
+                    <label for="editQuizWindow-club">Клуб:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 70%">
+                <div class="table-cell-content,tooltip">
+                    <div class="tooltip" style="width: 100%">
+                        <select id="editQuizWindow-club" name="club" required>
+                            <option disabled selected value="0">Выберите клуб</option>
+                        </select>
+                        <span class="tooltip-text">Выберите клуб</span>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="table-row">
             <div class="table-cell" style="width: 30%">
                 <div class="table-cell-content, right_label">
@@ -468,21 +484,17 @@
 <script type="text/javascript" src="quiz.js"></script>
 <script>
     document.onreadystatechange = function() {
-        if (document.readyState !== "complete") {
-            document.querySelector("body").style.visibility = "hidden";
+        if (document.readyState !== 'complete') {
+            document.querySelector('body').style.visibility = 'hidden';
             loadingWindow.show();
         } else {
             loadingWindow.hide();
-            document.querySelector("body").style.visibility = "visible";
+            document.querySelector('body').style.visibility = 'visible';
         }
     };
 
     function initApp() {
-        mainMenu.show();
-    }
-
-    function showLoginWindow() {
-        loginWindow.show();
+        personalInfo.initApplication();
     }
 
     function showMainMenu() {

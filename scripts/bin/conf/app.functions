@@ -1,0 +1,31 @@
+warn () {
+    echo "$0:" "$@" >&2
+}
+
+die () {
+    rc=$1
+    shift
+    warn "$@"
+    exit $rc
+}
+
+check_pids() {
+    [ -d "$rundir" ] || return 0
+    local app="$1"
+
+    local pids=($(ls -1 "${rundir}/$app".* 2> /dev/null))
+    if [[ ${#pids[@]} == 1 ]]; then
+      local pid="${pids##*.}"
+      local procdir="/proc/${pid}"
+      if [ -d "$procdir" ]; then
+          die 5 "check-pids: $app is already started with PID=$pid"
+      else
+        warn "check-pids: an orphan PID='$pid' for $app_name encountered, removing $pids"
+        rm "$pids" || die 1 "could not remove $pids"
+      fi
+    else
+      if [[ ${#pids} -gt 0 ]]; then
+        die 5 "multiple PID files in ${rundir}"
+      fi
+    fi
+}

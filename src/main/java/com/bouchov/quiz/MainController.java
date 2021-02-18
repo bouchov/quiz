@@ -69,11 +69,26 @@ class MainController extends AbstractController {
         return new UserBean(user);
     }
 
+    @RequestMapping("/ping")
+    public UserBean ping() {
+        Long userId = (Long) session.getAttribute(SessionAttributes.USER_ID);
+        if (userId == null) {
+            throw new UserNotFoundException("session expired");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        return new UserBean(user);
+    }
+
     @ResponseStatus(HttpStatus.NOT_FOUND)
     static class UserNotFoundException extends RuntimeException {
 
         public UserNotFoundException(String login) {
             super("could not find user '" + login + "'.");
+        }
+
+        public UserNotFoundException(Long userId) {
+            super("could not find user " + userId + ".");
         }
     }
 

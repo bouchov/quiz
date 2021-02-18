@@ -1,8 +1,7 @@
 package com.bouchov.quiz.entities;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.Set;
 
 @Table(name = "users")
 @Entity
@@ -13,6 +12,8 @@ public class User extends BasicEntity {
     private String nickname;
     private String password;
     private UserRole role;
+    @ManyToMany(fetch = FetchType.LAZY)
+    private Set<Club> clubs;
 
     public User() {
     }
@@ -54,5 +55,23 @@ public class User extends BasicEntity {
 
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    public Set<Club> getClubs() {
+        return clubs;
+    }
+
+    public void setClubs(Set<Club> clubs) {
+        this.clubs = clubs;
+    }
+
+    @Override
+    public String toString() {
+        return "[User" +
+                " login='" + login + '\'' +
+                ", nickname='" + nickname + '\'' +
+                ", password='" + password + '\'' +
+                ", role=" + role +
+                ']';
     }
 }

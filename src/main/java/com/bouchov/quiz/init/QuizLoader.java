@@ -22,9 +22,10 @@ public class QuizLoader {
     }
 
     public void load(QuizRepository repository,
-                     QuestionRepository questionRepo,
-                     UserRepository userRepo,
-                     User defaultAuthor)
+            QuestionRepository questionRepo,
+            UserRepository userRepo,
+            User defaultAuthor,
+            Club club)
             throws IOException {
         try(InputStream stream = QuizLoader.class.getResourceAsStream(fileName)) {
             Objects.requireNonNull(stream, "file not found");
@@ -45,6 +46,7 @@ public class QuizLoader {
                     questionsNumber = allQuestions.size();
                 }
                 Quiz entity = new Quiz(author,
+                        club,
                         quiz.getName(),
                         quiz.getType(),
                         quiz.getMinPlayers(),

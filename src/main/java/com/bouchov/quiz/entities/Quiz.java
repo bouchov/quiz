@@ -11,6 +11,8 @@ public class Quiz extends BasicEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private User author;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Club club;
     @Column(unique = true)
     private String name;
     private QuizType type;
@@ -32,6 +34,7 @@ public class Quiz extends BasicEntity {
     }
 
     public Quiz(User author,
+            Club club,
             String name,
             QuizType type,
             int minPlayers,
@@ -42,6 +45,7 @@ public class Quiz extends BasicEntity {
             Date startedDate,
             QuizStatus status) {
         this.author = author;
+        this.club = club;
         this.name = name;
         this.type = type;
         this.minPlayers = minPlayers;
@@ -59,6 +63,14 @@ public class Quiz extends BasicEntity {
 
     public void setAuthor(User author) {
         this.author = author;
+    }
+
+    public Club getClub() {
+        return club;
+    }
+
+    public void setClub(Club club) {
+        this.club = club;
     }
 
     public String getName() {

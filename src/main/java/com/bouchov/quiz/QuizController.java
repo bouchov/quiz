@@ -23,6 +23,7 @@ class QuizController extends AbstractController {
     private final HttpSession session;
     private final UserRepository userRepository;
     private final QuizRepository quizRepository;
+    private final ClubRepository clubRepository;
     private final QuestionRepository questionRepository;
     private final QuizService quizService;
 
@@ -30,11 +31,13 @@ class QuizController extends AbstractController {
     public QuizController(HttpSession session,
             UserRepository userRepository,
             QuizRepository quizRepository,
+            ClubRepository clubRepository,
             QuestionRepository questionRepository,
             QuizService quizService) {
         this.session = session;
         this.userRepository = userRepository;
         this.quizRepository = quizRepository;
+        this.clubRepository = clubRepository;
         this.questionRepository = questionRepository;
         this.quizService = quizService;
     }
@@ -88,10 +91,14 @@ class QuizController extends AbstractController {
                 && quiz.getStatus() != QuizStatus.DRAFT) {
             throw new InvalidQuizParameterException("status");
         }
-
+        if (quiz.getClubId() == null) {
+            throw new InvalidQuizParameterException("clubId");
+        }
+        Club club = clubRepository.findById(quiz.getClubId()).orElseThrow();
         User author = getUser(session, userRepository).orElseThrow();
         Quiz entity = new Quiz();
         entity.setAuthor(author);
+        entity.setClub(club);
         fillParams(quiz, entity);
 
         try {
@@ -132,7 +139,11 @@ class QuizController extends AbstractController {
                 quiz.setQuestionsNumber(entity.getQuestions().size());
             }
         }
-
+        if (quiz.getClubId() == null) {
+            throw new InvalidQuizParameterException("clubId");
+        }
+        Club club = clubRepository.findById(quiz.getClubId()).orElseThrow();
+        entity.setClub(club);
         fillParams(quiz, entity);
 
         try {
