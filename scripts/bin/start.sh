@@ -22,6 +22,7 @@ for f in $(ls -1 "$libdir"/*.jar 2> /dev/null); do
     CLASSPATH="$CLASSPATH:$f"
 done
 
+mkdir -p "$homedir/classes"
 mkdir -p "$rundir"
 mkdir -p "$logs"
 mkdir -p "$diags"
