@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -53,8 +54,9 @@ public class QuizLoader {
                         quiz.getMaxPlayers(),
                         quiz.getSelectionStrategy(),
                         questionsNumber,
-                        quiz.getStartDate(),
-                        quiz.getStartedDate(),
+                        new Date(),
+                        null,
+                        null,
                         status);
                 if (quiz.getSelectionStrategy() == QuestionSelectionStrategy.QUIZ) {
                     entity.setQuestions(allQuestions);

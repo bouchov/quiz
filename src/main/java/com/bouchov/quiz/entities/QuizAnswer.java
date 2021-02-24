@@ -7,7 +7,7 @@ import javax.persistence.ManyToOne;
 @Entity
 public class QuizAnswer extends BasicEntity {
     @ManyToOne(fetch = FetchType.LAZY)
-    private Quiz quiz;
+    private QuizResult quizResult;
     @ManyToOne(fetch = FetchType.LAZY)
     private Question question;
     @ManyToOne(fetch = FetchType.LAZY)
@@ -19,8 +19,8 @@ public class QuizAnswer extends BasicEntity {
     public QuizAnswer() {
     }
 
-    public QuizAnswer(Quiz quiz, Question question, User answerer, int answer, int value, QuizAnswerStatus status) {
-        this.quiz = quiz;
+    public QuizAnswer(QuizResult quizResult, Question question, User answerer, int answer, int value, QuizAnswerStatus status) {
+        this.quizResult = quizResult;
         this.question = question;
         this.answerer = answerer;
         this.answer = answer;
@@ -28,12 +28,12 @@ public class QuizAnswer extends BasicEntity {
         this.status = status;
     }
 
-    public Quiz getQuiz() {
-        return quiz;
+    public QuizResult getQuizResult() {
+        return quizResult;
     }
 
-    public void setQuiz(Quiz quiz) {
-        this.quiz = quiz;
+    public void setQuizResult(QuizResult quizResult) {
+        this.quizResult = quizResult;
     }
 
     public Question getQuestion() {

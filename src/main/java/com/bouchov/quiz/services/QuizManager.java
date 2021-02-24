@@ -1,11 +1,11 @@
 package com.bouchov.quiz.services;
 
-import com.bouchov.quiz.entities.Quiz;
 import com.bouchov.quiz.entities.QuizParticipant;
+import com.bouchov.quiz.entities.QuizResult;
 import com.bouchov.quiz.entities.User;
 
 public interface QuizManager {
-    QuizParticipant register(Quiz quiz, User user);
+    QuizParticipant register(QuizResult result, User user);
 
     void join(QuizParticipant participant);
 

@@ -23,7 +23,7 @@ public abstract class AbstractQuizManager implements QuizManager {
         Set<Long> used = participant.getAnswers().stream()
                 .map((qa) -> qa.getQuestion().getId())
                 .collect(Collectors.toSet());
-        Quiz quiz = participant.getQuiz();
+        Quiz quiz = participant.getQuizResult().getQuiz();
         Question selectedQuestion = null;
         if (quiz.getSelectionStrategy() == QuestionSelectionStrategy.QUIZ) {
             List<Question> questions = new ArrayList<>(quiz.getQuestions());

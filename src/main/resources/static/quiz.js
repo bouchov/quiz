@@ -419,9 +419,6 @@ class QuizWindow extends WebForm {
             } else {
                 this.view.insertAdjacentHTML('beforeend', '<p>Вопросов: ' + quiz.questionsNumber + '</p>');
             }
-            if (quiz.status === 'FINISHED') {
-                this.view.insertAdjacentHTML('beforeend', '<p>Викторина окончена</p>');
-            }
         }
     }
 
@@ -992,7 +989,15 @@ class QuestionWindow extends WebForm {
     setQuiz(quiz) {
         this.view.innerHTML = '';
         this.view.insertAdjacentHTML("beforeend", '<p> Викторина ' + quiz.name + '</p>');
-        this.view.insertAdjacentHTML("beforeend", '<p> начнется ' + new Date(quiz.startDate) + '</p>');
+        if (quiz.result !== undefined) {
+            if (quiz.result.status === 'ACTIVE') {
+                this.view.insertAdjacentHTML("beforeend", '<p> начнется ' + new Date(quiz.result.started) + '</p>');
+            } else if (quiz.result.status === 'FINISHED') {
+                this.view.insertAdjacentHTML("beforeend", '<p> окончился ' + new Date(quiz.result.finished) + '</p>');
+            } else {
+                this.view.insertAdjacentHTML("beforeend", '<p> отменен</p>');
+            }
+        }
     }
 
     setQuestion(question) {

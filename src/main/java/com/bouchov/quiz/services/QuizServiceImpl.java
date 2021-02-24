@@ -10,7 +10,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
@@ -19,9 +21,7 @@ import org.springframework.web.socket.WebSocketSession;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
@@ -31,7 +31,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
 
     private final QuizParticipantRepository quizParticipantRepository;
     private final QuizAnswerRepository quizAnswerRepository;
-    private final QuizRepository quizRepository;
+    private final QuizResultRepository quizResultRepository;
     private final QuestionRepository questionRepository;
     private final ThreadPoolTaskScheduler quizScheduler;
     private final ScheduledTaskService taskService;
@@ -41,13 +41,13 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     @Autowired
     public QuizServiceImpl(QuizParticipantRepository quizParticipantRepository,
             QuizAnswerRepository quizAnswerRepository,
-            QuizRepository quizRepository,
+            QuizResultRepository quizResultRepository,
             QuestionRepository questionRepository,
             ThreadPoolTaskScheduler quizScheduler,
             ScheduledTaskService taskService) {
         this.quizParticipantRepository = quizParticipantRepository;
         this.quizAnswerRepository = quizAnswerRepository;
-        this.quizRepository = quizRepository;
+        this.quizResultRepository = quizResultRepository;
         this.questionRepository = questionRepository;
         this.quizScheduler = quizScheduler;
         this.taskService = taskService;
@@ -61,29 +61,39 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
         if (quiz.getStatus() == QuizStatus.DRAFT) {
             throw new RuntimeException("quiz is not ready");
         }
-        QuizParticipant participant = quizParticipantRepository.getByQuizAndUser(quiz, user).orElse(null);
-        if (quiz.getStatus() == QuizStatus.FINISHED) {
-            return participant;
+        if (quiz.getStatus() == QuizStatus.CLOSED) {
+            throw new RuntimeException("quiz is closed");
         }
-        if (quiz.getStatus() != QuizStatus.ACTIVE) {
-            throw new RuntimeException("quiz is not active");
+        Page<QuizResult> results = quizResultRepository.findAllByQuizAndStatus(quiz,
+                List.of(QuizResultStatus.REGISTER, QuizResultStatus.STARTED),
+                PageRequest.of(1, 1, Sort.by(Sort.Direction.ASC, "registrationStarted")));
+        QuizResult result;
+        if (results.isEmpty()) {
+            result = new QuizResult(quiz, QuizResultStatus.REGISTER, new Date());
+            result.setParticipants(new ArrayList<>());
+            result = quizResultRepository.save(result);
+        } else {
+            result = results.getContent().get(0);
         }
-        if (!managers.containsKey(quiz.getId())) {
-            managers.computeIfAbsent(quiz.getId(),
-                    (k) -> QuizManagerFactory.getInstance().createManager(this, quiz));
+
+        if (!managers.containsKey(result.getId())) {
+            QuizResult fResult = result;
+            managers.computeIfAbsent(result.getId(),
+                    (k) -> QuizManagerFactory.getInstance().createManager(this, fResult));
         }
+        QuizParticipant participant = quizParticipantRepository.getByQuizResultAndUser(result, user).orElse(null);
         if (participant == null) {
-            participant = getManager(quiz).register(quiz, user);
+            participant = getManager(result).register(result, user);
             participant = quizParticipantRepository.save(participant);
-            quiz.getParticipants().add(participant);
+            result.getParticipants().add(participant);
         }
         return participant;
     }
 
-    private QuizManager getManager(Quiz quiz) {
-        QuizManager quizManager = managers.get(quiz.getId());
+    private QuizManager getManager(QuizResult result) {
+        QuizManager quizManager = managers.get(result.getId());
         if (quizManager == null) {
-            throw new RuntimeException("manager not found for " + quiz);
+            throw new RuntimeException("manager not found for " + result);
         }
         return quizManager;
     }
@@ -93,21 +103,19 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     public void connect(Long participantId, WebSocketSession session) {
         log.debug("register session for {}", participantId);
         quizParticipantRepository.findById(participantId).ifPresent(quizParticipant -> {
-            Quiz quiz = quizParticipant.getQuiz();
-            if (quiz.getStatus() == QuizStatus.FINISHED) {
-                sendMessage(session, new ResponseBean(new QuizResultBean(quizParticipant)));
+            QuizResult result = quizParticipant.getQuizResult();
+            if (result.getStatus() == QuizResultStatus.FINISHED) {
+                sendMessage(session, new ResponseBean(new QuizResultBean(quizParticipant, result)));
                 return;
-            } else if (quiz.getStatus() != QuizStatus.ACTIVE
-                    && quiz.getStatus() != QuizStatus.STARTED) {
-                throw new IllegalStateException("invalid quiz status: " + quiz.getStatus());
             }
             sessions.put(participantId, session);
-            getManager(quiz).join(quizParticipant);
+            getManager(result).join(quizParticipant);
         });
     }
 
     QuizAnswer findActiveAnswer(QuizParticipant quizParticipant) {
-        return quizAnswerRepository.findByQuizAndAnswererAndStatus(quizParticipant.getQuiz(),
+        return quizAnswerRepository.findByQuizResultAndAnswererAndStatus(
+                quizParticipant.getQuizResult(),
                 quizParticipant.getUser(),
                 QuizAnswerStatus.ACTIVE).orElse(null);
     }
@@ -116,7 +124,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
         log.debug("select question #{} for {}", question.getId(), quizParticipant.getId());
         User user = quizParticipant.getUser();
         QuizAnswer answer = quizAnswerRepository.save(new QuizAnswer(
-                quizParticipant.getQuiz(),
+                quizParticipant.getQuizResult(),
                 question,
                 user,
                 -1,
@@ -144,7 +152,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     public void answer(Long participantId, int answer) {
         log.debug("answer #{} for {}", answer, participantId);
         quizParticipantRepository.findById(participantId).ifPresent(
-                (quizParticipant) -> getManager(quizParticipant.getQuiz()).answer(quizParticipant, answer));
+                (quizParticipant) -> getManager(quizParticipant.getQuizResult()).answer(quizParticipant, answer));
     }
 
     @Override
@@ -152,7 +160,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     public void next(Long participantId) {
         log.debug("next question for {}", participantId);
         quizParticipantRepository.findById(participantId).ifPresent(
-                quizParticipant -> getManager(quizParticipant.getQuiz()).next(quizParticipant));
+                quizParticipant -> getManager(quizParticipant.getQuizResult()).next(quizParticipant));
     }
 
     private TextMessage toMessage(Object bean)
@@ -166,8 +174,8 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
         sessions.remove(participantId);
     }
 
-    public Quiz getQuiz(Long quizId) {
-        return quizRepository.findById(quizId).orElseThrow();
+    public QuizResult getQuizResult(Long resultId) {
+        return quizResultRepository.findById(resultId).orElseThrow();
     }
 
     @Override

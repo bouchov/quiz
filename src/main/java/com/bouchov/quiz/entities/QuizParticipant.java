@@ -11,7 +11,7 @@ import java.util.List;
 @Entity
 public class QuizParticipant extends BasicEntity {
     @ManyToOne(fetch = FetchType.EAGER)
-    private Quiz quiz;
+    private QuizResult quizResult;
     @ManyToOne(fetch = FetchType.EAGER)
     private User user;
     @OneToMany(fetch = FetchType.LAZY)
@@ -26,14 +26,14 @@ public class QuizParticipant extends BasicEntity {
     public QuizParticipant() {
     }
 
-    public QuizParticipant(Quiz quiz, User user, ParticipantStatus status) {
-        this.quiz = quiz;
+    public QuizParticipant(QuizResult quizResult, User user, ParticipantStatus status) {
+        this.quizResult = quizResult;
         this.user = user;
         this.status = status;
     }
 
-    public Quiz getQuiz() {
-        return quiz;
+    public QuizResult getQuizResult() {
+        return quizResult;
     }
 
     public User getUser() {
@@ -90,15 +90,15 @@ public class QuizParticipant extends BasicEntity {
 
     @Override
     public String toString() {
-        return "QuizParticipant{" +
-                "quiz=" + quiz +
+        return "[QuizParticipant" +
+                " quizResult=" + quizResult +
                 ", user=" + user +
                 ", place=" + place +
                 ", value=" + value +
                 ", rightAnswers=" + rightAnswers +
                 ", wrongAnswers=" + wrongAnswers +
                 ", status=" + status +
-                '}';
+                ']';
     }
 }
 

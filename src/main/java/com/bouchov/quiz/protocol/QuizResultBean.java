@@ -2,6 +2,9 @@ package com.bouchov.quiz.protocol;
 
 import com.bouchov.quiz.entities.ParticipantStatus;
 import com.bouchov.quiz.entities.QuizParticipant;
+import com.bouchov.quiz.entities.QuizResult;
+
+import java.util.Date;
 
 public class QuizResultBean {
     private Long id;
@@ -10,14 +13,18 @@ public class QuizResultBean {
     private int wrong;
     private ParticipantStatus status;
     private int value;
+    private Date started;
+    private Date finished;
 
-    public QuizResultBean(QuizParticipant participant) {
+    public QuizResultBean(QuizParticipant participant, QuizResult result) {
         this.id = participant.getId();
         this.place = participant.getPlace();
         this.right = participant.getRightAnswers();
         this.wrong = participant.getWrongAnswers();
         this.value = participant.getValue();
         this.status = participant.getStatus();
+        this.started = result.getStarted();
+        this.finished = result.getFinished();
     }
 
     public QuizResultBean() {
@@ -71,15 +78,33 @@ public class QuizResultBean {
         this.status = status;
     }
 
+    public Date getStarted() {
+        return started;
+    }
+
+    public void setStarted(Date started) {
+        this.started = started;
+    }
+
+    public Date getFinished() {
+        return finished;
+    }
+
+    public void setFinished(Date finished) {
+        this.finished = finished;
+    }
+
     @Override
     public String toString() {
-        return "QuizResultBean{" +
-                "id=" + id +
+        return "[QuizResultBean" +
+                " id=" + id +
                 ", place=" + place +
                 ", right=" + right +
                 ", wrong=" + wrong +
                 ", status=" + status +
                 ", value=" + value +
-                '}';
+                ", started=" + started +
+                ", finished=" + finished +
+                ']';
     }
 }

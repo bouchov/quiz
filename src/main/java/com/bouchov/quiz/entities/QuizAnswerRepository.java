@@ -6,5 +6,5 @@ import java.util.Optional;
 
 public interface QuizAnswerRepository extends CrudRepository<QuizAnswer,Long> {
 
-    Optional<QuizAnswer> findByQuizAndAnswererAndStatus(Quiz quiz, User answerer, QuizAnswerStatus status);
+    Optional<QuizAnswer> findByQuizResultAndAnswererAndStatus(QuizResult result, User answerer, QuizAnswerStatus status);
 }

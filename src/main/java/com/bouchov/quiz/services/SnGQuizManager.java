@@ -17,19 +17,20 @@ import java.util.concurrent.Future;
 public class SnGQuizManager extends AbstractQuizManager {
     private final Logger logger = LoggerFactory.getLogger(SnGQuizManager.class);
     private Future<?> task;
-    private final Long quizId;
+    private final Long resultId;
 
-    public SnGQuizManager(QuizServiceImpl service, Quiz quiz) {
+    public SnGQuizManager(QuizServiceImpl service, QuizResult result) {
         super(service);
-        this.quizId = quiz.getId();
+        this.resultId = result.getId();
     }
 
     @Override
-    public QuizParticipant register(Quiz quiz, User user) {
-        int size = quiz.getParticipants().size();
+    public QuizParticipant register(QuizResult result, User user) {
+        int size = result.getParticipants().size();
+        Quiz quiz = result.getQuiz();
         QuizParticipant participant = null;
         if (size < quiz.getMaxPlayers()) {
-            participant = new QuizParticipant(quiz, user, ParticipantStatus.ACTIVE);
+            participant = new QuizParticipant(result, user, ParticipantStatus.ACTIVE);
 
             if (size + 1 == quiz.getMinPlayers()) {
                 if (task == null) {
@@ -40,7 +41,7 @@ public class SnGQuizManager extends AbstractQuizManager {
                         //wait for others 1 min
                         startTime = Instant.now().plus(Duration.of(1L, ChronoUnit.MINUTES));
                     }
-                    quiz.setStartDate(new Date(startTime.toEpochMilli()));
+                    result.setStarted(new Date(startTime.toEpochMilli()));
                     task = service.schedule(this::start, startTime);
                 }
             }
@@ -49,10 +50,11 @@ public class SnGQuizManager extends AbstractQuizManager {
     }
 
     protected void start() {
-        Quiz quiz = service.getQuiz(quizId);
-        quiz.setStatus(QuizStatus.STARTED);
+        QuizResult result = service.getQuizResult(resultId);
+        result.setStatus(QuizResultStatus.STARTED);
+        Quiz quiz = result.getQuiz();
         Question question = null;
-        for (QuizParticipant participant : quiz.getParticipants()) {
+        for (QuizParticipant participant : result.getParticipants()) {
             QuizAnswer answer = service.findActiveAnswer(participant);
             if (answer != null) {
                 question = answer.getQuestion();
@@ -60,7 +62,7 @@ public class SnGQuizManager extends AbstractQuizManager {
             }
         }
         if (question == null) {
-            for (QuizParticipant participant : quiz.getParticipants()) {
+            for (QuizParticipant participant : result.getParticipants()) {
                 if (question == null) {
                     question = nextQuestion(participant);
                     if (question == null) {
@@ -92,15 +94,15 @@ public class SnGQuizManager extends AbstractQuizManager {
     }
 
     private void finishQuiz() {
-        Quiz quiz = service.getQuiz(quizId);
-        List<QuizParticipant> participants = new ArrayList<>(quiz.getParticipants());
+        QuizResult result = service.getQuizResult(resultId);
+        result.setStatus(QuizResultStatus.FINISHED);
+        List<QuizParticipant> participants = new ArrayList<>(result.getParticipants());
         participants.sort(Comparator.comparingInt(QuizParticipant::getValue));
         int place = participants.size();
         for (QuizParticipant participant : participants) {
-            participant.getQuiz().setStatus(QuizStatus.FINISHED);
             participant.setStatus(ParticipantStatus.FINISHED);
             participant.setPlace(place--);
-            service.sendMessage(participant, new ResponseBean(new QuizResultBean(participant)));
+            service.sendMessage(participant, new ResponseBean(new QuizResultBean(participant, result)));
         }
     }
 
@@ -110,7 +112,7 @@ public class SnGQuizManager extends AbstractQuizManager {
         if (answer != null) {
             int number = participant.getAnswers().size();
             Integer total = null;
-            Quiz quiz = participant.getQuiz();
+            Quiz quiz = participant.getQuizResult().getQuiz();
             if (quiz.getSelectionStrategy() != QuestionSelectionStrategy.ALL) {
                 total = quiz.getQuestionsNumber();
             }
@@ -121,7 +123,10 @@ public class SnGQuizManager extends AbstractQuizManager {
                         new ResponseBean(new AnswerBean(answer, toQuestion(answer.getQuestion(), number, total))));
             }
         } else {
-            service.sendMessage(participant, new ResponseBean(new QuizBean(participant.getQuiz())));
+            QuizResult result = participant.getQuizResult();
+            QuizBean bean = new QuizBean(result.getQuiz());
+            bean.setResult(new QuizResultBean(participant, result));
+            service.sendMessage(participant, new ResponseBean(bean));
         }
     }
 
@@ -135,15 +140,16 @@ public class SnGQuizManager extends AbstractQuizManager {
 
         int number = participant.getAnswers().size();
         Integer total = null;
-        Quiz quiz = service.getQuiz(quizId);
+        QuizResult result = service.getQuizResult(resultId);
+        Quiz quiz = result.getQuiz();
         if (quiz.getSelectionStrategy() != QuestionSelectionStrategy.ALL) {
             total = quiz.getQuestionsNumber();
         }
         service.sendMessage(participant,
                 new ResponseBean(new AnswerBean(quizAnswer, toQuestion(quizAnswer.getQuestion(), number, total))));
-        int size = quiz.getParticipants().size();
+        int size = result.getParticipants().size();
         int answered = 0;
-        for (QuizParticipant quizParticipant : quiz.getParticipants()) {
+        for (QuizParticipant quizParticipant : result.getParticipants()) {
             if (service.findActiveAnswer(quizParticipant) == null) {
                 answered++;
             }
@@ -155,9 +161,10 @@ public class SnGQuizManager extends AbstractQuizManager {
     }
 
     private void next() {
-        Quiz quiz = service.getQuiz(quizId);
+        QuizResult result = service.getQuizResult(resultId);
+        Quiz quiz = result.getQuiz();
         Question selectedQuestion = null;
-        for (QuizParticipant participant : quiz.getParticipants()) {
+        for (QuizParticipant participant : result.getParticipants()) {
             if (selectedQuestion == null) {
                 selectedQuestion = nextQuestion(participant);
             }

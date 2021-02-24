@@ -1,6 +1,6 @@
 package com.bouchov.quiz.services;
 
-import com.bouchov.quiz.entities.Quiz;
+import com.bouchov.quiz.entities.QuizResult;
 import com.bouchov.quiz.entities.QuizType;
 
 public class QuizManagerFactory {
@@ -13,9 +13,9 @@ public class QuizManagerFactory {
         return instance;
     }
 
-    public QuizManager createManager(QuizServiceImpl service, Quiz quiz) {
-        if (quiz.getType() == QuizType.SIMPLE) {
-            return new SnGQuizManager(service, quiz);
+    public QuizManager createManager(QuizServiceImpl service, QuizResult result) {
+        if (result.getQuiz().getType() == QuizType.SIMPLE) {
+            return new SnGQuizManager(service, result);
         }
         throw new UnsupportedOperationException("createManager");
     }

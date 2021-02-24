@@ -10,6 +10,7 @@ JAVA_OPTS=(
     "-XX:HeapDumpPath=$logs"
     "-XX:FlightRecorderOptions:repository=$diags,stackdepth=1024"
     "-XX:StartFlightRecording:name=main,settings=default,delay=1m,maxsize=10G,maxage=24h,disk=true,filename=$diags/main.jfr,dumponexit=true"
+    "-Doracle.net.tns_admin=$confdir/ora"
 )
 
 check_pids "$app"

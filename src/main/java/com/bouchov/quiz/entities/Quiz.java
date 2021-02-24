@@ -20,15 +20,13 @@ public class Quiz extends BasicEntity {
     private int maxPlayers;
     private QuestionSelectionStrategy selectionStrategy;
     private int questionsNumber;
-    private Date startDate;
-    private Date startedDate;
+    private Date created;
+    private Date activated;
+    private Date closed;
     private QuizStatus status;
     @ManyToMany(fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Question> questions;
-    @OneToMany(fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<QuizParticipant> participants;
 
     public Quiz() {
     }
@@ -41,8 +39,9 @@ public class Quiz extends BasicEntity {
             int maxPlayers,
             QuestionSelectionStrategy selectionStrategy,
             int questionsNumber,
-            Date startDate,
-            Date startedDate,
+            Date created,
+            Date activated,
+            Date closed,
             QuizStatus status) {
         this.author = author;
         this.club = club;
@@ -52,8 +51,9 @@ public class Quiz extends BasicEntity {
         this.maxPlayers = maxPlayers;
         this.selectionStrategy = selectionStrategy;
         this.questionsNumber = questionsNumber;
-        this.startDate = startDate;
-        this.startedDate = startedDate;
+        this.created = created;
+        this.activated = activated;
+        this.closed = closed;
         this.status = status;
     }
 
@@ -121,20 +121,24 @@ public class Quiz extends BasicEntity {
         this.questionsNumber = questionsNumber;
     }
 
-    public Date getStartDate() {
-        return startDate;
+    public Date getCreated() {
+        return created;
     }
 
-    public void setStartDate(Date startDate) {
-        this.startDate = startDate;
+    public Date getActivated() {
+        return activated;
     }
 
-    public Date getStartedDate() {
-        return startedDate;
+    public void setActivated(Date activated) {
+        this.activated = activated;
     }
 
-    public void setStartedDate(Date startedDate) {
-        this.startedDate = startedDate;
+    public Date getClosed() {
+        return closed;
+    }
+
+    public void setClosed(Date closed) {
+        this.closed = closed;
     }
 
     public QuizStatus getStatus() {
@@ -151,13 +155,5 @@ public class Quiz extends BasicEntity {
 
     public void setQuestions(List<Question> questions) {
         this.questions = questions;
-    }
-
-    public List<QuizParticipant> getParticipants() {
-        return participants;
-    }
-
-    public void setParticipants(List<QuizParticipant> participants) {
-        this.participants = participants;
     }
 }

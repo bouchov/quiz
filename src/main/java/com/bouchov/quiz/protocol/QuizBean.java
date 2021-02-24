@@ -19,8 +19,7 @@ public class QuizBean {
     private int maxPlayers;
     private QuestionSelectionStrategy selectionStrategy;
     private int questionsNumber;
-    private Date startDate;
-    private Date startedDate;
+    private Date created;
     private QuizStatus status;
     private QuizResultBean result;
     private List<QuestionBean> questions;
@@ -39,9 +38,8 @@ public class QuizBean {
         this.maxPlayers = quiz.getMaxPlayers();
         this.selectionStrategy = quiz.getSelectionStrategy();
         this.questionsNumber = quiz.getQuestionsNumber();
-        this.startDate = quiz.getStartDate();
-        this.startedDate = quiz.getStartedDate();
         this.status = quiz.getStatus();
+        this.created = quiz.getCreated();
     }
 
     public Long getId() {
@@ -124,20 +122,12 @@ public class QuizBean {
         this.questionsNumber = questionsNumber;
     }
 
-    public Date getStartDate() {
-        return startDate;
+    public Date getCreated() {
+        return created;
     }
 
-    public void setStartDate(Date startDate) {
-        this.startDate = startDate;
-    }
-
-    public Date getStartedDate() {
-        return startedDate;
-    }
-
-    public void setStartedDate(Date startedDate) {
-        this.startedDate = startedDate;
+    public void setCreated(Date created) {
+        this.created = created;
     }
 
     public QuizStatus getStatus() {
@@ -177,8 +167,7 @@ public class QuizBean {
                 ", maxPlayers=" + maxPlayers +
                 ", selectionStrategy=" + selectionStrategy +
                 ", questionsNumber=" + questionsNumber +
-                ", startDate=" + startDate +
-                ", startedDate=" + startedDate +
+                ", created=" + created +
                 ", status=" + status +
                 ", result=" + result +
                 ", questions=" + questions +

@@ -17,7 +17,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/quiz")
 class QuizController extends AbstractController {
-    private static final QuizStatus[] STATUS_FOR_PLAY = new QuizStatus[]{QuizStatus.ACTIVE,QuizStatus.STARTED,QuizStatus.FINISHED};
+    private static final QuizStatus[] STATUS_FOR_PLAY = new QuizStatus[]{QuizStatus.ACTIVE};
     private static final QuizStatus[] STATUS_FOR_EDIT = QuizStatus.values();
 
     private final HttpSession session;
@@ -50,7 +50,7 @@ class QuizController extends AbstractController {
         QuizBean quizBean = new QuizBean(quiz);
         QuizParticipant participant = quizService.register(quiz, user);
         if (participant != null) {
-            quizBean.setResult(new QuizResultBean(participant));
+            quizBean.setResult(new QuizResultBean(participant, participant.getQuizResult()));
         }
         return quizBean;
     }
@@ -117,7 +117,6 @@ class QuizController extends AbstractController {
         entity.setType(quiz.getType());
         entity.setSelectionStrategy(quiz.getSelectionStrategy());
         entity.setQuestionsNumber(quiz.getQuestionsNumber());
-        entity.setStartDate(quiz.getStartDate());
         entity.setStatus(quiz.getStatus());
     }
 

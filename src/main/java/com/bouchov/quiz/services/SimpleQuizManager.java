@@ -13,13 +13,13 @@ public class SimpleQuizManager extends AbstractQuizManager {
     }
 
     @Override
-    public QuizParticipant register(Quiz quiz, User user) {
-        if (quiz.getParticipants().isEmpty()) {
-            if (quiz.getStatus() == QuizStatus.ACTIVE) {
-                quiz.setStatus(QuizStatus.STARTED);
-                quiz.setStartedDate(new Date());
+    public QuizParticipant register(QuizResult result, User user) {
+        if (result.getParticipants().isEmpty()) {
+            if (result.getStatus() == QuizResultStatus.REGISTER) {
+                result.setStatus(QuizResultStatus.STARTED);
+                result.setStarted(new Date());
             }
-            return new QuizParticipant(quiz, user, ParticipantStatus.ACTIVE);
+            return new QuizParticipant(result, user, ParticipantStatus.ACTIVE);
         } else {
             throw new RuntimeException("too many users");
         }
@@ -54,9 +54,10 @@ public class SimpleQuizManager extends AbstractQuizManager {
     public void next(QuizParticipant participant) {
         Question selectedQuestion = nextQuestion(participant);
         if (selectedQuestion == null) {
-            participant.getQuiz().setStatus(QuizStatus.FINISHED);
+            QuizResult result = participant.getQuizResult();
+            result.setStatus(QuizResultStatus.FINISHED);
             participant.setStatus(ParticipantStatus.FINISHED);
-            service.sendMessage(participant, new ResponseBean(new QuizResultBean(participant)));
+            service.sendMessage(participant, new ResponseBean(new QuizResultBean(participant, result)));
         } else {
             service.addAnswer(participant, selectedQuestion);
             service.sendMessage(participant, new ResponseBean(toQuestion(selectedQuestion)));
