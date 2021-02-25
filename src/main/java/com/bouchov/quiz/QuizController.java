@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import java.util.Locale;
 import java.util.Objects;
 
 @RestController
@@ -80,7 +81,7 @@ class QuizController extends AbstractController {
         if (filter.getName() == null || filter.getName().isEmpty()) {
             page = quizRepository.findAllByStatus(club, pageable, statuses);
         } else {
-            page  = quizRepository.findAllByNameAndStatus(club, filter.getName(), pageable, statuses);
+            page  = quizRepository.findAllByNameUpperAndStatus(club, filter.getName().toUpperCase(Locale.ROOT), pageable, statuses);
         }
         PageBean<QuizBean> bean = new PageBean<>(page.getNumber(), page.getSize(), page.getTotalPages());
         bean.setElements(page.map(QuizBean::new).getContent());
