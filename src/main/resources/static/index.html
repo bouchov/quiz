@@ -614,6 +614,14 @@
         return false;
     }
 
+    function onClubListWindowPrevPage() {
+        clubListWindow.loadNextPage(-1);
+    }
+
+    function onClubListWindowNextPage() {
+        clubListWindow.loadNextPage(1);
+    }
+
     function onSelectQuiz(event) {
         event = event || window.event; // IE
         let target = event.target || event.srcElement; // IE
