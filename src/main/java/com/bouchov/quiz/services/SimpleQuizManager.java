@@ -8,8 +8,11 @@ import com.bouchov.quiz.protocol.ResponseBean;
 import java.util.Date;
 
 public class SimpleQuizManager extends AbstractQuizManager {
-    public SimpleQuizManager(QuizServiceImpl service) {
+    private final Long resultId;
+
+    public SimpleQuizManager(QuizServiceImpl service, QuizResult result) {
         super(service);
+        this.resultId = result.getId();
     }
 
     @Override
@@ -30,7 +33,8 @@ public class SimpleQuizManager extends AbstractQuizManager {
         QuizAnswer answer = service.findActiveAnswer(participant);
         Question question;
         if (answer == null) {
-            question = nextQuestion(participant);
+            Club club = service.getQuizResult(resultId).getQuiz().getClub();
+            question = nextQuestion(club, participant);
             service.addAnswer(participant, question);
         } else {
             question = answer.getQuestion();
@@ -52,7 +56,8 @@ public class SimpleQuizManager extends AbstractQuizManager {
 
     @Override
     public void next(QuizParticipant participant) {
-        Question selectedQuestion = nextQuestion(participant);
+        Club club = service.getQuizResult(resultId).getQuiz().getClub();
+        Question selectedQuestion = nextQuestion(club, participant);
         if (selectedQuestion == null) {
             QuizResult result = participant.getQuizResult();
             result.setStatus(QuizResultStatus.FINISHED);

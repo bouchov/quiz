@@ -12,16 +12,20 @@ public class ClubBean {
     private Long id;
     private String uid;
     private String name;
-    private String owner;
+    private Boolean owner;
 
     public ClubBean() {
     }
 
     public ClubBean(Club that) {
+        this(that, null);
+    }
+
+    public ClubBean(Club that, Boolean owner) {
         this.id = that.getId();
         this.uid = that.getUid();
         this.name = that.getName();
-        this.owner = that.getOwner().getNickname();
+        this.owner = owner;
     }
 
     public Long getId() {
@@ -48,11 +52,11 @@ public class ClubBean {
         this.name = name;
     }
 
-    public String getOwner() {
+    public Boolean getOwner() {
         return owner;
     }
 
-    public void setOwner(String owner) {
+    public void setOwner(Boolean owner) {
         this.owner = owner;
     }
 
@@ -62,7 +66,7 @@ public class ClubBean {
                 " id=" + id +
                 ", uid='" + uid + '\'' +
                 ", name='" + name + '\'' +
-                ", owner='" + owner + '\'' +
+                ", owner=" + owner +
                 ']';
     }
 }

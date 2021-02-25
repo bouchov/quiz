@@ -8,7 +8,7 @@ class MessageWindow extends WebForm {
     showMessage(text, callback) {
         this.text.innerHTML = text;
         if (callback === undefined) {
-            callback = function () {mainMenu.show()}
+            callback = function () {clubListWindow.show()}
         }
         this.show(callback);
     }
@@ -37,6 +37,89 @@ class LoadingWindow extends WebForm {
     hide() {
         this.element.style.display='none';
         return true;
+    }
+}
+
+class ClubListWindow extends PagedWebForm {
+    constructor() {
+        super('clubListWindow');
+        this.pageSize = 5;
+        this.clubName = document.getElementById('clubListWindow-clubName');
+        this.view = document.getElementById('clubListWindow-view');
+
+        this.clubArray = [];
+        this.club = {id:undefined, uid:undefined, name:'Неизвестно', owner:undefined};
+
+        this.view.innerHTML = 'Список пуст';
+    }
+
+    loadPage() {
+        let name = this.clubName.value;
+        let form = this;
+        let xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                form.hide();
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    form.reload = false;
+                    let data = JSON.parse(xhttp.responseText);
+                    form.loadClubListData(data);
+                    form.show();
+                } else if (this.status === 401) {
+                    loginWindow.show(function () {form.show()});
+                } else {
+                    form.log.warn('problem to load club list: ', xhttp.responseText);
+                    messageWindow.showMessage(xhttp.responseText);
+                }
+            }
+        };
+
+        this.sendJson(xhttp, '/club/list',
+            {
+                name: name,
+                page: this.pageNumber,
+                size: this.pageSize
+            });
+    }
+
+    loadClubListData(page) {
+        this.view.innerHTML = '';
+        this.total = page.total;
+        this.pageNumber = page.page;
+        if (!page.elements || page.elements.length === 0) {
+            this.view.innerHTML = 'Список пуст';
+        } else {
+            let form = this;
+            this.clubArray = page.elements;
+            this.view.innerHTML = '';
+            this.clubArray.forEach(function(club) {
+                let clubName = club.name;
+                if (club.owner) {
+                    clubName += ' *';
+                }
+                form.view.insertAdjacentHTML('beforeend',
+                    '<button type="button" onclick="onSelectClub()" value="' + club.id + '" class="dialog-button">' + clubName + '</button>');
+            })
+        }
+    }
+
+    setClub(clubId) {
+        let club = undefined;
+        this.clubArray.forEach(function (q) {
+            if (q.id === clubId) {
+                club = q;
+            }
+        })
+        if (club) {
+            this.club = club;
+            editQuizWindow.setClub(club);
+            editQuestionWindow.setClub(club);
+        }
+    }
+
+    getClub() {
+        return this.club;
     }
 }
 
@@ -102,7 +185,7 @@ class PersonalInfo extends WebForm {
                         form.log.log('WEB: <<< ' + xhttp.responseText);
                         let user = JSON.parse(this.responseText);
                         form.log.log('user is logged in', user);
-                        mainMenu.show();
+                        clubListWindow.show();
                     } else {
                         form.log.warn('Session expired');
                         loginWindow.show();
@@ -157,7 +240,7 @@ class LoginWindow extends WebForm {
 
     show(callback) {
         if (callback === undefined) {
-            callback = function () {mainMenu.show()};
+            callback = function () {clubListWindow.show()};
         }
         super.show(callback);
         if (!this.userName.value) {
@@ -257,65 +340,6 @@ class RegisterWindow extends WebForm {
     }
 }
 
-class PagedWebForm extends WebForm {
-    constructor(id) {
-        super(id);
-        this.nextPage = document.getElementById(id + '-nextPage');
-        this.prevPage = document.getElementById(id + '-prevPage');
-        this.submit = document.getElementById(id + '-submit');
-
-        this.pageNumber = 0;
-        this.total = undefined;
-        this.pageSize = 10;
-    }
-
-    reset() {
-        this.pageNumber = 0;
-        this.total = undefined;
-    }
-
-    beforeShow() {
-        if (this.pageNumber <= 0) {
-            this.prevPage.disabled = true;
-        } else {
-            this.prevPage.disabled = false;
-        }
-        if (this.total !== undefined) {
-            if (this.submit) {
-                this.submit.disabled = false;
-            }
-            if (this.pageNumber + 1 >= this.total) {
-                this.nextPage.disabled = true;
-            } else {
-                this.nextPage.disabled = false;
-            }
-        } else {
-            if (this.submit) {
-                this.submit.disabled = true;
-            }
-            this.nextPage.disabled = true;
-            this.loadPage();
-            return false;
-        }
-        return super.beforeShow();
-    }
-
-    loadPage() {
-    }
-
-    loadNextPage(inc) {
-        let nextPage = this.pageNumber + inc;
-        if (nextPage >= 0) {
-            if (this.total !== undefined) {
-                if (nextPage < this.total) {
-                    this.pageNumber = nextPage;
-                    this.loadPage();
-                }
-            }
-        }
-    }
-}
-
 class QuizListWindow extends PagedWebForm {
     constructor() {
         super('quizListWindow');
@@ -355,8 +379,8 @@ class QuizListWindow extends PagedWebForm {
                 }
             }
         };
-
-        this.sendJson(xhttp, '/quiz/list',
+        let club = clubListWindow.getClub();
+        this.sendJson(xhttp, '/' + club.id + '/quiz/list',
             {
                 name: name,
                 page: this.pageNumber,
@@ -441,7 +465,8 @@ class QuizWindow extends WebForm {
                 }
             }
         };
-        this.sendGet( xhttp, '/quiz/' + this.quizId + '/register');
+        let club = clubListWindow.getClub();
+        this.sendGet( xhttp, '/' + club.id + '/quiz/' + this.quizId + '/register');
     }
 
     beforeShow() {
@@ -506,7 +531,7 @@ class ClubControl extends WebControl {
 class EditQuizWindow extends WebForm {
     constructor() {
         super('editQuizWindow');
-        this.club = new ClubControl('editQuizWindow-club');
+        this.club = document.getElementById('editQuizWindow-club')
         this.name = document.getElementById('editQuizWindow-name')
         this.minPlayers = document.getElementById('editQuizWindow-minPlayers')
         this.maxPlayers = document.getElementById('editQuizWindow-maxPlayers')
@@ -521,7 +546,6 @@ class EditQuizWindow extends WebForm {
 
     setNewQuiz() {
         let quiz = {id: null,
-            clubId: 0,
             name: '',
             minPlayers: 1,
             maxPlayers: 2,
@@ -534,8 +558,6 @@ class EditQuizWindow extends WebForm {
     setQuiz(quiz) {
         this.quizId = quiz.id;
         this.quiz = quiz;
-        this.club.load();
-        this.club.setClub(quiz.clubId);
         this.name.value = quiz.name;
         this.minPlayers.value = quiz.minPlayers;
         this.maxPlayers.value = quiz.maxPlayers;
@@ -544,17 +566,19 @@ class EditQuizWindow extends WebForm {
         this.status.value = quiz.status;
     }
 
+    setClub(club) {
+        this.club.value = club.name;
+    }
+
     saveQuiz() {
         //validate !!!
         let minPlayers = Number.parseInt(this.minPlayers.value);
         let maxPlayers = Number.parseInt(this.maxPlayers.value);
         let questionsNumber = Number.parseInt(this.questionsNumber.value);
-        let clubId = this.club.getClub();
 
         this.submit.disabled = true;
         let quiz = {
             id               :this.quizId,
-            clubId           :clubId,
             name             :this.name.value,
             type             :'SIMPLE',
             minPlayers       :minPlayers,
@@ -584,11 +608,12 @@ class EditQuizWindow extends WebForm {
                 }
             }
         };
-        let url;
+        let club = clubListWindow.getClub();
+        let url = '/' + club.id;
         if (quiz.id) {
-            url =  '/quiz/' + quiz.id + '/edit';
+            url = url + '/quiz/' + quiz.id + '/edit';
         } else {
-            url =  '/quiz/create';
+            url = url + '/quiz/create';
         }
         this.sendJson(xhttp, url, quiz);
     }
@@ -696,7 +721,8 @@ class QuestionListWindow extends PagedWebForm {
                 }
             }
         };
-        this.sendJson(xhttp, '/quiz/' + this.quizId + '/questions',
+        let club = clubListWindow.getClub();
+        this.sendJson(xhttp, '/' + club.id + '/quiz/' + this.quizId + '/questions',
             {added: addedQuestions, removed: removedQuestions});
     }
 
@@ -725,7 +751,8 @@ class QuestionListWindow extends PagedWebForm {
         if (this.category.getCategory() > 0) {
             categoryId = this.category.getCategory();
         }
-        this.sendJson(xhttp, '/questions/list', {
+        let club = clubListWindow.getClub();
+        this.sendJson(xhttp, '/' + club.id + '/questions/list', {
             categoryId: categoryId,
             quizId: this.quizId,
             page: this.pageNumber,
@@ -771,6 +798,7 @@ class EditQuestionWindow extends WebForm {
     constructor() {
         super('editQuestionWindow');
         this.category = new CategoryControl('editQuestionWindow-category');
+        this.club = document.getElementById('editQuestionWindow-club');
         this.text = document.getElementById('editQuestionWindow-text');
         this.value = document.getElementById('editQuestionWindow-value');
         this.options = document.getElementById('editQuestionWindow-options');
@@ -792,6 +820,10 @@ class EditQuestionWindow extends WebForm {
         this.text.value = question.text;
         this.value.value = question.value;
         this.writeOptions();
+    }
+
+    setClub(club) {
+        this.club.value = club.name;
     }
 
     beforeShow() {
@@ -903,11 +935,12 @@ class EditQuestionWindow extends WebForm {
                 }
             }
         };
-        let url;
+        let club = clubListWindow.getClub();
+        let url = '/' + club.id;
         if (query.id) {
-            url = '/questions/' + query.id + '/edit';
+            url = url + '/questions/' + query.id + '/edit';
         } else {
-            url = '/questions/create';
+            url = url + '/questions/create';
         }
         this.sendJson(xhttp, url, query);
     }
@@ -1071,6 +1104,7 @@ function playQuizWebsocketMessageHandler(event) {
     }
 }
 
+var clubListWindow = new ClubListWindow();
 var mainMenu = new MainMenu();
 var loadingWindow = new LoadingWindow();
 var personalInfo = new PersonalInfo();

@@ -12,10 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
-import java.util.Optional;
+import java.util.Objects;
 
 @RestController
-@RequestMapping("/quiz")
+@RequestMapping("/{clubId}/quiz")
 class QuizController extends AbstractController {
     private static final QuizStatus[] STATUS_FOR_PLAY = new QuizStatus[]{QuizStatus.ACTIVE};
     private static final QuizStatus[] STATUS_FOR_EDIT = QuizStatus.values();
@@ -43,10 +43,15 @@ class QuizController extends AbstractController {
     }
 
     @RequestMapping("/{quizId}/register")
-    public QuizBean startQuiz(@PathVariable Long quizId) {
+    public QuizBean startQuiz(
+            @PathVariable(required = false) Long clubId,
+            @PathVariable Long quizId) {
         checkAuthorization(session);
         User user = getUser(session, userRepository).orElseThrow();
         Quiz quiz = quizRepository.findById(quizId).orElseThrow(() -> new QuizNotFoundException(quizId));
+        if (!Objects.equals(clubId, quiz.getClub().getId())) {
+            throw new QuizNotFoundException(quizId);
+        }
         QuizBean quizBean = new QuizBean(quiz);
         QuizParticipant participant = quizService.register(quiz, user);
         if (participant != null) {
@@ -57,10 +62,14 @@ class QuizController extends AbstractController {
 
     @RequestMapping("/list")
     public PageBean<QuizBean> list(
+            @PathVariable Long clubId,
             @RequestBody QuizFilterBean filter) {
-        Optional<User> optional = getUser(session, userRepository);
+        checkAuthorization(session);
         QuizStatus[] statuses = STATUS_FOR_PLAY;
-        if (optional.isPresent() && optional.get().getRole() == UserRole.ADMIN) {
+        User user = getUser(session, userRepository).orElseThrow();
+        Club club = clubRepository.findById(clubId).orElseThrow(
+                () -> new ClubNotFoundException(clubId));
+        if (user.equals(club.getOwner())) {
             statuses = STATUS_FOR_EDIT;
         }
         int pageNumber = filter.getPage() == null ? 0 : filter.getPage();
@@ -69,9 +78,9 @@ class QuizController extends AbstractController {
         PageRequest pageable = PageRequest.of(pageNumber, pageSize, sort);
         Page<Quiz> page;
         if (filter.getName() == null || filter.getName().isEmpty()) {
-            page = quizRepository.findAllByStatus(pageable, statuses);
+            page = quizRepository.findAllByStatus(club, pageable, statuses);
         } else {
-            page  = quizRepository.findAllByNameAndStatus(filter.getName(), pageable, statuses);
+            page  = quizRepository.findAllByNameAndStatus(club, filter.getName(), pageable, statuses);
         }
         PageBean<QuizBean> bean = new PageBean<>(page.getNumber(), page.getSize(), page.getTotalPages());
         bean.setElements(page.map(QuizBean::new).getContent());
@@ -79,7 +88,9 @@ class QuizController extends AbstractController {
     }
 
     @PostMapping("/create")
-    public QuizBean createQuiz(@RequestBody QuizBean quiz) {
+    public QuizBean createQuiz(
+            @PathVariable Long clubId,
+            @RequestBody QuizBean quiz) {
         checkAdmin(session);
         validate(quiz);
         if (quiz.getStatus() == null
@@ -91,10 +102,7 @@ class QuizController extends AbstractController {
                 && quiz.getStatus() != QuizStatus.DRAFT) {
             throw new InvalidQuizParameterException("status");
         }
-        if (quiz.getClubId() == null) {
-            throw new InvalidQuizParameterException("clubId");
-        }
-        Club club = clubRepository.findById(quiz.getClubId()).orElseThrow();
+        Club club = clubRepository.findById(clubId).orElseThrow();
         User author = getUser(session, userRepository).orElseThrow();
         Quiz entity = new Quiz();
         entity.setAuthor(author);
@@ -121,7 +129,9 @@ class QuizController extends AbstractController {
     }
 
     @PostMapping("/{quizId}/edit")
-    public QuizBean editQuiz(@PathVariable Long quizId,
+    public QuizBean editQuiz(
+            @PathVariable(required = false) Long clubId,
+            @PathVariable Long quizId,
             @RequestBody QuizBean quiz) {
         checkAdmin(session);
         Quiz entity = quizRepository.findById(quizId).orElseThrow(() -> new QuizNotFoundException(quizId));
@@ -138,11 +148,9 @@ class QuizController extends AbstractController {
                 quiz.setQuestionsNumber(entity.getQuestions().size());
             }
         }
-        if (quiz.getClubId() == null) {
+        if (!Objects.equals(clubId, entity.getClub().getId())) {
             throw new InvalidQuizParameterException("clubId");
         }
-        Club club = clubRepository.findById(quiz.getClubId()).orElseThrow();
-        entity.setClub(club);
         fillParams(quiz, entity);
 
         try {
@@ -156,10 +164,14 @@ class QuizController extends AbstractController {
 
     @PostMapping("/{quizId}/questions")
     public long[] changeQuestions(
+            @PathVariable(required = false) Long clubId,
             @PathVariable Long quizId,
             @RequestBody ChangedCollectionBean changes) {
         checkAdmin(session);
         Quiz entity = quizRepository.findById(quizId).orElseThrow(() -> new QuizNotFoundException(quizId));
+        if (!Objects.equals(clubId, entity.getClub().getId())) {
+            throw new QuizNotFoundException(quizId);
+        }
         if (entity.getStatus() != QuizStatus.DRAFT) {
             throw new InvalidQuizParameterException("status");
         }
@@ -214,6 +226,13 @@ class QuizController extends AbstractController {
     static class QuizNotFoundException extends RuntimeException {
         public QuizNotFoundException(Long id) {
             super("quiz " + id + " not found");
+        }
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    static class ClubNotFoundException extends RuntimeException {
+        public ClubNotFoundException(Long id) {
+            super("club " + id + " not found");
         }
     }
 

@@ -196,11 +196,11 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
         return quizScheduler.schedule(() -> taskService.transactional(task), startTime);
     }
 
-    public List<Question> listQuestions(Set<Long> used, int limit) {
+    public List<Question> listQuestions(Club club, Set<Long> used, int limit) {
         if (used.isEmpty()) {
-            return questionRepository.findAll(PageRequest.of(0, limit)).getContent();
+            return questionRepository.findAllByClub(club, PageRequest.of(0, limit)).getContent();
         } else {
-            return questionRepository.findAllBut(used, PageRequest.of(0, limit));
+            return questionRepository.findAllByClubBut(club, used, PageRequest.of(0, limit));
         }
     }
 }

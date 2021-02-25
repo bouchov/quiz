@@ -8,8 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 public class UserLoader {
     private final String fileName;
@@ -33,7 +33,7 @@ public class UserLoader {
                         user.getNickname(),
                         user.getPassword(),
                         user.getRole());
-                entity.setClubs(Collections.singleton(club));
+                entity.setClubs(Set.of(club));
                 repository.save(entity);
             }
         }

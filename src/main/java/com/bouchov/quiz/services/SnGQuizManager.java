@@ -64,7 +64,7 @@ public class SnGQuizManager extends AbstractQuizManager {
         if (question == null) {
             for (QuizParticipant participant : result.getParticipants()) {
                 if (question == null) {
-                    question = nextQuestion(participant);
+                    question = nextQuestion(quiz.getClub(), participant);
                     if (question == null) {
                         break;
                     }
@@ -166,7 +166,7 @@ public class SnGQuizManager extends AbstractQuizManager {
         Question selectedQuestion = null;
         for (QuizParticipant participant : result.getParticipants()) {
             if (selectedQuestion == null) {
-                selectedQuestion = nextQuestion(participant);
+                selectedQuestion = nextQuestion(quiz.getClub(), participant);
             }
             if (selectedQuestion == null) {
                 finishQuiz();

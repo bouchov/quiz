@@ -11,95 +11,53 @@
 <div id="loadingWindow" class="loading fade-in" onclick="hideLoadingWindow()">
     <div class="center loading-spin"></div>
 </div>
-<div id="editQuestionWindow" class="modal">
-    <span class="close" onclick="showMainMenu()" title="Close">&times;</span>
-    <form class="modal-content animate" onsubmit="return doSubmitQuestionWindow()">
-        <h1>Редактор вопросов</h1>
+<div id="clubListWindow" class="modal">
+    <form class="modal-content animate" onsubmit="return doSearchClub()">
+        <h1>Список клубов</h1>
         <div class="table-row">
             <div class="table-cell" style="width: 20%">
                 <div class="table-cell-content, right_label">
-                    <label for="editQuestionWindow-category">Категория:</label>
+                    <label for="clubListWindow-clubName">Название:</label>
                 </div>
             </div>
-            <div class="table-cell" style="width: 80%">
+            <div class="table-cell" style="width: 60%">
                 <div class="table-cell-content">
-                    <select id="editQuestionWindow-category" name="category" required>
-                        <option disabled selected value="0">Выберите категорию</option>
-                        <option value="1">Концертный зал</option>
-                        <option value="2">Библиотека</option>
-                        <option value="3">Лаборатория</option>
-                        <option value="4">Мастерская</option>
-                        <option value="5">Музей</option>
-                    </select>
+                    <input type="text" id="clubListWindow-clubName">
                 </div>
             </div>
-        </div>
-        <div class="table-row">
             <div class="table-cell" style="width: 20%">
-                <div class="table-cell-content, right_label">
-                    <label for="editQuestionWindow-text">Текст:</label>
-                </div>
-            </div>
-            <div class="table-cell" style="width: 80%">
-                <div class="table-cell-content,tooltip">
-                    <div class="tooltip" style="width: 100%">
-                        <input type="text" id="editQuestionWindow-text" name="text" required>
-                        <span class="tooltip-text">Введите текст вопроса</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="table-row">
-            <div class="table-cell" style="width: 20%">
-                <div class="table-cell-content, right_label">
-                    <label for="editQuestionWindow-value">Стоимость:</label>
-                </div>
-            </div>
-            <div class="table-cell" style="width: 80%">
                 <div class="table-cell-content">
-                    <input type="number" id="editQuestionWindow-value" name="value" min="1" value="1">
+                    <button type="submit" class="search-button">Поиск</button>
                 </div>
             </div>
         </div>
-        <div id="editQuestionWindow-options">
-            <div class="table-row" id="editQuestionWindow-option1-row">
-                <div class="table-cell" style="width: 20%">
-                    <div class="table-cell-content, right_label">
-                        <input type="radio" name="options" value="1">
-                    </div>
-                </div>
-                <div class="table-cell" style="width: 70%">
-                    <div class="table-cell-content">
-                        <input type="text" name="option-text1" required value="текст ответа 1">
-                    </div>
-                </div>
-                <div class="table-cell" style="width: 10%">
-                    <div class="table-cell-content">
-                        <button onclick="onRemoveQuestionOption(1)" type="button" class="remove-button">&times;</button>
-                    </div>
+        <div id="clubListWindow-view">
+            <button onclick="onSelectClub()" type="button" value="1" class="dialog-button">Клуб 1</button>
+            <button onclick="onSelectClub()" type="button" value="2" class="dialog-button">Клуб 2</button>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 25%">
+                <div class="table-cell-content">
+                    <button onclick="onClubListWindowPrevPage()" type="button" id="clubListWindow-prevPage" class="dialog-button" title="Назад">&lt;&lt;</button>
                 </div>
             </div>
-            <div class="table-row" id="editQuestionWindow-option2-row">
-                <div class="table-cell" style="width: 20%">
-                    <div class="table-cell-content, right_label">
-                        <input type="radio" name="options" value="2">
-                    </div>
+            <div class="table-cell" style="width: 25%">
+                <div class="table-cell-content">
+                    <button onclick="onClubListWindowEnterClub()" type="button" id="clubListWindow-enterClub" class="dialog-button" title="Вступить в клуб">Вступить</button>
                 </div>
-                <div class="table-cell" style="width: 70%">
-                    <div class="table-cell-content">
-                        <input type="text" name="option-text2" required value="текст ответа 2">
-                    </div>
+            </div>
+            <div class="table-cell" style="width: 25%">
+                <div class="table-cell-content">
+                    <button onclick="onClubListWindowCreateClub()" type="button" id="clubListWindow-createClub" class="dialog-button" title="Создать клуб">Создать</button>
                 </div>
-                <div class="table-cell" style="width: 10%">
-                    <div class="table-cell-content">
-                        <button onclick="onRemoveQuestionOption(2)" type="button" class="remove-button">&times;</button>
-                    </div>
+            </div>
+            <div class="table-cell" style="width: 25%">
+                <div class="table-cell-content">
+                    <button onclick="onClubListWindowNextPage()" type="button" id="clubListWindow-nextPage" class="dialog-button" title="Вперёд">&gt;&gt;</button>
                 </div>
             </div>
         </div>
-        <button onclick="onAddQuestionOption()" type="button" class="dialog-button">Добавить ответ</button>
-        <button type="submit" id="editQuestionWindow-submit" class="dialog-button">Сохранить</button>
-        <button onclick="showLoadingWindow()" type="button" class="dialog-button-close">Закрыть</button>
+        <div class="table-footer"></div>
     </form>
 </div>
 
@@ -111,28 +69,16 @@
 <script type="text/javascript" src="common.js"></script>
 <script type="text/javascript" src="quiz.js"></script>
 <script>
-    var editQuestionWindow = new EditQuestionWindow()
+    var clubListWindow = {element:null}
 
     function initApp() {
-        editQuestionWindow.element = document.getElementById('editQuestionWindow');
+        clubListWindow.element = document.getElementById('clubListWindow');
 
-        showModalWindow(editQuestionWindow.element);
+        showModalWindow(clubListWindow.element);
     }
 
     function showModalWindow(element) {
         element.style.display='block';
-    }
-
-    function onAddQuestionOption() {
-        editQuestionWindow.addOption();
-    }
-
-    function onRemoveQuestionOption(id) {
-        editQuestionWindow.removeOption(id);
-    }
-
-    function showLoadingWindow() {
-        loadingWindow.show();
     }
 
     function hideLoadingWindow() {

@@ -9,24 +9,75 @@
 <div id="loadingWindow" class="loading fade-in" onclick="hideLoadingWindow()">
     <div class="center loading-spin"></div>
 </div>
+<div id="clubListWindow" class="modal">
+    <form class="modal-content animate" onsubmit="return doSearchClub()">
+        <h1>Список клубов</h1>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="clubListWindow-clubName">Название:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 60%">
+                <div class="table-cell-content">
+                    <input type="text" id="clubListWindow-clubName">
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button type="submit" class="search-button">Поиск</button>
+                </div>
+            </div>
+        </div>
+        <div id="clubListWindow-view">
+            <button onclick="onSelectClub()" type="button" value="1" class="dialog-button">Клуб 1</button>
+            <button onclick="onSelectClub()" type="button" value="2" class="dialog-button">Клуб 2</button>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 25%">
+                <div class="table-cell-content">
+                    <button onclick="onClubListWindowPrevPage()" type="button" id="clubListWindow-prevPage" class="dialog-button" title="Назад">&lt;&lt;</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 25%">
+                <div class="table-cell-content">
+                    <button onclick="onClubListWindowEnterClub()" type="button" id="clubListWindow-enterClub" class="dialog-button" title="Вступить в клуб">Вступить</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 25%">
+                <div class="table-cell-content">
+                    <button onclick="onClubListWindowCreateClub()" type="button" id="clubListWindow-createClub" class="dialog-button" title="Создать клуб">Создать</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 25%">
+                <div class="table-cell-content">
+                    <button onclick="onClubListWindowNextPage()" type="button" id="clubListWindow-nextPage" class="dialog-button" title="Вперёд">&gt;&gt;</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-footer"></div>
+    </form>
+</div>
 <div id="mainMenu" class="modal">
+    <span class="close" onclick="showClubListWindow()" title="Close">&times;</span>
     <form class="modal-content animate">
         <button onclick="showQuizListWindow(true)" type="button" id="mainMenu-quiz" class="dialog-button">Викторина</button>
         <button onclick="showCreateQuizWindow()" type="button" id="mainMenu-createQuiz" class="dialog-button">Новая викторина</button>
         <button onclick="showCreateQuestion()" type="button" id="mainMenu-createQuestion" class="dialog-button">Новый вопрос</button>
+        <button onclick="showClubListWindow()" type="button" class="dialog-button-close">Закрыть</button>
     </form>
 </div>
 <div id="messageWindow" class="modal">
-    <span class="close" onclick="doHideMessageWindow()" title="Close">&times;</span>
+    <span class="close" onclick="doHideMessageWindow()" title="Закрыть">&times;</span>
     <form class="modal-content animate" onsubmit="return doHideMessageWindow()">
         <div style="align-content: center; border: 1px solid #cccccc">
             <p id="messageWindow-text">&nbsp;</p>
         </div>
-        <button type="submit" class="dialog-button-close" id="messageWindow-submit">Close</button>
+        <button type="submit" class="dialog-button-close" id="messageWindow-submit">Закрыть</button>
     </form>
 </div>
 <div id="loginWindow" class="modal">
-    <span class="close" onclick="showMainMenu()" title="Close">&times;</span>
+    <span class="close" onclick="showClubListWindow()" title="Close">&times;</span>
     <form class="modal-content animate" onsubmit="return doSubmitLogin()">
         <h1>Вход</h1>
         <div class="table-row">
@@ -58,7 +109,7 @@
     </form>
 </div>
 <div id="registerWindow" class="modal">
-    <span class="close" onclick="showMainMenu()" title="Close">&times;</span>
+    <span class="close" onclick="showClubListWindow()" title="Close">&times;</span>
     <form class="modal-content animate" onsubmit="return doSubmitRegister()">
         <h1>Регистрация</h1>
         <div class="table-row">
@@ -152,10 +203,7 @@
             <div class="table-cell" style="width: 70%">
                 <div class="table-cell-content,tooltip">
                     <div class="tooltip" style="width: 100%">
-                        <select id="editQuizWindow-club" name="club" required>
-                            <option disabled selected value="0">Выберите клуб</option>
-                        </select>
-                        <span class="tooltip-text">Выберите клуб</span>
+                        <input type="text" id="editQuizWindow-club" name="club" disabled>
                     </div>
                 </div>
             </div>
@@ -391,6 +439,20 @@
         <div class="table-row">
             <div class="table-cell" style="width: 20%">
                 <div class="table-cell-content, right_label">
+                    <label for="editQuestionWindow-club">Клуб:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 80%">
+                <div class="table-cell-content,tooltip">
+                    <div class="tooltip" style="width: 100%">
+                        <input type="text" id="editQuestionWindow-club" name="club" disabled>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
                     <label for="editQuestionWindow-category">Категория:</label>
                 </div>
             </div>
@@ -501,6 +563,10 @@
         mainMenu.show();
     }
 
+    function showClubListWindow() {
+        clubListWindow.show();
+    }
+
     function doSubmitLogin() {
         loginWindow.doSubmit();
         return false;
@@ -520,6 +586,15 @@
         registerWindow.show();
     }
 
+    function onSelectClub(event) {
+        event = event || window.event; // IE
+        let target = event.target || event.srcElement; // IE
+        let clubId = Number.parseInt(target.value);
+        clubListWindow.setClub(clubId);
+
+        mainMenu.show();
+    }
+
     function showQuizListWindow(reload) {
         if (reload !== undefined) {
             quizListWindow.reset();
@@ -530,6 +605,12 @@
     function doSearchQuiz() {
         quizListWindow.reset();
         quizListWindow.show();
+        return false;
+    }
+
+    function doSearchClub() {
+        clubListWindow.reset();
+        clubListWindow.show();
         return false;
     }
 

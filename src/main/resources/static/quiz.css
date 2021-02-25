@@ -215,6 +215,10 @@ button:disabled:hover {
     clear: both;
 }
 
+.table-footer {
+    clear: both;
+}
+
 .right_label {
     width: 100%;
     text-align: right;

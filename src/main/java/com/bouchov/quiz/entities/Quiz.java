@@ -11,7 +11,7 @@ public class Quiz extends BasicEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private User author;
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Club club;
     @Column(unique = true)
     private String name;

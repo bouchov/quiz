@@ -10,8 +10,10 @@ import java.util.Collection;
 import java.util.List;
 
 public interface QuestionRepository extends PagingAndSortingRepository<Question,Long> {
-    Page<Question> findAllByCategory(Category category, Pageable pageable);
+    Page<Question> findAllByCategoryAndClub(Category category, Club club, Pageable pageable);
 
-    @Query("select Q from Question Q where Q.id not in :ids")
-    List<Question> findAllBut(@Param("ids") Collection<Long> ids, Pageable pageable);
+    Page<Question> findAllByClub(Club club, Pageable pageable);
+
+    @Query("select Q from Question Q where Q.club = :club and Q.id not in :ids")
+    List<Question> findAllByClubBut(@Param("club") Club club, @Param("ids") Collection<Long> ids, Pageable pageable);
 }

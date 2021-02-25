@@ -151,6 +151,65 @@ class WebControl extends HttpCommunicator {
     }
 }
 
+class PagedWebForm extends WebForm {
+    constructor(id) {
+        super(id);
+        this.nextPage = document.getElementById(id + '-nextPage');
+        this.prevPage = document.getElementById(id + '-prevPage');
+        this.submit = document.getElementById(id + '-submit');
+
+        this.pageNumber = 0;
+        this.total = undefined;
+        this.pageSize = 10;
+    }
+
+    reset() {
+        this.pageNumber = 0;
+        this.total = undefined;
+    }
+
+    beforeShow() {
+        if (this.pageNumber <= 0) {
+            this.prevPage.disabled = true;
+        } else {
+            this.prevPage.disabled = false;
+        }
+        if (this.total !== undefined) {
+            if (this.submit) {
+                this.submit.disabled = false;
+            }
+            if (this.pageNumber + 1 >= this.total) {
+                this.nextPage.disabled = true;
+            } else {
+                this.nextPage.disabled = false;
+            }
+        } else {
+            if (this.submit) {
+                this.submit.disabled = true;
+            }
+            this.nextPage.disabled = true;
+            this.loadPage();
+            return false;
+        }
+        return super.beforeShow();
+    }
+
+    loadPage() {
+    }
+
+    loadNextPage(inc) {
+        let nextPage = this.pageNumber + inc;
+        if (nextPage >= 0) {
+            if (this.total !== undefined) {
+                if (nextPage < this.total) {
+                    this.pageNumber = nextPage;
+                    this.loadPage();
+                }
+            }
+        }
+    }
+}
+
 function playSound(audio) {
     audio.volume = 0.2;
     audio.play();

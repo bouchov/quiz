@@ -2,7 +2,9 @@ package com.bouchov.quiz.entities;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import java.util.Set;
 
 /**
  * Alexandre Y. Bouchov
@@ -20,6 +22,9 @@ public class Club extends BasicEntity {
 
     @ManyToOne(optional = false)
     private User owner;
+
+    @ManyToMany(mappedBy = "clubs")
+    private Set<User> participants;
 
     public Club() {
     }
@@ -40,6 +45,14 @@ public class Club extends BasicEntity {
 
     public User getOwner() {
         return owner;
+    }
+
+    public Set<User> getParticipants() {
+        return participants;
+    }
+
+    public void setParticipants(Set<User> participants) {
+        this.participants = participants;
     }
 
     @Override

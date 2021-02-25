@@ -19,7 +19,7 @@ public abstract class AbstractQuizManager implements QuizManager {
         this.service = service;
     }
 
-    protected Question nextQuestion(QuizParticipant participant) {
+    protected Question nextQuestion(Club club, QuizParticipant participant) {
         Set<Long> used = participant.getAnswers().stream()
                 .map((qa) -> qa.getQuestion().getId())
                 .collect(Collectors.toSet());
@@ -36,10 +36,10 @@ public abstract class AbstractQuizManager implements QuizManager {
             }
         } else if (quiz.getSelectionStrategy() == QuestionSelectionStrategy.SOME) {
             if (quiz.getQuestionsNumber() > used.size()) {
-                selectedQuestion = anyNotUsedQuestion(used);
+                selectedQuestion = anyNotUsedQuestion(club, used);
             }
         } else if (quiz.getSelectionStrategy() == QuestionSelectionStrategy.ALL) {
-            selectedQuestion = anyNotUsedQuestion(used);
+            selectedQuestion = anyNotUsedQuestion(club, used);
         } else {
             throw new UnsupportedOperationException("nextQuestion");
         }
@@ -50,8 +50,8 @@ public abstract class AbstractQuizManager implements QuizManager {
         return selectedQuestion;
     }
 
-    private Question anyNotUsedQuestion(Set<Long> used) {
-        List<Question> questions = service.listQuestions(used, 10);
+    private Question anyNotUsedQuestion(Club club, Set<Long> used) {
+        List<Question> questions = service.listQuestions(club, used, 10);
         if (questions.isEmpty()) {
             return null;
         } else if (questions.size() > 1) {

@@ -26,14 +26,33 @@ public class QuestionControllerTest {
     @Autowired
     private QuestionRepository questionRepository;
     @Autowired
+    private ClubRepository clubRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
     private ObjectMapper objectMapper;
     private Category testCategory;
+    private User testUser;
+    private Club testClub;
 
     @BeforeEach
     public void setUp() {
         Category category = new Category();
         category.setName("Test category " + System.currentTimeMillis());
         testCategory = categoryRepository.save(category);
+        testUser = userRepository.save(
+                new User(
+                        UniqSource.uniqueString("login"),
+                        UniqSource.uniqueString("nickname"),
+                        UniqSource.uniqueString("pass"),
+                        UserRole.PLAYER));
+        testClub = clubRepository.save(
+                new Club(
+                        UniqSource.uniqueString("name"),
+                        IdGenerator.generate(),
+                        testUser
+                )
+        );
     }
 
     @Test public void addQuestion() throws Exception {
@@ -50,6 +69,7 @@ public class QuestionControllerTest {
 
     @Test public void listQuestions() throws Exception {
         questionRepository.save(new Question(
+                testClub,
                 testCategory,
                 "question 1",
                 0,
@@ -60,6 +80,7 @@ public class QuestionControllerTest {
                         new Option(2, "op2")))
         ));
         questionRepository.save(new Question(
+                testClub,
                 testCategory,
                 "question 2",
                 0,
@@ -70,6 +91,7 @@ public class QuestionControllerTest {
                         new Option(2, "op2")))
         ));
         questionRepository.save(new Question(
+                testClub,
                 testCategory,
                 "question 3",
                 0,
@@ -80,6 +102,7 @@ public class QuestionControllerTest {
                         new Option(2, "op2")))
         ));
         questionRepository.save(new Question(
+                testClub,
                 testCategory,
                 "question 4",
                 0,

@@ -12,6 +12,8 @@ import java.util.List;
 
 @Entity
 public class Question extends BasicEntity {
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private Club club;
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Category category;
@@ -23,12 +25,17 @@ public class Question extends BasicEntity {
     public Question() {
     }
 
-    public Question(Category category, String text, int answer, int value, String optionsJson) {
+    public Question(Club club, Category category, String text, int answer, int value, String optionsJson) {
+        this.club = club;
         this.category = category;
         this.text = text;
         this.answer = answer;
         this.value = value;
         this.optionsJson = optionsJson;
+    }
+
+    public Club getClub() {
+        return club;
     }
 
     public String getText() {

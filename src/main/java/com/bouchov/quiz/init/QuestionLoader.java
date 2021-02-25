@@ -1,9 +1,6 @@
 package com.bouchov.quiz.init;
 
-import com.bouchov.quiz.entities.Category;
-import com.bouchov.quiz.entities.CategoryRepository;
-import com.bouchov.quiz.entities.Question;
-import com.bouchov.quiz.entities.QuestionRepository;
+import com.bouchov.quiz.entities.*;
 import com.bouchov.quiz.protocol.QuestionBean;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -22,7 +19,7 @@ public class QuestionLoader {
         this("questions.json");
     }
 
-    public void load(QuestionRepository repository, CategoryRepository categoryRepo)
+    public void load(QuestionRepository repository, CategoryRepository categoryRepo, Club club)
             throws IOException {
         try(InputStream stream = QuestionLoader.class.getResourceAsStream(fileName)) {
             Objects.requireNonNull(stream, "file not found");
@@ -31,6 +28,7 @@ public class QuestionLoader {
             for (QuestionBean question : beans) {
                 Category category = categoryRepo.findByName(question.getCategory()).orElseThrow();
                 repository.save(new Question(
+                        club,
                         category,
                         question.getText(),
                         question.getAnswer(),
