@@ -118,17 +118,20 @@ label {
     100% {opacity: 1;}
 }
 
-.close {
+.menu-bar {
     position: absolute;
     right: 25px;
     top: 0;
+}
+
+.menu-button {
     color: #f1f1f1;
     font-size: 35px;
     font-weight: bold;
 }
 
-.close:hover,
-.close:focus {
+.menu-button:hover,
+.menu-button:focus {
     color: red;
     cursor: pointer;
 }

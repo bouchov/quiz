@@ -18,7 +18,7 @@ import javax.servlet.http.HttpSession;
 import java.util.*;
 
 @RestController
-@RequestMapping("/{clubId}/questions")
+@RequestMapping("/questions")
 class QuestionController extends AbstractController {
     private final HttpSession session;
     private final CategoryRepository categoryRepository;
@@ -47,7 +47,6 @@ class QuestionController extends AbstractController {
 
     @PostMapping("/create")
     public QuestionBean add(
-            @PathVariable Long clubId,
             @RequestBody QuestionBean jsonQuestion)
             throws JsonProcessingException {
         checkAuthorization(session);
@@ -56,8 +55,7 @@ class QuestionController extends AbstractController {
         validate(jsonQuestion);
 
         User user = getUser(session, userRepository).orElseThrow();
-        Club club = clubRepository.findById(clubId)
-                .orElseThrow(() -> new InvalidQuestionParameterException("clubId"));
+        Club club = getClub(session, clubRepository).orElseThrow(ClubNotFoundException::new);
         if (!user.equals(club.getOwner())) {
             throw new InvalidQuestionParameterException("clubId - user is not owner");
         }
@@ -128,16 +126,16 @@ class QuestionController extends AbstractController {
 
     @PostMapping("{questionId}/edit")
     public QuestionBean edit(
-            @PathVariable Long clubId,
             @PathVariable Long questionId,
             @RequestBody QuestionBean jsonQuestion)
             throws JsonProcessingException {
-        checkAdmin(session);
+        checkAuthorization(session);
         Question entity = questionRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(questionId));
         Category category = getCategory(jsonQuestion);
 
-        if (!Objects.equals(clubId, entity.getClub().getId())) {
+        Club club = getClub(session, clubRepository).orElseThrow(ClubNotFoundException::new);
+        if (!Objects.equals(club, entity.getClub())) {
             throw new InvalidQuestionParameterException("clubId");
         }
         validate(jsonQuestion);
@@ -159,10 +157,9 @@ class QuestionController extends AbstractController {
 
     @GetMapping
     public List<QuestionBean> showQuestions(
-            @PathVariable Long clubId,
             @RequestParam(required = false) Long categoryId) {
         checkAuthorization(session);
-        Club club = clubRepository.findById(clubId).orElseThrow(() -> new ClubNotFoundException(clubId));
+        Club club = getClub(session, clubRepository).orElseThrow();
         checkOwner(club);
         ArrayList<QuestionBean> questions = new ArrayList<>();
         if (categoryId != null) {
@@ -190,13 +187,12 @@ class QuestionController extends AbstractController {
 
     @PostMapping("/list")
     public PageBean<QuestionBean> listQuestions(
-            @PathVariable Long clubId,
             @RequestBody QuestionFilterBean filter) {
         checkAuthorization(session);
         int pageNumber = filter.getPage() == null ? 0 : filter.getPage();
         int pageSize = filter.getSize() == null ? 10 : filter.getSize();
         Sort sort = Sort.by("id");
-        Club club = clubRepository.findById(clubId).orElseThrow(() -> new ClubNotFoundException(clubId));
+        Club club = getClub(session, clubRepository).orElseThrow(ClubNotFoundException::new);
         checkOwner(club);
         Page<Question> page;
         if (filter.getCategoryId() != null) {
@@ -247,12 +243,12 @@ class QuestionController extends AbstractController {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     static class ClubNotFoundException extends RuntimeException {
 
-        public ClubNotFoundException(Long clubId) {
-            super("club " + clubId + " not found");
-        }
-
         public ClubNotFoundException(String message) {
             super(message);
+        }
+
+        public ClubNotFoundException() {
+            super("club is nor selected");
         }
     }
 

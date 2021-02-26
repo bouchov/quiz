@@ -23,16 +23,19 @@ public class Club extends BasicEntity {
     @ManyToOne(optional = false)
     private User owner;
 
+    private boolean autoInclusion;
+
     @ManyToMany(mappedBy = "clubs")
     private Set<User> participants;
 
     public Club() {
     }
 
-    public Club(String name, String uid, User owner) {
+    public Club(String name, String uid, User owner, boolean autoInclusion) {
         this.name = name;
         this.uid = uid;
         this.owner = owner;
+        this.autoInclusion = autoInclusion;
     }
 
     public String getName() {
@@ -45,6 +48,14 @@ public class Club extends BasicEntity {
 
     public User getOwner() {
         return owner;
+    }
+
+    public boolean isAutoInclusion() {
+        return autoInclusion;
+    }
+
+    public void setAutoInclusion(boolean autoInclusion) {
+        this.autoInclusion = autoInclusion;
     }
 
     public Set<User> getParticipants() {

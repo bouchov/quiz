@@ -48,9 +48,13 @@ class ClubListWindow extends PagedWebForm {
         this.view = document.getElementById('clubListWindow-view');
 
         this.clubArray = [];
-        this.club = {id:undefined, uid:undefined, name:'Неизвестно', owner:undefined};
 
         this.view.innerHTML = 'Список пуст';
+    }
+
+    beforeShow() {
+        enableAllButtons(this.view);
+        return super.beforeShow();
     }
 
     loadPage() {
@@ -104,7 +108,7 @@ class ClubListWindow extends PagedWebForm {
         }
     }
 
-    setClub(clubId) {
+    selectClub(clubId) {
         let club = undefined;
         this.clubArray.forEach(function (q) {
             if (q.id === clubId) {
@@ -112,14 +116,130 @@ class ClubListWindow extends PagedWebForm {
             }
         })
         if (club) {
-            this.club = club;
-            editQuizWindow.setClub(club);
-            editQuestionWindow.setClub(club);
+            disableAllButtons(this.view)
+            let form = this;
+            let xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState === 4) {
+                    form.hide();
+                    if (this.status === 200) {
+                        form.log.log('WEB: <<< ' + xhttp.responseText);
+                        let club = JSON.parse(xhttp.responseText);
+                        form.log.log('Club selected: ', club);
+                        personalInfo.saveClub(club);
+                        mainMenu.show();
+                    } else {
+                        form.log.warn('Club selection failed: ' + this.status);
+                        messageWindow.showMessage(this.responseText, function () {form.show()});
+                    }
+                }
+            };
+            this.sendGet(xhttp, '/club/' + club.id);
         }
     }
+}
 
-    getClub() {
-        return this.club;
+class CreateClubWindow extends WebForm {
+    constructor() {
+        super('createClubWindow');
+        this.clubName = document.getElementById('createClubWindow-clubName')
+        this.submit = document.getElementById('createClubWindow-submit')
+    }
+
+    beforeShow() {
+        this.submit.disabled = false;
+
+        return super.beforeShow();
+    }
+
+
+    show() {
+        super.show();
+        this.clubName.focus();
+    }
+
+    doSubmit() {
+        let name = this.clubName.value;
+        if (name == null || name === '') {
+            return;
+        }
+        this.submit.disabled = true;
+        let form = this;
+        let xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                form.hide();
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    let club = JSON.parse(xhttp.responseText);
+                    form.log.log('Club created: ', club);
+                    clubListWindow.reset();
+                    messageWindow.showMessage('Клуб успешно сохранён', function () {form.show()});
+                } else {
+                    form.log.warn('Club creation failed: ' + this.status);
+                    messageWindow.showMessage(this.responseText, function () {form.show()});
+                }
+            }
+        };
+        this.sendJson(xhttp, '/club/create',
+            {
+                name: name
+            });
+    }
+}
+
+class EnterClubWindow extends WebForm {
+    constructor() {
+        super('enterClubWindow');
+        this.clubUid = document.getElementById('enterClubWindow-clubUid')
+        this.submit = document.getElementById('enterClubWindow-submit')
+    }
+
+    beforeShow() {
+        this.submit.disabled = false;
+
+        return super.beforeShow();
+    }
+
+
+    show() {
+        super.show();
+        this.clubUid.focus();
+    }
+
+    doSubmit() {
+        let uid = this.clubUid.value;
+        if (uid == null || uid === '') {
+            return;
+        }
+        this.submit.disabled = true;
+        let form = this;
+        let xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                form.hide();
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    let request = JSON.parse(xhttp.responseText);
+                    //request can be pending, success, resigned
+                    form.log.log('Club request: ', request);
+                    if (request.status === 'PENDING') {
+                        messageWindow.showMessage('Запрос успешно отправлен в клуб ' + request.club.name, function () {form.show()});
+                    } else if (request.status === 'SUCCESS') {
+                        messageWindow.showMessage('Вы успешно вступили в клуб ' + request.club.name, function () {form.show()});
+                    } else {
+                        messageWindow.showMessage('Вам отказано во вступлении в клуб ' + request.club.name, function () {form.show()});
+                    }
+                } else {
+                    form.log.warn('Club entering failed: ' + this.status);
+                    messageWindow.showMessage(this.responseText, function () {form.show()});
+                }
+            }
+        };
+        this.sendJson(xhttp, '/club/enter',
+            {
+                uid: uid
+            });
     }
 }
 
@@ -133,13 +253,12 @@ class MainMenu extends WebForm {
 
     beforeShow() {
         this.quiz.disabled = false;
-        if (personalInfo.user && personalInfo.user.role === 'ADMIN') {
+        if (personalInfo.user && personalInfo.club.owner) {
             this.createQuiz.disabled = false;
             this.createQuestion.disabled = false;
             this.createQuiz.style.display = 'inline';
             this.createQuestion.style.display = 'inline';
         } else {
-            //admin required
             this.createQuiz.disabled = true;
             this.createQuestion.disabled = true;
             this.createQuiz.style.display = 'none';
@@ -156,23 +275,46 @@ class MainMenu extends WebForm {
 
 class PersonalInfo extends WebForm {
     KEY_USER = 'KEY_USER';
+    KEY_CLUB = 'KEY_CLUB';
 
     constructor() {
         super('personalInfo');
 
+        this.name = document.getElementById('personalInfo-name')
+
         let jsonUser = localStorage.getItem(this.KEY_USER)
         if (!jsonUser) {
-            this.user = {nickname: 'Гость'};
+            this.user = {nickname: 'Гость'}
         } else {
-            this.user = JSON.parse(jsonUser);
+            this.user = JSON.parse(jsonUser)
         }
-        this.element.innerHTML='<p>' + this.user.nickname + '</p>';
+        let jsonClub = localStorage.getItem(this.KEY_CLUB)
+        if (!jsonClub) {
+            this.club = {id:undefined, uid:undefined, name:'Неизвестно', owner:undefined};
+        } else {
+            this.club = JSON.parse(jsonClub)
+        }
+        this.name.innerHTML = this.generateHtml();
+    }
+
+    generateHtml() {
+        let html = '<p>' + this.user.nickname
+        if (this.club.id) {
+            html += ' : ' + this.club.name
+        }
+        return html + '</p>';
     }
 
     saveUser(user) {
         this.user = user;
         localStorage.setItem(this.KEY_USER, JSON.stringify(user));
-        this.element.innerHTML='<p>' + user.nickname + '</p>';
+        this.name.innerHTML = this.generateHtml();
+    }
+
+    saveClub(club) {
+        this.club = club;
+        localStorage.setItem(this.KEY_CLUB, JSON.stringify(club));
+        this.name.innerHTML = this.generateHtml();
     }
 
     initApplication() {
@@ -198,11 +340,6 @@ class PersonalInfo extends WebForm {
             loginWindow.show();
         }
     }
-
-    isAdmin() {
-        return this.user && this.user.role === 'ADMIN';
-    }
-
 
     show() {
         //always shown
@@ -256,6 +393,9 @@ class LoginWindow extends WebForm {
             return false;
         }
         this.submitButton.disabled = true;
+        let login = this.userName.value;
+        let password = this.userPassword.value;
+        this.userPassword.value = '';
         let form = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
@@ -268,14 +408,18 @@ class LoginWindow extends WebForm {
                     personalInfo.saveUser(user);
                     form.saveLogin(user.login);
                     form.runCallback();
+                } else if (this.status === 409) {
+                    //need re-login
+                    form.log.warn('Need ReLogin: ' + this.status);
+                    form.userPassword.value = password;
+                    messageWindow.showMessage('Произошла ошибка. Попробуйте ещё раз.', function() {form.show()});
                 } else {
                     form.log.warn('Login Failed: ' + this.status);
                     messageWindow.showMessage(this.responseText, function() {form.show()});
                 }
             }
         };
-        this.sendPost(xhttp, '/', 'login=' + this.userName.value + '&password=' + this.userPassword.value);
-        this.userPassword.value = '';
+        this.sendPost(xhttp, '/', 'login=' + login + '&password=' + password);
     }
 }
 
@@ -379,8 +523,7 @@ class QuizListWindow extends PagedWebForm {
                 }
             }
         };
-        let club = clubListWindow.getClub();
-        this.sendJson(xhttp, '/' + club.id + '/quiz/list',
+        this.sendJson(xhttp, '/quiz/list',
             {
                 name: name,
                 page: this.pageNumber,
@@ -465,12 +608,11 @@ class QuizWindow extends WebForm {
                 }
             }
         };
-        let club = clubListWindow.getClub();
-        this.sendGet( xhttp, '/' + club.id + '/quiz/' + this.quizId + '/register');
+        this.sendGet( xhttp, '/quiz/' + this.quizId + '/register');
     }
 
     beforeShow() {
-        if (personalInfo.isAdmin() && this.quiz.status === 'DRAFT') {
+        if (personalInfo.club.owner && this.quiz.status === 'DRAFT') {
             this.editButton.style.display = 'inline';
         } else {
             this.editButton.style.display = 'none';
@@ -566,10 +708,6 @@ class EditQuizWindow extends WebForm {
         this.status.value = quiz.status;
     }
 
-    setClub(club) {
-        this.club.value = club.name;
-    }
-
     saveQuiz() {
         //validate !!!
         let minPlayers = Number.parseInt(this.minPlayers.value);
@@ -597,7 +735,7 @@ class EditQuizWindow extends WebForm {
                     form.log.log('WEB: <<< ' + xhttp.responseText);
                     let quiz = JSON.parse(xhttp.responseText);
                     form.setQuiz(quiz);
-                    form.log.log('quiz saved: ', xhttp.responseText);
+                    form.log.log('quiz saved: ', quiz);
                     quizListWindow.reset();
                     messageWindow.showMessage('Викторина успешно сохранена', function () {form.show()});
                 } else if (this.status === 401) {
@@ -608,18 +746,16 @@ class EditQuizWindow extends WebForm {
                 }
             }
         };
-        let club = clubListWindow.getClub();
-        let url = '/' + club.id;
         if (quiz.id) {
-            url = url + '/quiz/' + quiz.id + '/edit';
+            this.sendJson(xhttp, '/quiz/' + quiz.id + '/edit', quiz);
         } else {
-            url = url + '/quiz/create';
+            this.sendJson(xhttp, '/quiz/create', quiz);
         }
-        this.sendJson(xhttp, url, quiz);
     }
 
     beforeShow() {
         this.submit.disabled = false;
+        this.club.value = personalInfo.club.name;
         if (this.quiz.id && this.quiz.selectionStrategy === 'QUIZ' && this.quiz.status === 'DRAFT') {
             this.selectQuestions.disabled = false;
             this.selectQuestions.style.display = 'inline';
@@ -721,8 +857,7 @@ class QuestionListWindow extends PagedWebForm {
                 }
             }
         };
-        let club = clubListWindow.getClub();
-        this.sendJson(xhttp, '/' + club.id + '/quiz/' + this.quizId + '/questions',
+        this.sendJson(xhttp, '/quiz/' + this.quizId + '/questions',
             {added: addedQuestions, removed: removedQuestions});
     }
 
@@ -751,8 +886,7 @@ class QuestionListWindow extends PagedWebForm {
         if (this.category.getCategory() > 0) {
             categoryId = this.category.getCategory();
         }
-        let club = clubListWindow.getClub();
-        this.sendJson(xhttp, '/' + club.id + '/questions/list', {
+        this.sendJson(xhttp, '/questions/list', {
             categoryId: categoryId,
             quizId: this.quizId,
             page: this.pageNumber,
@@ -822,12 +956,9 @@ class EditQuestionWindow extends WebForm {
         this.writeOptions();
     }
 
-    setClub(club) {
-        this.club.value = club.name;
-    }
-
     beforeShow() {
         this.submit.disabled = false;
+        this.club.value = personalInfo.club.name;
         return super.beforeShow();
     }
 
@@ -935,14 +1066,11 @@ class EditQuestionWindow extends WebForm {
                 }
             }
         };
-        let club = clubListWindow.getClub();
-        let url = '/' + club.id;
         if (query.id) {
-            url = url + '/questions/' + query.id + '/edit';
+            this.sendJson(xhttp, '/questions/' + query.id + '/edit', query);
         } else {
-            url = url + '/questions/create';
+            this.sendJson(xhttp, '/questions/create', query);
         }
-        this.sendJson(xhttp, url, query);
     }
 }
 
@@ -1105,6 +1233,8 @@ function playQuizWebsocketMessageHandler(event) {
 }
 
 var clubListWindow = new ClubListWindow();
+var createClubWindow = new CreateClubWindow();
+var enterClubWindow = new EnterClubWindow();
 var mainMenu = new MainMenu();
 var loadingWindow = new LoadingWindow();
 var personalInfo = new PersonalInfo();

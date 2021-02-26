@@ -1,8 +1,6 @@
 package com.bouchov.quiz;
 
-import com.bouchov.quiz.entities.User;
-import com.bouchov.quiz.entities.UserRepository;
-import com.bouchov.quiz.entities.UserRole;
+import com.bouchov.quiz.entities.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -31,6 +29,14 @@ public class AbstractController {
             return Optional.empty();
         }
         return repository.findById(userId);
+    }
+
+    protected Optional<Club> getClub(HttpSession session, ClubRepository repository) {
+        Long clubId = (Long) session.getAttribute(SessionAttributes.CLUB_ID);
+        if (clubId == null) {
+            return Optional.empty();
+        }
+        return repository.findById(clubId);
     }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)

@@ -1,7 +1,5 @@
 package com.bouchov.quiz.protocol;
 
-import com.bouchov.quiz.entities.QuizAnswerStatus;
-
 public class ResponseBean {
     private QuestionBean question;
     private AnswerBean answer;

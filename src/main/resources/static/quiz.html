@@ -11,70 +11,47 @@
 <div id="loadingWindow" class="loading fade-in" onclick="hideLoadingWindow()">
     <div class="center loading-spin"></div>
 </div>
-<div id="clubListWindow" class="modal">
-    <form class="modal-content animate" onsubmit="return doSearchClub()">
-        <h1>Список клубов</h1>
+<div id="createClubWindow" class="modal">
+    <div class="menu-bar">
+        <span class="menu-button" onclick="showMenu()" title="Menu">&ctdot;</span>
+        <span class="menu-button" onclick="showLoginWindow()" title="Close">&times;</span>
+    </div>
+    <form class="modal-content animate" onsubmit="return doCreateClub()">
+        <h1>Создать клуб</h1>
         <div class="table-row">
             <div class="table-cell" style="width: 20%">
                 <div class="table-cell-content, right_label">
-                    <label for="clubListWindow-clubName">Название:</label>
+                    <label for="createClubWindow-clubName">Название:</label>
                 </div>
             </div>
-            <div class="table-cell" style="width: 60%">
+            <div class="table-cell" style="width: 80%">
                 <div class="table-cell-content">
-                    <input type="text" id="clubListWindow-clubName">
-                </div>
-            </div>
-            <div class="table-cell" style="width: 20%">
-                <div class="table-cell-content">
-                    <button type="submit" class="search-button">Поиск</button>
+                    <input type="text" id="createClubWindow-clubName">
                 </div>
             </div>
         </div>
-        <div id="clubListWindow-view">
-            <button onclick="onSelectClub()" type="button" value="1" class="dialog-button">Клуб 1</button>
-            <button onclick="onSelectClub()" type="button" value="2" class="dialog-button">Клуб 2</button>
-        </div>
-        <div class="table-row">
-            <div class="table-cell" style="width: 25%">
-                <div class="table-cell-content">
-                    <button onclick="onClubListWindowPrevPage()" type="button" id="clubListWindow-prevPage" class="dialog-button" title="Назад">&lt;&lt;</button>
-                </div>
-            </div>
-            <div class="table-cell" style="width: 25%">
-                <div class="table-cell-content">
-                    <button onclick="onClubListWindowEnterClub()" type="button" id="clubListWindow-enterClub" class="dialog-button" title="Вступить в клуб">Вступить</button>
-                </div>
-            </div>
-            <div class="table-cell" style="width: 25%">
-                <div class="table-cell-content">
-                    <button onclick="onClubListWindowCreateClub()" type="button" id="clubListWindow-createClub" class="dialog-button" title="Создать клуб">Создать</button>
-                </div>
-            </div>
-            <div class="table-cell" style="width: 25%">
-                <div class="table-cell-content">
-                    <button onclick="onClubListWindowNextPage()" type="button" id="clubListWindow-nextPage" class="dialog-button" title="Вперёд">&gt;&gt;</button>
-                </div>
-            </div>
-        </div>
+        <button type="submit" id="createClubWindow-create" class="dialog-button">Создать</button>
+        <button onclick="showClubListWindow()" type="button" class="dialog-button-close">Закрыть</button>
         <div class="table-footer"></div>
     </form>
 </div>
 
-<div style="right: 100px; position: absolute;">
-<p>Nickname: Lox</p>
+<div id="personalInfo" style="right: 10em; position: absolute;">
+    <div id="personalInfo-name">
+        <p>Гостъ</p>
+    </div>
 </div>
 </body>
 </html>
 <script type="text/javascript" src="common.js"></script>
 <script type="text/javascript" src="quiz.js"></script>
 <script>
-    var clubListWindow = {element:null}
+    var createClubWindow = {element:null}
 
     function initApp() {
-        clubListWindow.element = document.getElementById('clubListWindow');
+        createClubWindow.element = document.getElementById('createClubWindow');
 
-        showModalWindow(clubListWindow.element);
+        showModalWindow(createClubWindow.element);
     }
 
     function showModalWindow(element) {

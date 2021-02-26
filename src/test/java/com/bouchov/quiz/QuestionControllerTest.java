@@ -50,7 +50,8 @@ public class QuestionControllerTest {
                 new Club(
                         UniqSource.uniqueString("name"),
                         IdGenerator.generate(),
-                        testUser
+                        testUser,
+                        true
                 )
         );
     }

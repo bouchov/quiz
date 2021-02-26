@@ -12,6 +12,7 @@ public class ClubBean {
     private Long id;
     private String uid;
     private String name;
+    private boolean autoInclusion;
     private Boolean owner;
 
     public ClubBean() {
@@ -25,6 +26,7 @@ public class ClubBean {
         this.id = that.getId();
         this.uid = that.getUid();
         this.name = that.getName();
+        this.autoInclusion = that.isAutoInclusion();
         this.owner = owner;
     }
 
@@ -50,6 +52,14 @@ public class ClubBean {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isAutoInclusion() {
+        return autoInclusion;
+    }
+
+    public void setAutoInclusion(boolean autoInclusion) {
+        this.autoInclusion = autoInclusion;
     }
 
     public Boolean getOwner() {

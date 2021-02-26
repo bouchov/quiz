@@ -38,7 +38,7 @@ class MainController extends AbstractController {
                 .orElseThrow(() -> new UserNotFoundException(login));
         if (userId != null && !Objects.equals(user.getId(), userId)) {
             session.invalidate();
-            throw new UserNotFoundException(login);
+            throw new NeedReLoginException();
         }
         if (!Objects.equals(password, user.getPassword())) {
             throw new UserNotFoundException(login);
@@ -97,6 +97,13 @@ class MainController extends AbstractController {
 
         public UserAlreadyExistsException(String login) {
             super("user '" + login + "' already exists.");
+        }
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    static class NeedReLoginException extends RuntimeException {
+        public NeedReLoginException() {
+            super("user is logged in with another credentials");
         }
     }
 

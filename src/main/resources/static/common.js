@@ -216,10 +216,18 @@ function playSound(audio) {
 }
 
 function disableAllButtons(element) {
+    changeAllButtons(element, true)
+}
+
+function enableAllButtons(element) {
+    changeAllButtons(element, false)
+}
+
+function changeAllButtons(element, disabled) {
     let node = element.firstChild;
     do {
         if (node.tagName === 'BUTTON') {
-            node.disabled = true;
+            node.disabled = disabled;
         }
         node = node.nextSibling;
     } while (node);

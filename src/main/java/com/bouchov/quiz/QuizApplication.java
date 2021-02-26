@@ -36,7 +36,11 @@ public class QuizApplication {
                 return;
             }
             admin = userRepository.save(new User("admin", "admin", "Admin", UserRole.ADMIN));
-            Club club = clubRepository.save(new Club("Club of " + admin.getNickname(), IdGenerator.generate(), admin));
+            Club club = clubRepository.save(new Club(
+                    "Club of " + admin.getNickname(),
+                    IdGenerator.generate(),
+                    admin,
+                    true));
             admin.setClubs(Set.of(club));
             userRepository.save(admin);
 
