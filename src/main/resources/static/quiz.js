@@ -126,7 +126,7 @@ class ClubListWindow extends PagedWebForm {
                         form.log.log('WEB: <<< ' + xhttp.responseText);
                         let club = JSON.parse(xhttp.responseText);
                         form.log.log('Club selected: ', club);
-                        personalInfo.saveClub(club);
+                        mainMenu.saveClub(club);
                         mainMenu.show();
                     } else {
                         form.log.warn('Club selection failed: ' + this.status);
@@ -244,16 +244,25 @@ class EnterClubWindow extends WebForm {
 }
 
 class MainMenu extends WebForm {
+    KEY_CLUB = 'KEY_CLUB';
+
     constructor() {
         super('mainMenu');
+        this.title = document.getElementById('mainMenu-title');
         this.quiz = document.getElementById('mainMenu-quiz');
         this.createQuiz = document.getElementById('mainMenu-createQuiz');
         this.createQuestion = document.getElementById('mainMenu-createQuestion');
+        let jsonClub = localStorage.getItem(this.KEY_CLUB)
+        if (!jsonClub) {
+            this.club = {id:undefined, uid:undefined, name:'Неизвестно', owner:undefined};
+        } else {
+            this.club = JSON.parse(jsonClub)
+        }
     }
 
     beforeShow() {
         this.quiz.disabled = false;
-        if (personalInfo.user && personalInfo.club.owner) {
+        if (personalInfo.user && this.club.owner) {
             this.createQuiz.disabled = false;
             this.createQuestion.disabled = false;
             this.createQuiz.style.display = 'inline';
@@ -264,6 +273,7 @@ class MainMenu extends WebForm {
             this.createQuiz.style.display = 'none';
             this.createQuestion.style.display = 'none';
         }
+        this.title.innerHtml = this.generateHtml();
         return super.beforeShow();
     }
 
@@ -271,11 +281,20 @@ class MainMenu extends WebForm {
         super.show();
         this.quiz.focus();
     }
+
+    saveClub(club) {
+        this.club = club;
+        localStorage.setItem(this.KEY_CLUB, JSON.stringify(club));
+        this.title.innerHTML = this.generateHtml();
+    }
+
+    generateHtml() {
+        return '<h1>' + this.club.name + '</h1>'
+    }
 }
 
 class PersonalInfo extends WebForm {
     KEY_USER = 'KEY_USER';
-    KEY_CLUB = 'KEY_CLUB';
 
     constructor() {
         super('personalInfo');
@@ -288,32 +307,16 @@ class PersonalInfo extends WebForm {
         } else {
             this.user = JSON.parse(jsonUser)
         }
-        let jsonClub = localStorage.getItem(this.KEY_CLUB)
-        if (!jsonClub) {
-            this.club = {id:undefined, uid:undefined, name:'Неизвестно', owner:undefined};
-        } else {
-            this.club = JSON.parse(jsonClub)
-        }
         this.name.innerHTML = this.generateHtml();
     }
 
     generateHtml() {
-        let html = '<p>' + this.user.nickname
-        if (this.club.id) {
-            html += ' : ' + this.club.name
-        }
-        return html + '</p>';
+        return '<p>' + this.user.nickname + '</p>'
     }
 
     saveUser(user) {
         this.user = user;
         localStorage.setItem(this.KEY_USER, JSON.stringify(user));
-        this.name.innerHTML = this.generateHtml();
-    }
-
-    saveClub(club) {
-        this.club = club;
-        localStorage.setItem(this.KEY_CLUB, JSON.stringify(club));
         this.name.innerHTML = this.generateHtml();
     }
 
@@ -612,7 +615,7 @@ class QuizWindow extends WebForm {
     }
 
     beforeShow() {
-        if (personalInfo.club.owner && this.quiz.status === 'DRAFT') {
+        if (mainMenu.club.owner && this.quiz.status === 'DRAFT') {
             this.editButton.style.display = 'inline';
         } else {
             this.editButton.style.display = 'none';
@@ -755,7 +758,7 @@ class EditQuizWindow extends WebForm {
 
     beforeShow() {
         this.submit.disabled = false;
-        this.club.value = personalInfo.club.name;
+        this.club.value = mainMenu.club.name;
         if (this.quiz.id && this.quiz.selectionStrategy === 'QUIZ' && this.quiz.status === 'DRAFT') {
             this.selectQuestions.disabled = false;
             this.selectQuestions.style.display = 'inline';
@@ -958,7 +961,7 @@ class EditQuestionWindow extends WebForm {
 
     beforeShow() {
         this.submit.disabled = false;
-        this.club.value = personalInfo.club.name;
+        this.club.value = mainMenu.club.name;
         return super.beforeShow();
     }
 
