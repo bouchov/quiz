@@ -8,7 +8,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -189,8 +188,6 @@ class QuestionController extends AbstractController {
     public PageBean<QuestionBean> listQuestions(
             @RequestBody QuestionFilterBean filter) {
         checkAuthorization(session);
-        int pageNumber = filter.getPage() == null ? 0 : filter.getPage();
-        int pageSize = filter.getSize() == null ? 10 : filter.getSize();
         Sort sort = Sort.by("id");
         Club club = getClub(session, clubRepository).orElseThrow(ClubNotFoundException::new);
         checkOwner(club);
@@ -200,9 +197,9 @@ class QuestionController extends AbstractController {
             if (category == null) {
                 return PageBean.empty();
             }
-            page = questionRepository.findAllByCategoryAndClub(category, club, PageRequest.of(pageNumber, pageSize, sort));
+            page = questionRepository.findAllByCategoryAndClub(category, club, toPageable(filter, sort));
         } else {
-            page = questionRepository.findAllByClub(club, PageRequest.of(pageNumber, pageSize, sort));
+            page = questionRepository.findAllByClub(club, toPageable(filter, sort));
         }
         PageBean<QuestionBean> bean = new PageBean<>(page.getNumber(), page.getSize(), page.getTotalPages());
         bean.setElements(page.map(QuestionBean::new).getContent());

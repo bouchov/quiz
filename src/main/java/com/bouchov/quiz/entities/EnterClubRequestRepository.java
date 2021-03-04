@@ -1,6 +1,10 @@
 package com.bouchov.quiz.entities;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -12,4 +16,7 @@ import java.util.Optional;
  */
 public interface EnterClubRequestRepository extends PagingAndSortingRepository<EnterClubRequest,Long> {
     Optional<EnterClubRequest> findByUserAndClub(User user, Club club);
+
+    @Query("select R from EnterClubRequest R where R.club = :club and R.status in (:status)")
+    Page<EnterClubRequest> findAllByClubAndStatus(@Param("club") Club club, EnterClubStatus[] status, Pageable pageable);
 }

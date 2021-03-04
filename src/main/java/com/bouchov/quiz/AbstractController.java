@@ -1,6 +1,9 @@
 package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.*;
+import com.bouchov.quiz.protocol.FilterBean;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -37,6 +40,12 @@ public class AbstractController {
             return Optional.empty();
         }
         return repository.findById(clubId);
+    }
+
+    protected static PageRequest toPageable(FilterBean filter, Sort sort) {
+        int pageNumber = filter.getPage() == null ? 0 : filter.getPage();
+        int pageSize = filter.getSize() == null ? 10 : filter.getSize();
+        return PageRequest.of(pageNumber, pageSize, sort);
     }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)

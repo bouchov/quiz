@@ -11,28 +11,121 @@
 <div id="loadingWindow" class="loading fade-in" onclick="hideLoadingWindow()">
     <div class="center loading-spin"></div>
 </div>
-<div id="createClubWindow" class="modal">
+<div id="acceptClubWindow" class="modal">
     <div class="menu-bar">
         <span class="menu-button" onclick="showMenu()" title="Menu">&ctdot;</span>
-        <span class="menu-button" onclick="showLoginWindow()" title="Close">&times;</span>
+        <span class="menu-button" onclick="showClubListWindow()" title="Close">&times;</span>
     </div>
-    <form class="modal-content animate" onsubmit="return doCreateClub()">
-        <h1>Создать клуб</h1>
+    <form class="modal-content animate" onsubmit="return doLoadAcceptClubWindow()">
+        <div id="acceptClubWindow-title">
+            <h1>Список запросов: Клуб юных знаек</h1>
+        </div>
         <div class="table-row">
             <div class="table-cell" style="width: 20%">
                 <div class="table-cell-content, right_label">
-                    <label for="createClubWindow-clubName">Название:</label>
+                    <label for="acceptClubWindow-clubUid">Идентификатор:</label>
                 </div>
             </div>
             <div class="table-cell" style="width: 80%">
                 <div class="table-cell-content">
-                    <input type="text" id="createClubWindow-clubName">
+                    <input type="text" id="acceptClubWindow-clubUid" value="273823@3" disabled>
                 </div>
             </div>
         </div>
-        <button type="submit" id="createClubWindow-create" class="dialog-button">Создать</button>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="acceptClubWindow-status">Статус:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 60%">
+                <div class="table-cell-content">
+                    <select id="acceptClubWindow-status" name="status">
+                        <option selected value="NONE">Все статусы</option>
+                        <option value="PENDING">В ожидании</option>
+                        <option value="RESIGNED">Отказано</option>
+                        <option value="SUCCESS">Принятые</option>
+                    </select>
+
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button onclick="doLoadAcceptClubWindow()" type="submit" class="search-button">Выбрать</button>
+                </div>
+            </div>
+        </div>
+        <div id="acceptClubWindow-view">
+            <div class="table-row">
+                <div class="table-cell" style="width: 2em">
+                    <div class="table-cell-content">
+                        <input type="checkbox" name="requests" value="1" id="acceptClubWindow-request1">
+                    </div>
+                </div>
+                <div class="table-cell">
+                    <div class="table-cell-content">
+                        <label for="acceptClubWindow-request1">Петя Васечкин</label>
+                    </div>
+                </div>
+            </div>
+            <div class="table-row">
+                <div class="table-cell" style="width: 2em">
+                    <div class="table-cell-content">
+                        <input type="checkbox" name="requests" value="2" id="acceptClubWindow-request2">
+                    </div>
+                </div>
+                <div class="table-cell">
+                    <div class="table-cell-content">
+                        <label for="acceptClubWindow-request2">Вася Петечкин</label>
+                    </div>
+                </div>
+            </div>
+            <div class="table-row">
+                <div class="table-cell" style="width: 2em">
+                    <div class="table-cell-content">
+                        <input type="checkbox" name="requests" value="3" id="acceptClubWindow-request3">
+                    </div>
+                </div>
+                <div class="table-cell">
+                    <div class="table-cell-content">
+                        <label for="acceptClubWindow-request3">Зинаида Ивановна</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 16%">
+                <div class="table-cell-content">
+                    <button onclick="onAcceptClubWindowPrevPage()" type="button" id="acceptClubWindow-prevPage" class="dialog-button" title="Назад">&lt;&lt;</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 17%">
+                <div class="table-cell-content">
+                    <button onclick="onSelectAll('acceptClubWindow')" type="button" id="acceptClubWindow-selectAll" class="dialog-button" title="Выделить всё">V</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 17%">
+                <div class="table-cell-content">
+                    <button onclick="doSubmitAcceptClubWindow()" type="button" id="acceptClubWindow-accept" class="dialog-button">Принять</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 17%">
+                <div class="table-cell-content">
+                    <button onclick="doSubmitAcceptClubWindow()" type="button" id="acceptClubWindow-resign" class="dialog-button">Отказать</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 17%">
+                <div class="table-cell-content">
+                    <button onclick="onInvertAll('acceptClubWindow')" type="button" id="acceptClubWindow-invertAll" class="dialog-button" title="Инвертировать выделение">$</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 16%">
+                <div class="table-cell-content">
+                    <button onclick="onAcceptClubWindowNextPage()" type="button" id="acceptClubWindow-nextPage" class="dialog-button" title="Вперёд">&gt;&gt;</button>
+                </div>
+            </div>
+        </div>
         <button onclick="showClubListWindow()" type="button" class="dialog-button-close">Закрыть</button>
-        <div class="table-footer"></div>
     </form>
 </div>
 
@@ -46,12 +139,12 @@
 <script type="text/javascript" src="common.js"></script>
 <script type="text/javascript" src="quiz.js"></script>
 <script>
-    var createClubWindow = {element:null}
+    var acceptClubWindow = {element:null}
 
     function initApp() {
-        createClubWindow.element = document.getElementById('createClubWindow');
+        acceptClubWindow.element = document.getElementById('acceptClubWindow');
 
-        showModalWindow(createClubWindow.element);
+        showModalWindow(acceptClubWindow.element);
     }
 
     function showModalWindow(element) {

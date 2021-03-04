@@ -1,10 +1,7 @@
 package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.*;
-import com.bouchov.quiz.protocol.ClubBean;
-import com.bouchov.quiz.protocol.ClubFilterBean;
-import com.bouchov.quiz.protocol.ClubRequestBean;
-import com.bouchov.quiz.protocol.PageBean;
+import com.bouchov.quiz.protocol.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -50,10 +47,7 @@ class ClubController extends AbstractController {
     public PageBean<ClubBean> listClubs(@RequestBody ClubFilterBean filter) {
         checkAuthorization(session);
         User user = getUser(session, userRepository).orElseThrow();
-        int pageNumber = filter.getPage() == null ? 0 : filter.getPage();
-        int pageSize = filter.getSize() == null ? 10 : filter.getSize();
-        Sort sort = Sort.by("name");
-        PageRequest pageable = PageRequest.of(pageNumber, pageSize, sort);
+        PageRequest pageable = toPageable(filter, Sort.by("name"));
         Page<Club> page;
         if (filter.getName() == null || filter.getName().isEmpty()) {
             page = clubRepository.findAllByParticipants(user, pageable);
@@ -74,7 +68,7 @@ class ClubController extends AbstractController {
                 bean.getName(),
                 IdGenerator.generate(),
                 user,
-                bean.isAutoInclusion()));
+                bean.isAutoInclusion() != null && bean.isAutoInclusion()));
         user.getClubs().add(club);
         userRepository.save(user);
         return new ClubBean(club, true);
@@ -115,6 +109,47 @@ class ClubController extends AbstractController {
         return new ClubRequestBean(new ClubBean(club), status);
     }
 
+    @PostMapping("/requestStatus")
+    public void acceptOrResign(@RequestBody ChangedCollectionBean changes) {
+        if (changes.getAdded() != null && !changes.getAdded().isEmpty()) {
+            for (Long id : changes.getAdded()) {
+                EnterClubRequest request = requestRepository.findById(id).orElseThrow();
+                request.setStatus(EnterClubStatus.SUCCESS);
+                User user = request.getUser();
+                user.getClubs().add(request.getClub());
+                userRepository.save(user);
+                requestRepository.delete(request);
+            }
+        }
+        if (changes.getRemoved() != null && !changes.getRemoved().isEmpty()) {
+            for (Long id : changes.getRemoved()) {
+                EnterClubRequest request = requestRepository.findById(id).orElseThrow();
+                request.setStatus(EnterClubStatus.RESIGNED);
+                requestRepository.save(request);
+            }
+        }
+    }
+
+    @PostMapping("/requests")
+    public PageBean<EnterClubRequestBean> requests(@RequestBody EnterClubRequestFilterBean filter) {
+        checkAuthorization(session);
+        User user = getUser(session, userRepository).orElseThrow();
+        Club club = getClub(session, clubRepository).orElseThrow();
+        if (isOwner(club, user) == null) {
+            throw new ClubNotFoundException("user not an owner of club");
+        }
+        PageRequest pageable = toPageable(filter, Sort.by("user"));
+        EnterClubStatus[] status = filter.getStatus();
+        if (status == null || status.length == 0) {
+            status = EnterClubStatus.values();
+        }
+        Page<EnterClubRequest> page  = requestRepository.findAllByClubAndStatus(club, status, pageable);
+        PageBean<EnterClubRequestBean> bean =
+                new PageBean<>(page.getNumber(), page.getSize(), page.getTotalPages());
+        bean.setElements(page.map(EnterClubRequestBean::new).getContent());
+        return bean;
+    }
+
     private static Boolean isOwner(Club club, User user) {
         if (Objects.equals(user, club.getOwner())) {
             return Boolean.TRUE;
@@ -130,7 +165,7 @@ class ClubController extends AbstractController {
         }
 
         public ClubNotFoundException(String clubName) {
-            super("club '" + clubName + "' not find");
+            super("club '" + clubName + "' not found");
         }
     }
 }

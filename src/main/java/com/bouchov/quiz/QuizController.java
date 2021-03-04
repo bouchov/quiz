@@ -72,10 +72,7 @@ class QuizController extends AbstractController {
         if (user.equals(club.getOwner())) {
             statuses = STATUS_FOR_EDIT;
         }
-        int pageNumber = filter.getPage() == null ? 0 : filter.getPage();
-        int pageSize = filter.getSize() == null ? 10 : filter.getSize();
-        Sort sort = Sort.by("name");
-        PageRequest pageable = PageRequest.of(pageNumber, pageSize, sort);
+        PageRequest pageable = toPageable(filter, Sort.by("name"));
         Page<Quiz> page;
         if (filter.getName() == null || filter.getName().isEmpty()) {
             page = quizRepository.findAllByStatus(club, pageable, statuses);

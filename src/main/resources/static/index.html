@@ -120,6 +120,7 @@
         <button onclick="showQuizListWindow(true)" type="button" id="mainMenu-quiz" class="dialog-button">Викторина</button>
         <button onclick="showCreateQuizWindow()" type="button" id="mainMenu-createQuiz" class="dialog-button">Новая викторина</button>
         <button onclick="showCreateQuestion()" type="button" id="mainMenu-createQuestion" class="dialog-button">Новый вопрос</button>
+        <button onclick="showAcceptClubWindow()" type="button" id="mainMenu-acceptClub" class="dialog-button">Запросы на вступление</button>
         <button onclick="showClubListWindow()" type="button" class="dialog-button-close">Закрыть</button>
     </form>
 </div>
@@ -619,6 +620,123 @@
         <button onclick="showMainMenu()" type="button" class="dialog-button-close">Закрыть</button>
     </form>
 </div>
+<div id="acceptClubWindow" class="modal">
+    <div class="menu-bar">
+        <span class="menu-button" onclick="showMenu()" title="Menu">&ctdot;</span>
+        <span class="menu-button" onclick="showClubListWindow()" title="Close">&times;</span>
+    </div>
+    <form class="modal-content animate" onsubmit="return doLoadAcceptClubWindow()">
+        <div id="acceptClubWindow-title">
+            <h1>Список запросов: Клуб юных знаек</h1>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="acceptClubWindow-clubUid">Идентификатор:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 80%">
+                <div class="table-cell-content">
+                    <input type="text" id="acceptClubWindow-clubUid" value="273823@3" disabled>
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content, right_label">
+                    <label for="acceptClubWindow-status">Статус:</label>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 60%">
+                <div class="table-cell-content">
+                    <select id="acceptClubWindow-status" name="status">
+                        <option selected value="NONE">Все статусы</option>
+                        <option value="PENDING">В ожидании</option>
+                        <option value="RESIGNED">Отказано</option>
+                        <option value="SUCCESS">Принятые</option>
+                    </select>
+
+                </div>
+            </div>
+            <div class="table-cell" style="width: 20%">
+                <div class="table-cell-content">
+                    <button type="submit" class="search-button">Выбрать</button>
+                </div>
+            </div>
+        </div>
+        <div id="acceptClubWindow-view">
+            <div class="table-row">
+                <div class="table-cell" style="width: 2em">
+                    <div class="table-cell-content">
+                        <input type="checkbox" name="requests" value="1" id="acceptClubWindow-request1">
+                    </div>
+                </div>
+                <div class="table-cell">
+                    <div class="table-cell-content">
+                        <label for="acceptClubWindow-request1">Петя Васечкин</label>
+                    </div>
+                </div>
+            </div>
+            <div class="table-row">
+                <div class="table-cell" style="width: 2em">
+                    <div class="table-cell-content">
+                        <input type="checkbox" name="requests" value="2" id="acceptClubWindow-request2">
+                    </div>
+                </div>
+                <div class="table-cell">
+                    <div class="table-cell-content">
+                        <label for="acceptClubWindow-request2">Вася Петечкин</label>
+                    </div>
+                </div>
+            </div>
+            <div class="table-row">
+                <div class="table-cell" style="width: 2em">
+                    <div class="table-cell-content">
+                        <input type="checkbox" name="requests" value="3" id="acceptClubWindow-request3">
+                    </div>
+                </div>
+                <div class="table-cell">
+                    <div class="table-cell-content">
+                        <label for="acceptClubWindow-request3">Зинаида Ивановна</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div class="table-cell" style="width: 16%">
+                <div class="table-cell-content">
+                    <button onclick="onAcceptClubWindowPrevPage()" type="button" id="acceptClubWindow-prevPage" class="dialog-button" title="Назад">&lt;&lt;</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 17%">
+                <div class="table-cell-content">
+                    <button onclick="onSelectAll('acceptClubWindow')" type="button" id="acceptClubWindow-selectAll" class="dialog-button" title="Выделить всё">V</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 17%">
+                <div class="table-cell-content">
+                    <button onclick="doAcceptClubWindowAccept()" type="button" id="acceptClubWindow-accept" class="dialog-button">Принять</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 17%">
+                <div class="table-cell-content">
+                    <button onclick="doAcceptClubWindowResign()" type="button" id="acceptClubWindow-resign" class="dialog-button">Отказать</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 17%">
+                <div class="table-cell-content">
+                    <button onclick="onInvertAll('acceptClubWindow')" type="button" id="acceptClubWindow-invertAll" class="dialog-button" title="Инвертировать выделение">$</button>
+                </div>
+            </div>
+            <div class="table-cell" style="width: 16%">
+                <div class="table-cell-content">
+                    <button onclick="onAcceptClubWindowNextPage()" type="button" id="acceptClubWindow-nextPage" class="dialog-button" title="Вперёд">&gt;&gt;</button>
+                </div>
+            </div>
+        </div>
+        <button onclick="showClubListWindow()" type="button" class="dialog-button-close">Закрыть</button>
+    </form>
+</div>
 <div id="personalInfo" style="right: 100px; position: absolute;">
     <div id="personalInfo-name">
         <p>Гостъ</p>
@@ -714,6 +832,32 @@
 
     function onClubListWindowEnterClub() {
         enterClubWindow.show();
+    }
+
+    function doLoadAcceptClubWindow() {
+        acceptClubWindow.reset();
+        acceptClubWindow.show();
+        return false;
+    }
+
+    function showAcceptClubWindow() {
+        acceptClubWindow.show();
+    }
+
+    function onAcceptClubWindowPrevPage() {
+        acceptClubWindow.loadNextPage(-1)
+    }
+
+    function onAcceptClubWindowNextPage() {
+        acceptClubWindow.loadNextPage(1)
+    }
+
+    function doAcceptClubWindowAccept() {
+        acceptClubWindow.doAccept();
+    }
+
+    function doAcceptClubWindowResign() {
+        acceptClubWindow.doResign();
     }
 
     function doCreateClub() {

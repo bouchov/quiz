@@ -252,6 +252,7 @@ class MainMenu extends WebForm {
         this.quiz = document.getElementById('mainMenu-quiz');
         this.createQuiz = document.getElementById('mainMenu-createQuiz');
         this.createQuestion = document.getElementById('mainMenu-createQuestion');
+        this.acceptClub = document.getElementById('mainMenu-acceptClub');
         let jsonClub = localStorage.getItem(this.KEY_CLUB)
         if (!jsonClub) {
             this.club = {id:undefined, uid:undefined, name:'Неизвестно', owner:undefined};
@@ -267,11 +268,13 @@ class MainMenu extends WebForm {
             this.createQuestion.disabled = false;
             this.createQuiz.style.display = 'inline';
             this.createQuestion.style.display = 'inline';
+            this.acceptClub.style.display = 'inline';
         } else {
             this.createQuiz.disabled = true;
             this.createQuestion.disabled = true;
             this.createQuiz.style.display = 'none';
             this.createQuestion.style.display = 'none';
+            this.acceptClub.style.display = 'none';
         }
         this.title.innerHtml = this.generateHtml();
         return super.beforeShow();
@@ -286,6 +289,7 @@ class MainMenu extends WebForm {
         this.club = club;
         localStorage.setItem(this.KEY_CLUB, JSON.stringify(club));
         this.title.innerHTML = this.generateHtml();
+        acceptClubWindow.changeClub(this.club);
     }
 
     generateHtml() {
@@ -565,6 +569,139 @@ class QuizListWindow extends PagedWebForm {
         return quiz;
     }
 
+}
+
+class AcceptClubWindow extends PagedWebForm {
+    constructor() {
+        super('acceptClubWindow');
+        this.pageSize = 5;
+        this.title = document.getElementById('acceptClubWindow-title');
+        this.clubUid = document.getElementById('acceptClubWindow-clubUid');
+        this.status = document.getElementById('acceptClubWindow-status');
+        this.view = document.getElementById('acceptClubWindow-view');
+        this.accept = document.getElementById('acceptClubWindow-accept');
+        this.resign = document.getElementById('acceptClubWindow-resign');
+
+        this.requestArray = [];
+
+        this.view.innerHTML = 'Список пуст';
+    }
+
+    beforeShow() {
+        this.accept.disabled = false;
+        this.resign.disabled = false;
+        return super.beforeShow();
+    }
+
+    changeClub(club) {
+        this.title.innerHTML = '<h1>Список запросов: ' + club.name + '<h1>'
+        this.clubUid.value = club.uid;
+    }
+
+    loadPage() {
+        let status = [];
+        if (this.status.value !== 'NONE') {
+            status.push(this.status.value);
+        }
+        let form = this;
+        let xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                form.hide();
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    form.reload = false;
+                    let data = JSON.parse(xhttp.responseText);
+                    form.loadRequestListData(data);
+                    form.show();
+                } else if (this.status === 401) {
+                    loginWindow.show(function () {form.show()});
+                } else {
+                    form.log.warn('problem to load request list: ', xhttp.responseText);
+                    messageWindow.showMessage(xhttp.responseText);
+                }
+            }
+        };
+
+        this.sendJson(xhttp, '/club/requests',
+            {
+                status: status,
+                page: this.pageNumber,
+                size: this.pageSize
+            });
+    }
+
+    loadRequestListData(page) {
+        this.view.innerHTML = '';
+        this.total = page.total;
+        this.pageNumber = page.page;
+        if (!page.elements || page.elements.length === 0) {
+            this.view.innerHTML = 'Список пуст';
+        } else {
+            let form = this;
+            this.requestArray = page.elements;
+            this.view.innerHTML = '';
+            this.requestArray.forEach(function(request) {
+                form.view.insertAdjacentHTML('beforeend',
+                    '<div class="table-row">' +
+                    '  <div class="table-cell" style="width: 2em"><div class="table-cell-content">' +
+                    '    <input type="checkbox" name="requests" value="' + request.id + '" id="acceptClubWindow-request' + request.id + '">' +
+                    '  </div></div>' +
+                    '  <div class="table-cell"><div class="table-cell-content">' +
+                    '    <label for="acceptClubWindow-request' + request.id + '">' + request.user.nickname + ' (' + request.status + ')</label>' +
+                    '  </div></div>' +
+                    '</div>');
+            })
+        }
+    }
+
+    doAccept() {
+        this.doChangeStatus(true);
+    }
+
+    doResign() {
+        this.doChangeStatus(false);
+    }
+
+    doChangeStatus(accept) {
+        let ids = [];
+        forInputs(this.element.id, 'checkbox', function(checkbox){
+            if (checkbox.checked) {
+                ids.push(checkbox.value);
+            }
+        });
+        if (ids.length <= 0) {
+            return;
+        }
+        this.accept.disabled = true;
+        this.resign.disabled = true;
+        let form = this;
+        let xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState === 4) {
+                form.hide();
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    let pgNum = form.pageNumber;
+                    form.reset();
+                    form.pageNumber = pgNum;
+                    form.show();
+                } else if (this.status === 401) {
+                    loginWindow.show(function () {form.show()});
+                } else {
+                    form.log.warn('problem to load request list: ', xhttp.responseText);
+                    messageWindow.showMessage(xhttp.responseText);
+                }
+            }
+        }
+        let added = accept ? ids : null;
+        let removed = accept ? null : ids
+        this.sendJson(xhttp, '/club/requestStatus',
+            {
+                added   : added,
+                removed : removed
+            });
+    }
 }
 
 class QuizWindow extends WebForm {
@@ -1238,6 +1375,7 @@ function playQuizWebsocketMessageHandler(event) {
 var clubListWindow = new ClubListWindow();
 var createClubWindow = new CreateClubWindow();
 var enterClubWindow = new EnterClubWindow();
+var acceptClubWindow = new AcceptClubWindow();
 var mainMenu = new MainMenu();
 var loadingWindow = new LoadingWindow();
 var personalInfo = new PersonalInfo();
