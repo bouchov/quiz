@@ -26,6 +26,7 @@ public class QuizApplication {
     CommandLineRunner init(CategoryRepository categoryRepository,
                             UserRepository userRepository,
                             ClubRepository clubRepository,
+                            EnterClubRequestRepository enterClubRepository,
                             QuizRepository quizRepository,
                             QuestionRepository questionRepository) {
         return (evt) -> {
@@ -45,7 +46,7 @@ public class QuizApplication {
             userRepository.save(admin);
 
             UserLoader userLoader = new UserLoader();
-            userLoader.load(userRepository, club);
+            userLoader.load(userRepository, enterClubRepository, club);
             CategoryLoader categoryLoader = new CategoryLoader();
             categoryLoader.load(categoryRepository);
             QuestionLoader questionLoader = new QuestionLoader();

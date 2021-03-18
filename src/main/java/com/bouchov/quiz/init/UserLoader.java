@@ -1,8 +1,6 @@
 package com.bouchov.quiz.init;
 
-import com.bouchov.quiz.entities.Club;
-import com.bouchov.quiz.entities.User;
-import com.bouchov.quiz.entities.UserRepository;
+import com.bouchov.quiz.entities.*;
 import com.bouchov.quiz.protocol.UserBean;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -22,7 +20,8 @@ public class UserLoader {
         this("users.json");
     }
 
-    public void load(UserRepository repository, Club club) throws IOException {
+    public void load(UserRepository repository,
+            EnterClubRequestRepository enterClubRepository, Club club) throws IOException {
         try(InputStream stream = UserLoader.class.getResourceAsStream(fileName)) {
             Objects.requireNonNull(stream, "file not found");
             ObjectMapper mapper = new ObjectMapper();
@@ -35,6 +34,7 @@ public class UserLoader {
                         user.getRole());
                 entity.setClubs(Set.of(club));
                 repository.save(entity);
+                enterClubRepository.save(new EnterClubRequest(entity, club, EnterClubStatus.ACCEPTED));
             }
         }
     }

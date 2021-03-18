@@ -8,6 +8,6 @@ package com.bouchov.quiz.entities;
  */
 public enum EnterClubStatus {
     PENDING,
-    SUCCESS,
+    ACCEPTED,
     RESIGNED
 }

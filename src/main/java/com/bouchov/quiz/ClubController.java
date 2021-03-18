@@ -90,18 +90,18 @@ class ClubController extends AbstractController {
         EnterClubStatus status;
         User user = getUser(session, userRepository).orElseThrow();
         if (user.getClubs().contains(club)) {
-            status = EnterClubStatus.SUCCESS;
+            status = EnterClubStatus.ACCEPTED;
         } else {
             Optional<EnterClubRequest> request = requestRepository.findByUserAndClub(user, club);
             if (request.isEmpty()) {
                 if (club.isAutoInclusion()) {
-                    status = EnterClubStatus.SUCCESS;
+                    status = EnterClubStatus.ACCEPTED;
                     user.getClubs().add(club);
                     userRepository.save(user);
                 } else {
                     status = EnterClubStatus.PENDING;
-                    requestRepository.save(new EnterClubRequest(user, club, EnterClubStatus.PENDING));
                 }
+                requestRepository.save(new EnterClubRequest(user, club, status));
             } else {
                 status = request.get().getStatus();
             }
@@ -114,18 +114,29 @@ class ClubController extends AbstractController {
         if (changes.getAdded() != null && !changes.getAdded().isEmpty()) {
             for (Long id : changes.getAdded()) {
                 EnterClubRequest request = requestRepository.findById(id).orElseThrow();
-                request.setStatus(EnterClubStatus.SUCCESS);
-                User user = request.getUser();
-                user.getClubs().add(request.getClub());
-                userRepository.save(user);
-                requestRepository.delete(request);
+                EnterClubStatus status = request.getStatus();
+                if (status != EnterClubStatus.ACCEPTED) {
+                    request.setStatus(EnterClubStatus.ACCEPTED);
+                    requestRepository.save(request);
+                    User user = request.getUser();
+                    user.getClubs().add(request.getClub());
+                    userRepository.save(user);
+                }
             }
         }
         if (changes.getRemoved() != null && !changes.getRemoved().isEmpty()) {
             for (Long id : changes.getRemoved()) {
                 EnterClubRequest request = requestRepository.findById(id).orElseThrow();
-                request.setStatus(EnterClubStatus.RESIGNED);
-                requestRepository.save(request);
+                EnterClubStatus status = request.getStatus();
+                if (status != EnterClubStatus.RESIGNED) {
+                    request.setStatus(EnterClubStatus.RESIGNED);
+                    requestRepository.save(request);
+                    if (status == EnterClubStatus.ACCEPTED) {
+                        User user = request.getUser();
+                        user.getClubs().remove(request.getClub());
+                        userRepository.save(user);
+                    }
+                }
             }
         }
     }

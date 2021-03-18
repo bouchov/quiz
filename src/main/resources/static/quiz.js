@@ -225,7 +225,7 @@ class EnterClubWindow extends WebForm {
                     form.log.log('Club request: ', request);
                     if (request.status === 'PENDING') {
                         messageWindow.showMessage('Запрос успешно отправлен в клуб ' + request.club.name, function () {form.show()});
-                    } else if (request.status === 'SUCCESS') {
+                    } else if (request.status === 'ACCEPTED') {
                         messageWindow.showMessage('Вы успешно вступили в клуб ' + request.club.name, function () {form.show()});
                     } else {
                         messageWindow.showMessage('Вам отказано во вступлении в клуб ' + request.club.name, function () {form.show()});
