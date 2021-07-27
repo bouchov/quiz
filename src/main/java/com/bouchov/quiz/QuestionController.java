@@ -6,6 +6,8 @@ import com.bouchov.quiz.protocol.QuestionBean;
 import com.bouchov.quiz.protocol.QuestionFilterBean;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,8 @@ import java.util.*;
 @RestController
 @RequestMapping("/questions")
 class QuestionController extends AbstractController {
+    private final Logger log = LoggerFactory.getLogger(QuestionController.class);
+
     private final HttpSession session;
     private final CategoryRepository categoryRepository;
     private final QuestionRepository questionRepository;
@@ -174,6 +178,42 @@ class QuestionController extends AbstractController {
                     Pageable.unpaged()).forEach((e) -> questions.add(new QuestionBean(e)));
         }
         return questions;
+    }
+
+    @PostMapping
+    public int addQuestions(
+            @RequestBody List<QuestionBean> jsonQuestions)
+            throws JsonProcessingException {
+        checkAuthorization(session);
+        User user = getUser(session, userRepository).orElseThrow();
+        Club club = getClub(session, clubRepository).orElseThrow(ClubNotFoundException::new);
+        if (!user.equals(club.getOwner())) {
+            throw new InvalidQuestionParameterException("clubId - user is not owner");
+        }
+        int modified = 0;
+        for (QuestionBean jsonQuestion : jsonQuestions) {
+            Category category = getCategory(jsonQuestion);
+
+            validate(jsonQuestion);
+
+            if (jsonQuestion.getId() != null) {
+                Optional<Question> questionOpt = questionRepository.findById(jsonQuestion.getId());
+                if (questionOpt.isPresent()) {
+                    log.warn("question " + jsonQuestion.getId() + " already exists");
+                    continue;
+                }
+            }
+            modified++;
+            questionRepository.save(new Question(
+                    club,
+                    category,
+                    jsonQuestion.getText(),
+                    jsonQuestion.getAnswer(),
+                    jsonQuestion.getValue(),
+                    objectMapper.writeValueAsString(jsonQuestion.getOptions())
+            ));
+        }
+        return modified;
     }
 
 

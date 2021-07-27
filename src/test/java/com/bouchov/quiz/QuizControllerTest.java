@@ -11,10 +11,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import java.util.HashSet;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -26,16 +28,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Copyright 2014 ConnectiveGames LLC. All rights reserved.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource(locations = "classpath:application-integrationtest.properties")
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 public class QuizControllerTest {
     @Autowired
     private MockMvc mvc;
     @Autowired
     private QuizRepository quizRepository;
     private User admin;
+    private Club club;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ClubRepository clubRepository;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -46,7 +51,15 @@ public class QuizControllerTest {
                 UniqSource.uniqueString("nickname"),
                 "test",
                 UserRole.ADMIN);
+        u.setClubs(new HashSet<>());
         admin = userRepository.save(u);
+        club = clubRepository.save(new Club(
+                UniqSource.uniqueString("club"),
+                IdGenerator.generate(),
+                admin,
+                false));
+        admin.getClubs().add(club);
+        admin = userRepository.save(admin);
     }
 
     @Test
@@ -70,6 +83,7 @@ public class QuizControllerTest {
             throws Exception {
         Quiz entity = new Quiz();
         entity.setAuthor(admin);
+        entity.setClub(club);
         entity.setName(UniqSource.uniqueString("quizName"));
         entity.setMinPlayers(1);
         entity.setMaxPlayers(1);
@@ -203,7 +217,8 @@ public class QuizControllerTest {
             throws Exception {
         return mvc.perform(MockMvcRequestBuilders.post(url)
                 .sessionAttr(SessionAttributes.USER_ID, admin.getId())
-                .sessionAttr(SessionAttributes.USER_ROLE, UserRole.ADMIN)
+                .sessionAttr(SessionAttributes.USER_ROLE, admin.getRole())
+                .sessionAttr(SessionAttributes.CLUB_ID, club.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(bean))
                 .accept(MediaType.APPLICATION_JSON))
