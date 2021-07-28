@@ -73,20 +73,18 @@ class ClubListWindow extends PagedWebForm {
         let form = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    form.reload = false;
-                    let data = JSON.parse(xhttp.responseText);
-                    form.loadClubListData(data);
-                    form.show();
-                } else if (this.status === 401) {
-                    loginWindow.show(function () {form.show()});
-                } else {
-                    form.log.warn('problem to load club list: ', xhttp.responseText);
-                    messageWindow.showMessage(xhttp.responseText);
-                }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                form.reload = false;
+                let data = JSON.parse(xhttp.responseText);
+                form.loadClubListData(data);
+                form.show();
+            } else if (this.status === 401) {
+                loginWindow.show(function () {form.show()});
+            } else {
+                form.log.warn('problem to load club list: ', xhttp.responseText);
+                messageWindow.showMessage(xhttp.responseText);
             }
         };
 
@@ -131,18 +129,16 @@ class ClubListWindow extends PagedWebForm {
             let form = this;
             let xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function () {
-                if (this.readyState === 4) {
-                    form.hide();
-                    if (this.status === 200) {
-                        form.log.log('WEB: <<< ' + xhttp.responseText);
-                        let club = JSON.parse(xhttp.responseText);
-                        form.log.log('Club selected: ', club);
-                        mainMenu.saveClub(club);
-                        mainMenu.show();
-                    } else {
-                        form.log.warn('Club selection failed: ' + this.status);
-                        messageWindow.showMessage(this.responseText, function () {form.show()});
-                    }
+                form.hide();
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    let club = JSON.parse(xhttp.responseText);
+                    form.log.log('Club selected: ', club);
+                    mainMenu.saveClub(club);
+                    mainMenu.show();
+                } else {
+                    form.log.warn('Club selection failed: ' + this.status);
+                    messageWindow.showMessage(this.responseText, function () {form.show()});
                 }
             };
             this.sendGet(xhttp, '/club/' + club.id);
@@ -181,18 +177,16 @@ class CreateClubWindow extends WebForm {
         let form = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let club = JSON.parse(xhttp.responseText);
-                    form.log.log('Club created: ', club);
-                    clubListWindow.reset();
-                    messageWindow.showMessage('Клуб успешно сохранён', function () {form.show()});
-                } else {
-                    form.log.warn('Club creation failed: ' + this.status);
-                    messageWindow.showMessage(this.responseText, function () {form.show()});
-                }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let club = JSON.parse(xhttp.responseText);
+                form.log.log('Club created: ', club);
+                clubListWindow.reset();
+                messageWindow.showMessage('Клуб успешно сохранён', function () {form.show()});
+            } else {
+                form.log.warn('Club creation failed: ' + this.status);
+                messageWindow.showMessage(this.responseText, function () {form.show()});
             }
         };
         this.sendJson(xhttp, '/club/create',
@@ -233,24 +227,22 @@ class EnterClubWindow extends WebForm {
         let form = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let request = JSON.parse(xhttp.responseText);
-                    //request can be pending, success, resigned
-                    form.log.log('Club request: ', request);
-                    if (request.status === 'PENDING') {
-                        messageWindow.showMessage('Запрос успешно отправлен в клуб ' + request.club.name, function () {form.show()});
-                    } else if (request.status === 'ACCEPTED') {
-                        messageWindow.showMessage('Вы успешно вступили в клуб ' + request.club.name, function () {form.show()});
-                    } else {
-                        messageWindow.showMessage('Вам отказано во вступлении в клуб ' + request.club.name, function () {form.show()});
-                    }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let request = JSON.parse(xhttp.responseText);
+                //request can be pending, success, resigned
+                form.log.log('Club request: ', request);
+                if (request.status === 'PENDING') {
+                    messageWindow.showMessage('Запрос успешно отправлен в клуб ' + request.club.name, function () {form.show()});
+                } else if (request.status === 'ACCEPTED') {
+                    messageWindow.showMessage('Вы успешно вступили в клуб ' + request.club.name, function () {form.show()});
                 } else {
-                    form.log.warn('Club entering failed: ' + this.status);
-                    messageWindow.showMessage(this.responseText, function () {form.show()});
+                    messageWindow.showMessage('Вам отказано во вступлении в клуб ' + request.club.name, function () {form.show()});
                 }
+            } else {
+                form.log.warn('Club entering failed: ' + this.status);
+                messageWindow.showMessage(this.responseText, function () {form.show()});
             }
         };
         this.sendJson(xhttp, '/club/enter',
@@ -370,16 +362,14 @@ class PersonalInfo extends WebForm {
             let form = this;
             let xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function () {
-                if (this.readyState === 4) {
-                    if (this.status === 200) {
-                        form.log.log('WEB: <<< ' + xhttp.responseText);
-                        let user = JSON.parse(this.responseText);
-                        form.log.log('user is logged in', user);
-                        clubListWindow.show();
-                    } else {
-                        form.log.warn('Session expired');
-                        loginWindow.show();
-                    }
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    let user = JSON.parse(this.responseText);
+                    form.log.log('user is logged in', user);
+                    clubListWindow.show();
+                } else {
+                    form.log.warn('Session expired');
+                    loginWindow.show();
                 }
             };
             this.sendGet(xhttp, '/ping');
@@ -450,24 +440,22 @@ class LoginWindow extends WebForm {
         let form = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let user = JSON.parse(this.responseText);
-                    form.log.log('Logged-In Successfully');
-                    personalInfo.saveUser(user);
-                    form.saveLogin(user.login);
-                    form.runCallback();
-                } else if (this.status === 409) {
-                    //need re-login
-                    form.log.warn('Need ReLogin: ' + this.status);
-                    form.userPassword.value = password;
-                    messageWindow.showMessage('Произошла ошибка. Попробуйте ещё раз.', function() {form.show()});
-                } else {
-                    form.log.warn('Login Failed: ' + this.status);
-                    messageWindow.showMessage(this.responseText, function() {form.show()});
-                }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let user = JSON.parse(this.responseText);
+                form.log.log('Logged-In Successfully');
+                personalInfo.saveUser(user);
+                form.saveLogin(user.login);
+                form.runCallback();
+            } else if (this.status === 409) {
+                //need re-login
+                form.log.warn('Need ReLogin: ' + this.status);
+                form.userPassword.value = password;
+                messageWindow.showMessage('Произошла ошибка. Попробуйте ещё раз.', function() {form.show()});
+            } else {
+                form.log.warn('Login Failed: ' + this.status);
+                messageWindow.showMessage(this.responseText, function() {form.show()});
             }
         };
         this.sendPost(xhttp, '/', 'login=' + login + '&password=' + password);
@@ -515,19 +503,17 @@ class RegisterWindow extends WebForm {
         let form = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let user = JSON.parse(this.responseText);
-                    form.log.log('Register Successfully');
-                    personalInfo.saveUser(user);
-                    loginWindow.saveLogin(user.login);
-                    form.runCallback();
-                } else {
-                    form.log.warn('Registration Failed: ' + this.status);
-                    messageWindow.showMessage(this.responseText, function () {form.show()});
-                }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let user = JSON.parse(this.responseText);
+                form.log.log('Register Successfully');
+                personalInfo.saveUser(user);
+                loginWindow.saveLogin(user.login);
+                form.runCallback();
+            } else {
+                form.log.warn('Registration Failed: ' + this.status);
+                messageWindow.showMessage(this.responseText, function () {form.show()});
             }
         };
         this.sendPost(xhttp, '/register',
@@ -567,20 +553,18 @@ class QuizListWindow extends PagedWebForm {
         let form = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    form.reload = false;
-                    let data = JSON.parse(xhttp.responseText);
-                    form.loadQuizListData(data);
-                    form.show();
-                } else if (this.status === 401) {
-                    loginWindow.show(function () {form.show()});
-                } else {
-                    form.log.warn('problem to load quiz list: ', xhttp.responseText);
-                    messageWindow.showMessage(xhttp.responseText);
-                }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                form.reload = false;
+                let data = JSON.parse(xhttp.responseText);
+                form.loadQuizListData(data);
+                form.show();
+            } else if (this.status === 401) {
+                loginWindow.show(function () {form.show()});
+            } else {
+                form.log.warn('problem to load quiz list: ', xhttp.responseText);
+                messageWindow.showMessage(xhttp.responseText);
             }
         };
         this.sendJson(xhttp, '/quiz/list',
@@ -671,20 +655,18 @@ class AcceptClubWindow extends PagedWebForm {
         let form = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    form.reload = false;
-                    let data = JSON.parse(xhttp.responseText);
-                    form.loadRequestListData(data);
-                    form.show();
-                } else if (this.status === 401) {
-                    loginWindow.show(function () {form.show()});
-                } else {
-                    form.log.warn('problem to load request list: ', xhttp.responseText);
-                    messageWindow.showMessage(xhttp.responseText);
-                }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                form.reload = false;
+                let data = JSON.parse(xhttp.responseText);
+                form.loadRequestListData(data);
+                form.show();
+            } else if (this.status === 401) {
+                loginWindow.show(function () {form.show()});
+            } else {
+                form.log.warn('problem to load request list: ', xhttp.responseText);
+                messageWindow.showMessage(xhttp.responseText);
             }
         };
 
@@ -743,20 +725,18 @@ class AcceptClubWindow extends PagedWebForm {
         let form = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function() {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let pgNum = form.pageNumber;
-                    form.reset();
-                    form.pageNumber = pgNum;
-                    form.show();
-                } else if (this.status === 401) {
-                    loginWindow.show(function () {form.show()});
-                } else {
-                    form.log.warn('problem to load request list: ', xhttp.responseText);
-                    messageWindow.showMessage(xhttp.responseText);
-                }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let pgNum = form.pageNumber;
+                form.reset();
+                form.pageNumber = pgNum;
+                form.show();
+            } else if (this.status === 401) {
+                loginWindow.show(function () {form.show()});
+            } else {
+                form.log.warn('problem to load request list: ', xhttp.responseText);
+                messageWindow.showMessage(xhttp.responseText);
             }
         }
         let added = accept ? ids : null;
@@ -798,19 +778,17 @@ class QuizWindow extends WebForm {
         let form = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let quiz = JSON.parse(xhttp.responseText);
-                    if (quiz.result) {
-                        questionWindow.setParticipant(quiz.result);
-                        questionWindow.show();
-                    } else {
-                        //todo not active
-                    }
-                } else if (this.status === 401) {
-                    loginWindow.show(function () {form.show()});
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let quiz = JSON.parse(xhttp.responseText);
+                if (quiz.result) {
+                    questionWindow.setParticipant(quiz.result);
+                    questionWindow.show();
+                } else {
+                    //todo not active
                 }
+            } else if (this.status === 401) {
+                loginWindow.show(function () {form.show()});
             }
         };
         this.sendGet( xhttp, '/quiz/' + this.quizId + '/register');
@@ -849,15 +827,13 @@ class ClubControl extends WebControl {
         let xhttp = new XMLHttpRequest();
 
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let page = JSON.parse(xhttp.responseText);
-                    form.loadClubListData(page);
-                } else {
-                    form.reset();
-                    form.log.warn('error load clubs: ', xhttp.responseText);
-                }
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let page = JSON.parse(xhttp.responseText);
+                form.loadClubListData(page);
+            } else {
+                form.reset();
+                form.log.warn('error load clubs: ', xhttp.responseText);
             }
         };
         this.sendJson(xhttp, '/club/list');
@@ -942,21 +918,19 @@ class EditQuizWindow extends WebForm {
         let form = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let quiz = JSON.parse(xhttp.responseText);
-                    form.setQuiz(quiz);
-                    form.log.log('quiz saved: ', quiz);
-                    quizListWindow.reset();
-                    messageWindow.showMessage('Викторина успешно сохранена', function () {form.show()});
-                } else if (this.status === 401) {
-                    loginWindow.show(function () {form.show()});
-                } else {
-                    form.log.warn('error save quiz: ', xhttp.responseText);
-                    messageWindow.showMessage(xhttp.responseText, function () {form.show()});
-                }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let quiz = JSON.parse(xhttp.responseText);
+                form.setQuiz(quiz);
+                form.log.log('quiz saved: ', quiz);
+                quizListWindow.reset();
+                messageWindow.showMessage('Викторина успешно сохранена', function () {form.show()});
+            } else if (this.status === 401) {
+                loginWindow.show(function () {form.show()});
+            } else {
+                form.log.warn('error save quiz: ', xhttp.responseText);
+                messageWindow.showMessage(xhttp.responseText, function () {form.show()});
             }
         };
         if (quiz.id) {
@@ -998,15 +972,13 @@ class CategoryControl extends WebControl {
         let xhttp = new XMLHttpRequest();
 
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let categories = JSON.parse(xhttp.responseText);
-                    form.loadCategoryListData(categories);
-                } else {
-                    form.reset();
-                    form.log.warn('error load categories: ', xhttp.responseText);
-                }
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let categories = JSON.parse(xhttp.responseText);
+                form.loadCategoryListData(categories);
+            } else {
+                form.reset();
+                form.log.warn('error load categories: ', xhttp.responseText);
             }
         };
         this.sendJson(xhttp, '/categories/list');
@@ -1028,23 +1000,21 @@ class QuestionListWindow extends PagedWebForm {
         this.category = new CategoryControl('questionListWindow-category')
         this.view = document.getElementById('questionListWindow-view')
         this.file = document.getElementById('questionListWindow-file')
-        this.selectAll = document.getElementById('questionListWindow-selectAll')
-        this.invertAll = document.getElementById('questionListWindow-invertAll')
         this.search = document.getElementById('questionListWindow-search')
+        this.download = document.getElementById('questionListWindow-download')
 
         let form = this
         this.addSubmitListener(() => {form.doSubmit()})
         this.file.addEventListener('change', () => {form.doSubmitFile()})
-        this.selectAll.addEventListener('click', () => {onSelectAll(form.name)})
-        this.invertAll.addEventListener('click', () => {onInvertAll(form.name)})
         this.search.addEventListener('click', () => {form.doSearch()})
+        this.download.addEventListener('click', () => {form.doDownload()})
 
         this.view.innerHTML = 'Список пуст';
     }
 
     clear() {
         this.view.innerHTML = 'Список пуст';
-        super.reset();
+        this.reset();
         this.category.load();
     }
 
@@ -1099,19 +1069,17 @@ class QuestionListWindow extends PagedWebForm {
         let xhttp = new XMLHttpRequest();
 
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let questionsPage = JSON.parse(xhttp.responseText);
-                    form.loadQuestionListData(questionsPage);
-                    form.show();
-                } else if (this.status === 401) {
-                    loginWindow.show(function () {form.show()});
-                } else {
-                    form.log.warn('error load questions: ', xhttp.responseText);
-                    messageWindow.showMessage(xhttp.responseText, function () {form.show()});
-                }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let questionsPage = JSON.parse(xhttp.responseText);
+                form.loadQuestionListData(questionsPage);
+                form.show();
+            } else if (this.status === 401) {
+                loginWindow.show(function () {form.show()});
+            } else {
+                form.log.warn('error load questions: ', xhttp.responseText);
+                messageWindow.showMessage(xhttp.responseText, function () {form.show()});
             }
         };
         let categoryId = null;
@@ -1123,6 +1091,17 @@ class QuestionListWindow extends PagedWebForm {
             page: this.pageNumber,
             size: this.pageSize
         });
+    }
+
+    doDownload() {
+        let href = document.createElement('A')
+        href.style.display = 'none'
+        href.href = '/questions'
+        href.download = 'questions.json'
+        href.innerText = 'Скачать'
+        this.element.appendChild(href)
+        href.click()
+        this.element.removeChild(href)
     }
 
     loadQuestionListData(page) {
@@ -1200,19 +1179,17 @@ class SelectQuizQuestionsWindow extends PagedWebForm {
         let xhttp = new XMLHttpRequest();
 
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let questionIds = JSON.parse(xhttp.responseText);
-                    form.updateQuestionListData(questionIds);
-                    form.show();
-                } else if (this.status === 401) {
-                    loginWindow.show(function () {form.show()});
-                } else {
-                    form.log.warn('error save questions: ', xhttp.responseText);
-                    messageWindow.showMessage(xhttp.responseText, function () {form.show()});
-                }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let questionIds = JSON.parse(xhttp.responseText);
+                form.updateQuestionListData(questionIds);
+                form.show();
+            } else if (this.status === 401) {
+                loginWindow.show(function () {form.show()});
+            } else {
+                form.log.warn('error save questions: ', xhttp.responseText);
+                messageWindow.showMessage(xhttp.responseText, function () {form.show()});
             }
         };
         this.sendJson(xhttp, '/quiz/' + this.quizId + '/questions',
@@ -1225,19 +1202,17 @@ class SelectQuizQuestionsWindow extends PagedWebForm {
         let xhttp = new XMLHttpRequest();
 
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let questionsPage = JSON.parse(xhttp.responseText);
-                    form.loadQuestionListData(questionsPage);
-                    form.show();
-                } else if (this.status === 401) {
-                    loginWindow.show(function () {form.show()});
-                } else {
-                    form.log.warn('error load questions: ', xhttp.responseText);
-                    messageWindow.showMessage(xhttp.responseText, function () {form.show()});
-                }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let questionsPage = JSON.parse(xhttp.responseText);
+                form.loadQuestionListData(questionsPage);
+                form.show();
+            } else if (this.status === 401) {
+                loginWindow.show(function () {form.show()});
+            } else {
+                form.log.warn('error load questions: ', xhttp.responseText);
+                messageWindow.showMessage(xhttp.responseText, function () {form.show()});
             }
         };
         let categoryId = null;
@@ -1419,19 +1394,17 @@ class EditQuestionWindow extends WebForm {
         let xhttp = new XMLHttpRequest();
 
         xhttp.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                form.hide();
-                if (this.status === 200) {
-                    form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let question = JSON.parse(xhttp.responseText);
-                    form.setQuestion(question);
-                    messageWindow.showMessage('Вопрос успешно сохранён', function () {form.show()});
-                } else if (this.status === 401) {
-                    loginWindow.show(function () {form.show()});
-                } else {
-                    form.log.warn('error save question: ', xhttp.responseText);
-                    messageWindow.showMessage(xhttp.responseText, function () {form.show()});
-                }
+            form.hide();
+            if (this.status === 200) {
+                form.log.log('WEB: <<< ' + xhttp.responseText);
+                let question = JSON.parse(xhttp.responseText);
+                form.setQuestion(question);
+                messageWindow.showMessage('Вопрос успешно сохранён', function () {form.show()});
+            } else if (this.status === 401) {
+                loginWindow.show(function () {form.show()});
+            } else {
+                form.log.warn('error save question: ', xhttp.responseText);
+                messageWindow.showMessage(xhttp.responseText, function () {form.show()});
             }
         };
         if (query.id) {
