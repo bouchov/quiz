@@ -268,8 +268,28 @@ class MainMenu extends WebForm {
         this.title = document.getElementById('mainMenu-title');
         this.quiz = document.getElementById('mainMenu-quiz');
         this.createQuiz = document.getElementById('mainMenu-createQuiz');
+        this.questionList = document.getElementById('mainMenu-questionList');
         this.createQuestion = document.getElementById('mainMenu-createQuestion');
         this.acceptClub = document.getElementById('mainMenu-acceptClub');
+
+        this.quiz.addEventListener('click', () => {
+            quizListWindow.reset()
+            quizListWindow.show()
+        })
+        this.acceptClub.addEventListener('click', () => {acceptClubWindow.show()})
+        this.createQuiz.addEventListener('click', () => {
+            editQuizWindow.setNewQuiz()
+            editQuizWindow.show()
+        })
+        this.questionList.addEventListener('click', () => {
+            questionListWindow.reset()
+            questionListWindow.show()
+        })
+        this.createQuestion.addEventListener('click', () => {
+            editQuestionWindow.setNewQuestion()
+            editQuestionWindow.show()
+        })
+
         let jsonClub = localStorage.getItem(this.KEY_CLUB)
         if (!jsonClub) {
             this.club = {id:undefined, uid:undefined, name:'Неизвестно', owner:undefined};
@@ -282,14 +302,18 @@ class MainMenu extends WebForm {
         this.quiz.disabled = false;
         if (personalInfo.user && this.club.owner) {
             this.createQuiz.disabled = false;
+            this.questionList.disabled = false;
             this.createQuestion.disabled = false;
             this.createQuiz.style.display = 'inline';
+            this.questionList.style.display = 'inline';
             this.createQuestion.style.display = 'inline';
             this.acceptClub.style.display = 'inline';
         } else {
             this.createQuiz.disabled = true;
+            this.questionList.disabled = true;
             this.createQuestion.disabled = true;
             this.createQuiz.style.display = 'none';
+            this.questionList.style.display = 'none';
             this.createQuestion.style.display = 'none';
             this.acceptClub.style.display = 'none';
         }

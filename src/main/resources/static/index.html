@@ -115,11 +115,11 @@
     </div>
     <form class="modal-content animate">
         <div id="mainMenu-title"></div>
-        <button onclick="showQuizListWindow(true)" type="button" id="mainMenu-quiz" class="dialog-button">Викторина</button>
-        <button onclick="showAcceptClubWindow()" type="button" id="mainMenu-acceptClub" class="dialog-button">Участники</button>
-        <button onclick="showCreateQuizWindow()" type="button" id="mainMenu-createQuiz" class="dialog-button">Новая викторина</button>
-        <button onclick="showQuestionList()" type="button" id="mainMenu-questionList" class="dialog-button">Список вопросов</button>
-        <button onclick="showCreateQuestion()" type="button" id="mainMenu-createQuestion" class="dialog-button">Новый вопрос</button>
+        <button type="button" id="mainMenu-quiz" class="dialog-button">Викторина</button>
+        <button type="button" id="mainMenu-acceptClub" class="dialog-button">Участники</button>
+        <button type="button" id="mainMenu-createQuiz" class="dialog-button">Новая викторина</button>
+        <button type="button" id="mainMenu-questionList" class="dialog-button">Список вопросов</button>
+        <button type="button" id="mainMenu-createQuestion" class="dialog-button">Новый вопрос</button>
         <button onclick="showClubListWindow()" type="button" class="dialog-button-close">Закрыть</button>
     </form>
 </div>
@@ -846,11 +846,6 @@
         clubListWindow.show();
     }
 
-    function showQuestionList() {
-        questionListWindow.reset();
-        questionListWindow.show()
-    }
-
     function showRegisterWindow() {
         registerWindow.show();
     }
@@ -877,10 +872,6 @@
         enterClubWindow.show();
     }
 
-    function showAcceptClubWindow() {
-        acceptClubWindow.show();
-    }
-
     function onSelectQuiz(event) {
         event = event || window.event; // IE
         let target = event.target || event.srcElement; // IE
@@ -905,11 +896,6 @@
         selectQuizQuestionsWindow.doClose()
     }
 
-    function showCreateQuizWindow() {
-        editQuizWindow.setNewQuiz();
-        editQuizWindow.show();
-    }
-
     function doRequestRegisterQuiz() {
         quizWindow.registerQuiz();
     }
@@ -923,11 +909,6 @@
         let target = event.target || event.srcElement; // IE
         let answerId = Number.parseInt(target.value);
         questionWindow.sendAnswer(answerId);
-    }
-
-    function showCreateQuestion() {
-        editQuestionWindow.setNewQuestion();
-        editQuestionWindow.show();
     }
 
     function onAddQuestionOption() {
