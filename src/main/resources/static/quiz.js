@@ -1,8 +1,13 @@
 class MessageWindow extends WebForm {
     constructor() {
         super('messageWindow');
-        this.text = document.getElementById('messageWindow-text');
-        this.submit = document.getElementById('messageWindow-submit');
+        this.text = document.getElementById('messageWindow-text')
+        this.submit = document.getElementById('messageWindow-submit')
+        this.spanClose = document.getElementById('messageWindow-span-close')
+
+        let form = this
+        this.addSubmitListener(() => {form.dismiss()})
+        this.spanClose.addEventListener('click', () => {form.dismiss()})
     }
 
     showMessage(text, callback) {
@@ -46,6 +51,12 @@ class ClubListWindow extends PagedWebForm {
         this.pageSize = 5;
         this.clubName = document.getElementById('clubListWindow-clubName');
         this.view = document.getElementById('clubListWindow-view');
+
+        let form = this
+        this.addSubmitListener(() => {
+            form.reset()
+            form.show()
+        })
 
         this.clubArray = [];
 
@@ -144,6 +155,9 @@ class CreateClubWindow extends WebForm {
         super('createClubWindow');
         this.clubName = document.getElementById('createClubWindow-clubName')
         this.submit = document.getElementById('createClubWindow-submit')
+
+        let form = this
+        this.addSubmitListener(() => {form.doSubmit()})
     }
 
     beforeShow() {
@@ -193,6 +207,9 @@ class EnterClubWindow extends WebForm {
         super('enterClubWindow');
         this.clubUid = document.getElementById('enterClubWindow-clubUid')
         this.submit = document.getElementById('enterClubWindow-submit')
+
+        let form = this
+        this.addSubmitListener(() => {form.doSubmit()})
     }
 
     beforeShow() {
@@ -368,6 +385,9 @@ class LoginWindow extends WebForm {
         this.userPassword = document.getElementById('loginWindow-password');
         this.submitButton = document.getElementById('loginWindow-submit');
 
+        let form = this
+        this.addSubmitListener(() => {form.doSubmit()})
+
         this.userName.value = localStorage.getItem(this.KEY_LOGIN);
     }
 
@@ -437,6 +457,9 @@ class RegisterWindow extends WebForm {
         this.nickname = document.getElementById('registerWindow-nickname');
         this.userPassword = document.getElementById('registerWindow-password');
         this.submit = document.getElementById('registerWindow-submit');
+
+        let form = this
+        this.addSubmitListener(() => {form.doSubmit()})
     }
 
     beforeShow() {
@@ -497,6 +520,12 @@ class QuizListWindow extends PagedWebForm {
         this.pageSize = 5;
         this.quizName = document.getElementById('quizListWindow-quizName');
         this.view = document.getElementById('quizListWindow-view');
+
+        let form = this
+        this.addSubmitListener(() => {
+            form.reset()
+            form.show()
+        })
 
         this.quizArray = [];
 
@@ -581,6 +610,18 @@ class AcceptClubWindow extends PagedWebForm {
         this.view = document.getElementById('acceptClubWindow-view');
         this.accept = document.getElementById('acceptClubWindow-accept');
         this.resign = document.getElementById('acceptClubWindow-resign');
+        this.selectAll = document.getElementById('acceptClubWindow-selectAll')
+        this.invertAll = document.getElementById('acceptClubWindow-invertAll')
+
+        let form = this
+        this.addSubmitListener(() => {
+            form.reset()
+            form.show()
+        })
+        this.selectAll.addEventListener('click', () => {onSelectAll(form.name)})
+        this.invertAll.addEventListener('click', () => {onInvertAll(form.name)})
+        this.accept.addEventListener('click', () => {form.doAccept()})
+        this.resign.addEventListener('click', () => {form.doResign()})
 
         this.requestArray = [];
 
@@ -822,6 +863,14 @@ class EditQuizWindow extends WebForm {
         this.status = document.getElementById('editQuizWindow-status')
         this.selectQuestions = document.getElementById('editQuizWindow-selectQuestions')
         this.submit = document.getElementById('editQuizWindow-submit')
+
+        let form = this
+        this.addSubmitListener(() => {form.doSubmit()})
+        this.selectQuestions.addEventListener('click', () => {
+            selectQuizQuestionsWindow.setQuizId(form.quizId);
+            selectQuizQuestionsWindow.show();
+        })
+
         this.quiz = {}
         this.quizId = undefined;
     }
@@ -848,7 +897,7 @@ class EditQuizWindow extends WebForm {
         this.status.value = quiz.status;
     }
 
-    saveQuiz() {
+    doSubmit() {
         //validate !!!
         let minPlayers = Number.parseInt(this.minPlayers.value);
         let maxPlayers = Number.parseInt(this.maxPlayers.value);
@@ -952,8 +1001,144 @@ class CategoryControl extends WebControl {
 class QuestionListWindow extends PagedWebForm {
     constructor() {
         super('questionListWindow');
-        this.category = new CategoryControl('questionListWindow-category');
-        this.view = document.getElementById('questionListWindow-view');
+        this.category = new CategoryControl('questionListWindow-category')
+        this.view = document.getElementById('questionListWindow-view')
+        this.file = document.getElementById('questionListWindow-file')
+        this.selectAll = document.getElementById('questionListWindow-selectAll')
+        this.invertAll = document.getElementById('questionListWindow-invertAll')
+        this.search = document.getElementById('questionListWindow-search')
+
+        let form = this
+        this.addSubmitListener(() => {form.doSubmit()})
+        this.file.addEventListener('change', () => {form.doSubmitFile()})
+        this.selectAll.addEventListener('click', () => {onSelectAll(form.name)})
+        this.invertAll.addEventListener('click', () => {onInvertAll(form.name)})
+        this.search.addEventListener('click', () => {form.doSearch()})
+
+        this.view.innerHTML = 'Список пуст';
+    }
+
+    clear() {
+        this.view.innerHTML = 'Список пуст';
+        super.reset();
+        this.category.load();
+    }
+
+    doSubmit() {
+        this.file.click()
+    }
+
+    doSearch() {
+        this.reset()
+        this.loadPage()
+    }
+
+    doSubmitFile() {
+        if (this.file.files.length === 1) {
+            let data = this.file.files[0]
+            if (!data.type.match('.*json')) {
+                this.log.warn('not a json file')
+                return
+            }
+            this.submit.disabled = true
+
+            let form = this
+
+            let reader = new FileReader()
+            reader.onload = function (ff) {
+                form.log.log('loaded ', ff.loaded)
+
+                let xhttp = new XMLHttpRequest()
+
+                xhttp.onreadystatechange = function () {
+                    form.hide()
+                    if (this.status === 200) {
+                        form.log.log('WEB: <<< ' + xhttp.responseText)
+                        messageWindow.showMessage('Загружено ' + xhttp.responseText + ' вопросов',
+                            () => {form.clear(); form.show()})
+                    } else if (this.status === 401) {
+                        loginWindow.show(() => {form.show()})
+                    } else {
+                        form.log.warn('error save questions: ', xhttp.responseText)
+                        messageWindow.showMessage(xhttp.responseText, () => {form.show()})
+                    }
+                };
+                form.sendJson(xhttp, '/questions', reader.result)
+            }
+            reader.readAsText(data)
+        }
+    }
+    
+    loadPage() {
+        this.submit.disabled = true;
+        let form = this;
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                form.hide();
+                if (this.status === 200) {
+                    form.log.log('WEB: <<< ' + xhttp.responseText);
+                    let questionsPage = JSON.parse(xhttp.responseText);
+                    form.loadQuestionListData(questionsPage);
+                    form.show();
+                } else if (this.status === 401) {
+                    loginWindow.show(function () {form.show()});
+                } else {
+                    form.log.warn('error load questions: ', xhttp.responseText);
+                    messageWindow.showMessage(xhttp.responseText, function () {form.show()});
+                }
+            }
+        };
+        let categoryId = null;
+        if (this.category.getCategory() > 0) {
+            categoryId = this.category.getCategory();
+        }
+        this.sendJson(xhttp, '/questions/list', {
+            categoryId: categoryId,
+            page: this.pageNumber,
+            size: this.pageSize
+        });
+    }
+
+    loadQuestionListData(page) {
+        this.view.innerHTML = '';
+        this.total = page.total;
+        this.pageNumber = page.page;
+        if (!page.elements || page.elements.length === 0) {
+            this.view.innerHTML = 'Список пуст';
+        } else {
+            let form = this;
+            page.elements.forEach(function (question) {
+                form.view.insertAdjacentHTML('beforeend',
+                    '<div class="table-row">' +
+                    '  <div class="table-cell"><div class="table-cell-content">' +
+                    '    <p>' + question.category + ': ' + question.text + '</p>' +
+                    '  </div></div>' +
+                    '</div>');
+            })
+        }
+    }
+
+    doClose() {
+        mainMenu.show()
+    }
+}
+
+class SelectQuizQuestionsWindow extends PagedWebForm {
+    constructor() {
+        super('selectQuizQuestionsWindow');
+        this.category = new CategoryControl('selectQuizQuestionsWindow-category')
+        this.view = document.getElementById('selectQuizQuestionsWindow-view')
+        this.selectAll = document.getElementById('selectQuizQuestionsWindow-selectAll')
+        this.invertAll = document.getElementById('selectQuizQuestionsWindow-invertAll')
+        this.search = document.getElementById('selectQuizQuestionsWindow-search')
+
+        let form = this
+        this.addSubmitListener(() => {form.doSubmit()})
+        this.selectAll.addEventListener('click', () => {onSelectAll(form.name)})
+        this.invertAll.addEventListener('click', () => {onInvertAll(form.name)})
+        this.search.addEventListener('click', () => {form.doSearch()})
 
         this.quizId = undefined;
 
@@ -965,6 +1150,15 @@ class QuestionListWindow extends PagedWebForm {
         this.view.innerHTML = 'Список пуст';
         this.reset();
         this.category.load();
+    }
+
+    doSubmit() {
+        this.saveQuestionList()
+    }
+
+    doSearch() {
+        this.reset()
+        this.loadPage()
     }
 
     saveQuestionList() {
@@ -1047,11 +1241,14 @@ class QuestionListWindow extends PagedWebForm {
                 if (question.selected) {
                     checked = 'checked';
                 }
+                let checkbox = ''
+                if (form.quizId) {
+                    checkbox = '  <div class="table-cell" style="width: 2em"><div class="table-cell-content">' +
+                        '    <input type="checkbox" name="questions" ' + checked + ' value="' + question.id + '" id="questionListWindow-question' + question.id + '">' +
+                        '  </div></div>'
+                }
                 form.view.insertAdjacentHTML('beforeend',
-                    '<div class="table-row">' +
-                    '  <div class="table-cell" style="width: 2em"><div class="table-cell-content">' +
-                    '    <input type="checkbox" name="questions" ' + checked + ' value="' + question.id + '" id="questionListWindow-question' + question.id + '">' +
-                    '  </div></div>' +
+                    '<div class="table-row">' + checkbox +
                     '  <div class="table-cell"><div class="table-cell-content">' +
                     '    <label for="questionListWindow-question' + question.id + '">' + question.category + ':' + question.text + '</label>' +
                     '  </div></div>' +
@@ -1066,6 +1263,10 @@ class QuestionListWindow extends PagedWebForm {
             checkbox.checked = questionIds.indexOf(id) >= 0;
         });
     }
+
+    doClose() {
+        editQuizWindow.show()
+    }
 }
 
 class EditQuestionWindow extends WebForm {
@@ -1077,6 +1278,9 @@ class EditQuestionWindow extends WebForm {
         this.value = document.getElementById('editQuestionWindow-value');
         this.options = document.getElementById('editQuestionWindow-options');
         this.submit = document.getElementById('editQuestionWindow-submit');
+
+        let form = this
+        this.addSubmitListener(() => {form.doSubmit()})
 
         this.questionId = null;
         this.question = {id:null, categoryId:0, text:'', value:1, answer:undefined, options:[{id:0, name:'текст ответа 0'}]};
@@ -1372,19 +1576,20 @@ function playQuizWebsocketMessageHandler(event) {
     }
 }
 
-var clubListWindow = new ClubListWindow();
-var createClubWindow = new CreateClubWindow();
-var enterClubWindow = new EnterClubWindow();
-var acceptClubWindow = new AcceptClubWindow();
-var mainMenu = new MainMenu();
-var loadingWindow = new LoadingWindow();
-var personalInfo = new PersonalInfo();
-var messageWindow = new MessageWindow();
-var loginWindow = new LoginWindow();
-var registerWindow = new RegisterWindow();
-var quizListWindow = new QuizListWindow();
-var quizWindow = new QuizWindow();
-var editQuizWindow = new EditQuizWindow();
-var questionWindow = new QuestionWindow();
-var questionListWindow = new QuestionListWindow();
-var editQuestionWindow = new EditQuestionWindow();
+const clubListWindow = new ClubListWindow()
+const createClubWindow = new CreateClubWindow()
+const enterClubWindow = new EnterClubWindow()
+const acceptClubWindow = new AcceptClubWindow()
+const mainMenu = new MainMenu()
+const loadingWindow = new LoadingWindow()
+const personalInfo = new PersonalInfo()
+const messageWindow = new MessageWindow()
+const loginWindow = new LoginWindow()
+const registerWindow = new RegisterWindow()
+const quizListWindow = new QuizListWindow()
+const quizWindow = new QuizWindow()
+const editQuizWindow = new EditQuizWindow()
+const questionWindow = new QuestionWindow()
+const questionListWindow = new QuestionListWindow()
+const selectQuizQuestionsWindow = new SelectQuizQuestionsWindow()
+const editQuestionWindow = new EditQuestionWindow()

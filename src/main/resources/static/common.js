@@ -46,7 +46,12 @@ class HttpCommunicator {
         xhttp.open('POST', url, true);
         xhttp.setRequestHeader('Content-type', 'application/json');
         if (value !== undefined) {
-            let body = JSON.stringify(value);
+            let body
+            if (typeof value === 'string') {
+                body = value
+            } else {
+                body = JSON.stringify(value);
+            }
             this.log.log('POST', url, body)
             xhttp.send(body);
         } else {
@@ -84,6 +89,14 @@ class WebForm extends HttpCommunicator {
         this.element = document.getElementById(name);
 
         this.callback = undefined;
+    }
+
+    addSubmitListener(listener) {
+        let form = findForm(this.element);
+        form.addEventListener('submit', function (event) {
+            event.preventDefault()
+            listener(event)
+        })
     }
 
     beforeShow() {
@@ -157,6 +170,14 @@ class PagedWebForm extends WebForm {
         this.nextPage = document.getElementById(id + '-nextPage');
         this.prevPage = document.getElementById(id + '-prevPage');
         this.submit = document.getElementById(id + '-submit');
+
+        let form = this
+        if (this.nextPage) {
+            this.nextPage.addEventListener('click', () => {form.loadNextPage(1)})
+        }
+        if (this.prevPage) {
+            this.prevPage.addEventListener('click', () => {form.loadNextPage(-1)})
+        }
 
         this.pageNumber = 0;
         this.total = undefined;
@@ -242,9 +263,13 @@ function onInvertAll(id) {
 }
 
 function forInputs(id, inputType, callback) {
-    let element = document.getElementById(id);
+    let element = document.getElementById(id)
+    forInputsTree(element, inputType, callback)
+}
+
+function forInputsTree(element, inputType, callback) {
     let node = element.firstChild;
-    do {
+    while (node) {
         if (node.tagName === 'FORM') {
             let form = node;
             for (let i = 0; i < form.length; i++) {
@@ -253,9 +278,34 @@ function forInputs(id, inputType, callback) {
                     callback(input);
                 }
             }
+        } else if (node.firstChild) {
+            forInputsTree(node, inputType, callback)
         }
         node = node.nextSibling;
-    } while (node);
+    }
+}
+
+function forElementsTree(element, tagName, callback) {
+    let node = element.firstChild;
+    while (node) {
+        if (node.tagName === tagName) {
+            callback(node);
+        } else if (node.firstChild) {
+            forElementsTree(node, tagName, callback)
+        }
+        node = node.nextSibling;
+    }
+}
+
+function findForm(element) {
+    let node = element.firstChild
+    do {
+        if (node.tagName === 'FORM') {
+            return node
+        }
+        node = node.nextSibling
+    } while (node)
+    return undefined
 }
 
 function setLabelClass(input, labelClass) {
