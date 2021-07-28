@@ -14,6 +14,7 @@ public class QuizResultBean {
     private ParticipantStatus status;
     private int value;
     private Date started;
+    private Date registered;
     private Date finished;
 
     public QuizResultBean(QuizParticipant participant, QuizResult result) {
@@ -24,6 +25,7 @@ public class QuizResultBean {
         this.value = participant.getValue();
         this.status = participant.getStatus();
         this.started = result.getStarted();
+        this.registered = result.getRegistrationStarted();
         this.finished = result.getFinished();
     }
 
@@ -86,6 +88,14 @@ public class QuizResultBean {
         this.started = started;
     }
 
+    public Date getRegistered() {
+        return registered;
+    }
+
+    public void setRegistered(Date registered) {
+        this.registered = registered;
+    }
+
     public Date getFinished() {
         return finished;
     }
@@ -104,6 +114,7 @@ public class QuizResultBean {
                 ", status=" + status +
                 ", value=" + value +
                 ", started=" + started +
+                ", registered=" + registered +
                 ", finished=" + finished +
                 ']';
     }

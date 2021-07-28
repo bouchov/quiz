@@ -1515,21 +1515,59 @@ class QuestionWindow extends WebForm {
         }
     }
 
+    showProgress(start, end) {
+        let progress = document.getElementById('questionWindow-progress')
+        let seconds = document.getElementById('questionWindow-seconds')
+        if (progress) {
+            let millis = Date.now()
+            progress.value = end - millis
+            let secs = ((end - millis) / 1000).toFixed()
+            if (seconds) {
+                seconds.innerText = secs
+            }
+            this.log.log('Quiz will start in ' + secs + ' secs')
+        } else {
+            this.stopTimer()
+        }
+    }
+
+    stopTimer() {
+        if (this.timer) {
+            this.log.log('stop timer')
+            clearInterval(this.timer)
+            this.timer = undefined
+        }
+    }
+
     setQuiz(quiz) {
         this.view.innerHTML = '';
-        this.view.insertAdjacentHTML("beforeend", '<p> Викторина ' + quiz.name + '</p>');
+        this.view.insertAdjacentHTML('beforeend', '<p> Викторина ' + quiz.name + '</p>')
         if (quiz.result !== undefined) {
             if (quiz.result.status === 'ACTIVE') {
-                this.view.insertAdjacentHTML("beforeend", '<p> начнется ' + new Date(quiz.result.started) + '</p>');
+                let startTime = quiz.result.started
+                let registerTime = quiz.result.registered
+                let maxProgress = startTime - registerTime
+                this.view.insertAdjacentHTML('beforeend',
+                    '<p> начнется ' + new Date(startTime) + '</p>')
+                this.view.insertAdjacentHTML('beforeend',
+                    '<progress max="' + maxProgress + '" value="' + maxProgress + '" id="questionWindow-progress" style="width: 100%">' +
+                    'осталось <span id="questionWindow-seconds">0</span> секунд</progress>'
+                )
+                this.stopTimer()
+                let form = this
+                this.timer = setInterval((start, end) => {form.showProgress(start, end)},
+                    1000,
+                    registerTime, startTime)
             } else if (quiz.result.status === 'FINISHED') {
-                this.view.insertAdjacentHTML("beforeend", '<p> окончился ' + new Date(quiz.result.finished) + '</p>');
+                this.view.insertAdjacentHTML('beforeend', '<p> окончился ' + new Date(quiz.result.finished) + '</p>')
             } else {
-                this.view.insertAdjacentHTML("beforeend", '<p> отменен</p>');
+                this.view.insertAdjacentHTML('beforeend', '<p> отменен</p>')
             }
         }
     }
 
     setQuestion(question) {
+        this.stopTimer()
         this.question = question;
         this.writeQuestion();
         playSound(this.sounds.tickTack);
