@@ -64,9 +64,10 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
         if (quiz.getStatus() == QuizStatus.CLOSED) {
             throw new RuntimeException("quiz is closed");
         }
+        log.debug("register user {} for quiz {}", user.getId(), quiz.getId());
         Page<QuizResult> results = quizResultRepository.findAllByQuizAndStatus(quiz,
                 List.of(QuizResultStatus.REGISTER, QuizResultStatus.STARTED),
-                PageRequest.of(1, 1, Sort.by(Sort.Direction.ASC, "registrationStarted")));
+                PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "registrationStarted")));
         QuizResult result;
         if (results.isEmpty()) {
             result = new QuizResult(quiz, QuizResultStatus.REGISTER, new Date());
@@ -77,6 +78,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
         }
 
         if (!managers.containsKey(result.getId())) {
+            log.debug("create manager {} for quiz {}", result.getId(), quiz.getId());
             QuizResult fResult = result;
             managers.computeIfAbsent(result.getId(),
                     (k) -> QuizManagerFactory.getInstance().createManager(this, fResult));
@@ -86,6 +88,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
             participant = getManager(result).register(result, user);
             participant = quizParticipantRepository.save(participant);
             result.getParticipants().add(participant);
+            log.debug("add participant {} for manager {}", participant.getId(), result.getId());
         }
         return participant;
     }
@@ -101,8 +104,8 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     @Override
     @Transactional
     public void connect(Long participantId, WebSocketSession session) {
-        log.debug("register session for {}", participantId);
-        quizParticipantRepository.findById(participantId).ifPresent(quizParticipant -> {
+        log.debug("register connection of participant {}", participantId);
+        quizParticipantRepository.findById(participantId).ifPresentOrElse(quizParticipant -> {
             QuizResult result = quizParticipant.getQuizResult();
             if (result.getStatus() == QuizResultStatus.FINISHED) {
                 sendMessage(session, new ResponseBean(new QuizResultBean(quizParticipant, result)));
@@ -110,7 +113,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
             }
             sessions.put(participantId, session);
             getManager(result).join(quizParticipant);
-        });
+        }, () -> log.debug("participant {} not found", participantId));
     }
 
     QuizAnswer findActiveAnswer(QuizParticipant quizParticipant) {
@@ -121,7 +124,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     }
 
     void addAnswer(QuizParticipant quizParticipant, Question question) {
-        log.debug("select question #{} for {}", question.getId(), quizParticipant.getId());
+        log.debug("select question {} for participant {}", question.getId(), quizParticipant.getId());
         User user = quizParticipant.getUser();
         QuizAnswer answer = quizAnswerRepository.save(new QuizAnswer(
                 quizParticipant.getQuizResult(),
@@ -134,6 +137,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     }
 
     void sendMessage(QuizParticipant participant, ResponseBean bean) {
+        log.debug("send {} message {}", participant.getId(), bean);
         sendMessage(sessions.get(participant.getId()), bean);
     }
 
@@ -141,6 +145,8 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
         try {
             if (session != null) {
                 session.sendMessage(toMessage(bean));
+            } else {
+                log.warn("cannot send message: unknown session");
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -150,7 +156,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     @Override
     @Transactional
     public void answer(Long participantId, int answer) {
-        log.debug("answer #{} for {}", answer, participantId);
+        log.debug("answer #{} participant {}", answer, participantId);
         quizParticipantRepository.findById(participantId).ifPresent(
                 (quizParticipant) -> getManager(quizParticipant.getQuizResult()).answer(quizParticipant, answer));
     }
@@ -158,7 +164,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     @Override
     @Transactional
     public void next(Long participantId) {
-        log.debug("next question for {}", participantId);
+        log.debug("next question for participant {}", participantId);
         quizParticipantRepository.findById(participantId).ifPresent(
                 quizParticipant -> getManager(quizParticipant.getQuizResult()).next(quizParticipant));
     }
@@ -170,7 +176,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
 
     @Override
     public void disconnect(Long participantId) {
-        log.debug("unregister session for {}", participantId);
+        log.debug("unregister connection of participant {}", participantId);
         sessions.remove(participantId);
     }
 

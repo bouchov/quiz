@@ -15,8 +15,8 @@ import java.util.*;
 import java.util.concurrent.Future;
 
 public class SnGQuizManager extends AbstractQuizManager {
-    private final Logger logger = LoggerFactory.getLogger(SnGQuizManager.class);
-    private Future<?> task;
+    private final Logger log = LoggerFactory.getLogger(SnGQuizManager.class);
+    private volatile Future<?> task;
     private final Long resultId;
 
     public SnGQuizManager(QuizServiceImpl service, QuizResult result) {
@@ -31,7 +31,6 @@ public class SnGQuizManager extends AbstractQuizManager {
         QuizParticipant participant = null;
         if (size < quiz.getMaxPlayers()) {
             participant = new QuizParticipant(result, user, ParticipantStatus.ACTIVE);
-
             if (size + 1 == quiz.getMinPlayers()) {
                 if (task == null) {
                     Instant startTime;
@@ -43,6 +42,7 @@ public class SnGQuizManager extends AbstractQuizManager {
                     }
                     result.setStarted(new Date(startTime.toEpochMilli()));
                     task = service.schedule(this::start, startTime);
+                    log.debug("[{}] start at {}", resultId, startTime);
                 }
             }
         }
@@ -52,12 +52,14 @@ public class SnGQuizManager extends AbstractQuizManager {
     protected void start() {
         QuizResult result = service.getQuizResult(resultId);
         result.setStatus(QuizResultStatus.STARTED);
+        log.debug("[{}] start", resultId);
         Quiz quiz = result.getQuiz();
         Question question = null;
         for (QuizParticipant participant : result.getParticipants()) {
             QuizAnswer answer = service.findActiveAnswer(participant);
             if (answer != null) {
                 question = answer.getQuestion();
+                log.debug("[{}] continue question {}", resultId, question.getId());
                 break;
             }
         }
@@ -69,6 +71,7 @@ public class SnGQuizManager extends AbstractQuizManager {
                         break;
                     }
                 }
+                log.debug("[{}] next question {}", resultId, question.getId());
                 Question qq = question;
                 Optional<QuizAnswer> answer = participant.getAnswers().stream()
                         .filter((a) -> Objects.equals(qq.getId(), a.getQuestion().getId())).findAny();
@@ -94,6 +97,7 @@ public class SnGQuizManager extends AbstractQuizManager {
     }
 
     private void finishQuiz() {
+        log.debug("[{}] finish", resultId);
         QuizResult result = service.getQuizResult(resultId);
         result.setStatus(QuizResultStatus.FINISHED);
         List<QuizParticipant> participants = new ArrayList<>(result.getParticipants());
@@ -108,6 +112,7 @@ public class SnGQuizManager extends AbstractQuizManager {
 
     @Override
     public void join(QuizParticipant participant) {
+        log.debug("[{}] join participant {}", resultId, participant.getId());
         QuizAnswer answer = service.findActiveAnswer(participant);
         if (answer != null) {
             int number = participant.getAnswers().size();
@@ -132,6 +137,7 @@ public class SnGQuizManager extends AbstractQuizManager {
 
     @Override
     public void answer(QuizParticipant participant, int answer) {
+        log.debug("[{}] answer participant {}", resultId, participant.getId());
         QuizAnswer quizAnswer = service.findActiveAnswer(participant);
         if (quizAnswer == null) {
             throw new IllegalStateException("no active question found for " + participant);
@@ -161,6 +167,7 @@ public class SnGQuizManager extends AbstractQuizManager {
     }
 
     private void next() {
+        log.debug("[{}] next", resultId);
         QuizResult result = service.getQuizResult(resultId);
         Quiz quiz = result.getQuiz();
         Question selectedQuestion = null;
