@@ -4,6 +4,7 @@ import com.bouchov.quiz.entities.*;
 import com.bouchov.quiz.protocol.PageBean;
 import com.bouchov.quiz.protocol.QuestionBean;
 import com.bouchov.quiz.protocol.QuestionFilterBean;
+import com.bouchov.quiz.protocol.UpdateResultBean;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -181,7 +182,7 @@ class QuestionController extends AbstractController {
     }
 
     @PostMapping
-    public int addQuestions(
+    public UpdateResultBean addQuestions(
             @RequestBody List<QuestionBean> jsonQuestions)
             throws JsonProcessingException {
         checkAuthorization(session);
@@ -190,7 +191,7 @@ class QuestionController extends AbstractController {
         if (!user.equals(club.getOwner())) {
             throw new InvalidQuestionParameterException("clubId - user is not owner");
         }
-        int modified = 0;
+        int modified = 0, created = 0, total = 0;
         for (QuestionBean jsonQuestion : jsonQuestions) {
             Category category = getCategory(jsonQuestion);
 
@@ -200,10 +201,17 @@ class QuestionController extends AbstractController {
                 Optional<Question> questionOpt = questionRepository.findById(jsonQuestion.getId());
                 if (questionOpt.isPresent()) {
                     log.warn("question " + jsonQuestion.getId() + " already exists");
+                    Question question = questionOpt.get();
+                    question.setCategory(category);
+                    question.setText(jsonQuestion.getText());
+                    question.setAnswer(jsonQuestion.getAnswer());
+                    question.setOptionsJson(objectMapper.writeValueAsString(jsonQuestion.getOptions()));
+                    modified++;
+                    questionRepository.save(question);
                     continue;
                 }
             }
-            modified++;
+            created++;
             questionRepository.save(new Question(
                     club,
                     category,
@@ -213,7 +221,7 @@ class QuestionController extends AbstractController {
                     objectMapper.writeValueAsString(jsonQuestion.getOptions())
             ));
         }
-        return modified;
+        return new UpdateResultBean(created, modified, jsonQuestions.size());
     }
 
 

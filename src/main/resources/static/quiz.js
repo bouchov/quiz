@@ -1059,7 +1059,11 @@ class QuestionListWindow extends PagedWebForm {
                     form.hide()
                     if (this.status === 200) {
                         form.log.log('WEB: <<< ' + xhttp.responseText)
-                        messageWindow.showMessage('Загружено ' + xhttp.responseText + ' вопросов',
+                        let resp = JSON.parse(xhttp.responseText)
+                        messageWindow.showMessage(
+                            '<p>Создано ' + resp.created + ' вопросов</p>' +
+                            '<p>Обновлено ' + resp.modified + ' вопросов<p>' +
+                            '<p>Всего обработано ' + resp.total + ' вопросов<p>',
                             () => {form.clear(); form.show()})
                     } else if (this.status === 401) {
                         loginWindow.show(() => {form.show()})
