@@ -101,11 +101,17 @@ public class SnGQuizManager extends AbstractQuizManager {
         QuizResult result = service.getQuizResult(resultId);
         result.setStatus(QuizResultStatus.FINISHED);
         List<QuizParticipant> participants = new ArrayList<>(result.getParticipants());
-        participants.sort(Comparator.comparingInt(QuizParticipant::getValue));
-        int place = participants.size();
+        participants.sort(Comparator.comparingInt(QuizParticipant::getValue).reversed());
+        int place = 0, counter = 0;
+        Integer value = null;
         for (QuizParticipant participant : participants) {
             participant.setStatus(ParticipantStatus.FINISHED);
-            participant.setPlace(place--);
+            counter++;
+            if (value == null || value != participant.getValue()) {
+                place = counter;
+            }
+            participant.setPlace(place);
+            value = participant.getValue();
             service.sendMessage(participant, new ResponseBean(new QuizResultBean(participant, result)));
         }
     }
