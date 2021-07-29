@@ -114,8 +114,15 @@ public class SnGQuizManager extends AbstractQuizManager {
     public void join(QuizParticipant participant) {
         log.debug("[{}] join participant {}", resultId, participant.getId());
         QuizAnswer answer = service.findActiveAnswer(participant);
+        int number = 0;
+        if (answer == null) {
+            List<QuizAnswer> answers = participant.getAnswers();
+            number = answers.size();
+            if (!participant.getAnswers().isEmpty()) {
+                answer = answers.get(number - 1);
+            }
+        }
         if (answer != null) {
-            int number = participant.getAnswers().size();
             Integer total = null;
             Quiz quiz = participant.getQuizResult().getQuiz();
             if (quiz.getSelectionStrategy() != QuestionSelectionStrategy.ALL) {
