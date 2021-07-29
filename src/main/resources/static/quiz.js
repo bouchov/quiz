@@ -364,9 +364,9 @@ class PersonalInfo extends WebForm {
             xhttp.onreadystatechange = function () {
                 if (this.status === 200) {
                     form.log.log('WEB: <<< ' + xhttp.responseText);
-                    let user = JSON.parse(this.responseText);
-                    form.log.log('user is logged in', user);
-                    clubListWindow.show();
+                    let session = JSON.parse(this.responseText);
+                    form.log.log('user is logged in', session);
+                    form.showApplication(session);
                 } else {
                     form.log.warn('Session expired');
                     loginWindow.show();
@@ -376,6 +376,17 @@ class PersonalInfo extends WebForm {
         } else {
             this.log.log('user is not logged in')
             loginWindow.show();
+        }
+    }
+
+    showApplication(session) {
+        if (session.games && session.games.length === 1) {
+            let quiz = session.games[0];
+            quizWindow.setQuiz(quiz)
+            questionWindow.setParticipant(quiz.result)
+            questionWindow.show()
+        } else {
+            clubListWindow.show();
         }
     }
 
@@ -1438,42 +1449,70 @@ class QuestionWindow extends WebForm {
     beforeShow() {
         this.view.innerHTML = quizWindow.view.innerHTML;
         this.finished = false;
+        this.connect()
 
-        let url = getWebsocketProtocol() + '://' + getUrl() + '/websocket';
-        this.webSocket = new WebSocket(url);
-        let form = this;
-        this.webSocket.onopen = function () {
-            form.webSocket.send(JSON.stringify({enter: {participantId: form.participant.id}}));
-        }
-        this.webSocket.onmessage = playQuizWebsocketMessageHandler;
-        this.webSocket.onclose = function () {
-            form.log.log("connection closed by server");
-            quizWindow.show();
-        }
         return super.beforeShow();
     }
 
-    sendAnswer(answerId) {
-        if (this.webSocket) {
-            this.webSocket.send(JSON.stringify({answer:answerId}))
+    connect() {
+        if (!this.webSocket || this.webSocket.readyState !== WebSocket.OPEN) {
+            let url = getWebsocketProtocol() + '://' + getUrl() + '/websocket';
+            this.log.log('WEBSOCKET: connecting to ', url)
+            this.webSocket = new WebSocket(url);
+            let form = this;
+            this.webSocket.onopen = function () {
+                form.log.log('WEBSOCKET: connected to ', url, 'sending handshake')
+                form.sendWebSocket(JSON.stringify({enter: {participantId: form.participant.id}}));
+            }
+            this.webSocket.onmessage = playQuizWebsocketMessageHandler;
+            this.webSocket.onclose = function () {
+                form.log.log("connection closed by server");
+                quizWindow.show();
+            }
+            this.webSocket.onerror = function(err) {
+                form.log.warn('WEBSOCKET: error occur', err, 'Close socket')
+                form.webSocket.close()
+            }
         }
+    }
+
+    sendWebSocket(data) {
+        if (this.webSocket) {
+            if (typeof data == 'string') {
+                this.log.log('WEBSOCKET: >>> ', data)
+            } else if (data instanceof ArrayBuffer) {
+                this.log.log('WEBSOCKET: >>> ', data.byteLength)
+            }
+            this.webSocket.send(data)
+        } else {
+            this.log.warn('WEBSOCKET: cannot send to closed connection')
+        }
+    }
+
+    sendAnswer(answerId) {
+        this.sendWebSocket(JSON.stringify({answer:answerId}))
         this.stopPlaySound();
         disableAllButtons(this.view);
     }
 
-    close() {
-        this.stopPlaySound();
+    closeConnection() {
         if (this.webSocket && this.webSocket.readyState === WebSocket.OPEN) {
             this.webSocket.onclose = null;
             this.webSocket.close();
-            this.webSocket = null;
-            this.log.log("close connection");
+            this.log.log("WEBSOCKET: close connection");
         }
+        this.webSocket = undefined;
+    }
+
+    close() {
+        this.stopPlaySound()
+        this.closeConnection()
+
         if (this.finished) {
-            quizListWindow.reset();
-            quizListWindow.show();
+            quizListWindow.reset()
+            quizListWindow.show()
         } else {
-            quizWindow.show();
+            quizWindow.show()
         }
     }
 
@@ -1483,9 +1522,7 @@ class QuestionWindow extends WebForm {
 
 
     sendNext() {
-        if (this.webSocket) {
-            this.webSocket.send(JSON.stringify({next:true}))
-        }
+        this.sendWebSocket(JSON.stringify({next:true}))
     }
 
     showProgress(start, end) {
@@ -1516,21 +1553,27 @@ class QuestionWindow extends WebForm {
         this.view.innerHTML = '';
         this.view.insertAdjacentHTML('beforeend', '<p> Викторина ' + quiz.name + '</p>')
         if (quiz.result !== undefined) {
+            this.view.insertAdjacentHTML('beforeend', '<p> ' + quiz.result.players + ' участников</p>')
             if (quiz.result.status === 'ACTIVE') {
                 let startTime = quiz.result.started
                 let registerTime = quiz.result.registered
                 let maxProgress = startTime - registerTime
-                this.view.insertAdjacentHTML('beforeend',
-                    '<p> начнется ' + new Date(startTime) + '</p>')
-                this.view.insertAdjacentHTML('beforeend',
-                    '<progress max="' + maxProgress + '" value="' + maxProgress + '" id="questionWindow-progress" style="width: 100%">' +
-                    'осталось <span id="questionWindow-seconds">0</span> секунд</progress>'
-                )
-                this.stopTimer()
-                let form = this
-                this.timer = setInterval((start, end) => {form.showProgress(start, end)},
-                    1000,
-                    registerTime, startTime)
+                if (Date.now() < startTime) {
+                    this.view.insertAdjacentHTML('beforeend',
+                        '<p> начнется в ' + new Date(startTime) + '</p>')
+                    this.view.insertAdjacentHTML('beforeend',
+                        '<progress max="' + maxProgress + '" value="' + maxProgress + '" id="questionWindow-progress" style="width: 100%">' +
+                        'осталось <span id="questionWindow-seconds">0</span> секунд</progress>'
+                    )
+                    this.stopTimer()
+                    let form = this
+                    this.timer = setInterval((start, end) => {form.showProgress(start, end)},
+                        1000,
+                        registerTime, startTime)
+                } else {
+                    this.view.insertAdjacentHTML('beforeend',
+                        '<p> начинается </p>')
+                }
             } else if (quiz.result.status === 'FINISHED') {
                 this.view.insertAdjacentHTML('beforeend', '<p> окончился ' + new Date(quiz.result.finished) + '</p>')
             } else {
@@ -1590,10 +1633,12 @@ class QuestionWindow extends WebForm {
         this.finished = true;
         this.view.innerHTML = '';
         this.view.insertAdjacentHTML("beforeend", '<h1>Результат</h1>');
-        this.view.insertAdjacentHTML("beforeend", '<p>место: ' + participant.place + '</p>');
+        this.view.insertAdjacentHTML("beforeend", '<p>место: ' + participant.place + ' из ' + participant.players + '</p>');
         this.view.insertAdjacentHTML("beforeend", '<p>верных ответов: ' + participant.right + '</p>');
         this.view.insertAdjacentHTML("beforeend", '<p>неверных ответов: ' + participant.wrong + '</p>');
         this.view.insertAdjacentHTML("beforeend", '<p>очков: ' + participant.value + '</p>');
+        this.stopPlaySound()
+        this.closeConnection()
     }
 }
 

@@ -21,6 +21,7 @@ public class QuizResult extends BasicEntity {
     private Date registrationStarted;
     private Date started;
     private Date finished;
+    private int participantsNumber;
     @OneToMany(fetch = FetchType.LAZY)
     @JsonIgnore
     private List<QuizParticipant> participants;
@@ -66,6 +67,14 @@ public class QuizResult extends BasicEntity {
         this.finished = finished;
     }
 
+    public int getParticipantsNumber() {
+        return participantsNumber;
+    }
+
+    public void setParticipantsNumber(int participantsNumber) {
+        this.participantsNumber = participantsNumber;
+    }
+
     public List<QuizParticipant> getParticipants() {
         return participants;
     }
@@ -76,12 +85,14 @@ public class QuizResult extends BasicEntity {
 
     @Override
     public String toString() {
-        return "[QuizResult" +
-                " quiz=" + quiz +
+        return "[QuizResult super=" + super.toString() +
+                ", quiz=" + quiz +
                 ", status=" + status +
                 ", registrationStarted=" + registrationStarted +
                 ", started=" + started +
                 ", finished=" + finished +
+                ", participantsNumber=" + participantsNumber +
+                ", participants=" + participants +
                 ']';
     }
 }

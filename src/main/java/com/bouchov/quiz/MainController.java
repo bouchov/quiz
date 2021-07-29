@@ -1,8 +1,9 @@
 package com.bouchov.quiz;
 
-import com.bouchov.quiz.entities.User;
-import com.bouchov.quiz.entities.UserRepository;
-import com.bouchov.quiz.entities.UserRole;
+import com.bouchov.quiz.entities.*;
+import com.bouchov.quiz.protocol.QuizBean;
+import com.bouchov.quiz.protocol.QuizResultBean;
+import com.bouchov.quiz.protocol.SessionBean;
 import com.bouchov.quiz.protocol.UserBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,17 +11,23 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpSession;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @RestController
 @RequestMapping("/")
 class MainController extends AbstractController {
     private final UserRepository userRepository;
+    private final QuizParticipantRepository quizParticipantRepository;
     private final HttpSession session;
 
     @Autowired
-    public MainController(UserRepository userRepository, HttpSession session) {
+    public MainController(UserRepository userRepository,
+            QuizParticipantRepository quizParticipantRepository,
+            HttpSession session) {
         this.userRepository = userRepository;
+        this.quizParticipantRepository = quizParticipantRepository;
         this.session = session;
     }
 
@@ -70,14 +77,28 @@ class MainController extends AbstractController {
     }
 
     @RequestMapping("/ping")
-    public UserBean ping() {
+    public SessionBean ping() {
         Long userId = (Long) session.getAttribute(SessionAttributes.USER_ID);
         if (userId == null) {
             throw new UserNotFoundException("session expired");
         }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-        return new UserBean(user);
+        List<QuizParticipant> participants = quizParticipantRepository.findAllByUserAndStatus(user,
+                ParticipantStatus.ACTIVE);
+        List<QuizBean> games;
+        if (!participants.isEmpty()) {
+            games = new ArrayList<>();
+            participants.forEach((participant) -> {
+                QuizResult result = participant.getQuizResult();
+                QuizBean bean = new QuizBean(result.getQuiz());
+                bean.setResult(new QuizResultBean(participant, result));
+                games.add(bean);
+            });
+        } else {
+            games = null;
+        }
+        return new SessionBean(new UserBean(user), games);
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)

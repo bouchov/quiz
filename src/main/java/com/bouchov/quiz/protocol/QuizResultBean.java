@@ -9,6 +9,7 @@ import java.util.Date;
 public class QuizResultBean {
     private Long id;
     private int place;
+    private int players;
     private int right;
     private int wrong;
     private ParticipantStatus status;
@@ -24,6 +25,7 @@ public class QuizResultBean {
         this.wrong = participant.getWrongAnswers();
         this.value = participant.getValue();
         this.status = participant.getStatus();
+        this.players = result.getParticipantsNumber();
         this.started = result.getStarted();
         this.registered = result.getRegistrationStarted();
         this.finished = result.getFinished();
@@ -46,6 +48,14 @@ public class QuizResultBean {
 
     public void setPlace(int place) {
         this.place = place;
+    }
+
+    public int getPlayers() {
+        return players;
+    }
+
+    public void setPlayers(int players) {
+        this.players = players;
     }
 
     public int getRight() {
@@ -109,6 +119,7 @@ public class QuizResultBean {
         return "[QuizResultBean" +
                 " id=" + id +
                 ", place=" + place +
+                ", players=" + players +
                 ", right=" + right +
                 ", wrong=" + wrong +
                 ", status=" + status +

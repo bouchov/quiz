@@ -1,6 +1,7 @@
 package com.bouchov.quiz.services;
 
 import com.bouchov.quiz.entities.*;
+import com.bouchov.quiz.protocol.QuizBean;
 import com.bouchov.quiz.protocol.QuizResultBean;
 import com.bouchov.quiz.protocol.ResponseBean;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -88,9 +89,23 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
             participant = getManager(result).register(result, user);
             participant = quizParticipantRepository.save(participant);
             result.getParticipants().add(participant);
+            result.setParticipantsNumber(result.getParticipants().size());
             log.debug("add participant {} for manager {}", participant.getId(), result.getId());
+            sendForAll(result);
         }
         return participant;
+    }
+
+    private void sendForAll(QuizResult result) {
+        result.getParticipants().forEach((participant -> {
+            QuizBean bean = new QuizBean(result.getQuiz());
+            bean.setResult(new QuizResultBean(participant, result));
+            try {
+                sendMessage(participant, new ResponseBean(bean));
+            } catch (Exception e) {
+                log.warn("error sending message to " + participant.getId(), e);
+            }
+        }));
     }
 
     private QuizManager getManager(QuizResult result) {
@@ -108,7 +123,8 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
         quizParticipantRepository.findById(participantId).ifPresentOrElse(quizParticipant -> {
             QuizResult result = quizParticipant.getQuizResult();
             if (result.getStatus() == QuizResultStatus.FINISHED) {
-                sendMessage(session, new ResponseBean(new QuizResultBean(quizParticipant, result)));
+                sendMessage(participantId, session,
+                        new ResponseBean(new QuizResultBean(quizParticipant, result)));
                 return;
             }
             sessions.put(participantId, session);
@@ -137,16 +153,19 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
     }
 
     void sendMessage(QuizParticipant participant, ResponseBean bean) {
-        log.debug("send {} message {}", participant.getId(), bean);
-        sendMessage(sessions.get(participant.getId()), bean);
+        WebSocketSession session = sessions.get(participant.getId());
+        if (session != null) {
+            sendMessage(participant.getId(), session, bean);
+        } else {
+            log.warn("cannot send to {} message {}: not connected", participant.getId(), bean);
+        }
     }
 
-    private void sendMessage(WebSocketSession session, ResponseBean bean) {
+    private void sendMessage(Long participantId, WebSocketSession session, ResponseBean bean) {
+        log.debug("send {} message {}", participantId, bean);
         try {
             if (session != null) {
                 session.sendMessage(toMessage(bean));
-            } else {
-                log.warn("cannot send message: unknown session");
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
