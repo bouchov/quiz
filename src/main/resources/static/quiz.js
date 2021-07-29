@@ -1571,6 +1571,7 @@ class QuestionWindow extends WebForm {
                         1000,
                         registerTime, startTime)
                 } else {
+                    this.stopTimer()
                     this.view.insertAdjacentHTML('beforeend',
                         '<p> начинается </p>')
                 }
