@@ -3,6 +3,7 @@ package com.bouchov.quiz.entities;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
@@ -14,7 +15,7 @@ import java.util.Optional;
  * Time: 15:17
  * Copyright 2014 ConnectiveGames LLC. All rights reserved.
  */
-public interface ClubRepository extends PagingAndSortingRepository<Club,Long> {
+public interface ClubRepository extends CrudRepository<Club,Long>, PagingAndSortingRepository<Club,Long> {
     Optional<Club> findByName(String name);
 
     Optional<Club> findByUid(String uid);

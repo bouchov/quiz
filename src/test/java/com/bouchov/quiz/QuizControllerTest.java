@@ -3,6 +3,8 @@ package com.bouchov.quiz;
 import com.bouchov.quiz.entities.*;
 import com.bouchov.quiz.protocol.QuizBean;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,8 @@ public class QuizControllerTest {
     private ClubRepository clubRepository;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private EntityManager entityManager;
 
     @BeforeEach
     public void setUp() {
@@ -211,6 +215,14 @@ public class QuizControllerTest {
 
         send("/quiz/create", bean)
                 .andExpect(status().is(HttpStatus.EXPECTATION_FAILED.value()));
+    }
+
+    @Test
+    @Transactional
+    public void testEM() {
+        Category entity = new Category(UniqSource.uniqueString("namen"));
+        entityManager.persist(entity);
+        Assertions.assertNotNull(entity.getId());
     }
 
     private ResultActions send(String url, QuizBean bean)

@@ -1,6 +1,7 @@
 package com.bouchov.quiz.entities;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
+
 import java.util.Objects;
 
 @MappedSuperclass

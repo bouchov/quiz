@@ -1,11 +1,8 @@
 package com.bouchov.quiz.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import java.util.List;
 
 @Entity
@@ -18,6 +15,7 @@ public class QuizParticipant extends BasicEntity {
     @JsonIgnore
     private List<QuizAnswer> answers;
     private int place;
+    @Column(name = "part_value")
     private int value;
     private int rightAnswers;
     private int wrongAnswers;

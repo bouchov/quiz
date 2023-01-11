@@ -2,12 +2,12 @@ package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.*;
 import com.bouchov.quiz.protocol.FilterBean;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import javax.servlet.http.HttpSession;
 import java.util.Optional;
 
 public class AbstractController {

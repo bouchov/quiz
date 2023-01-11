@@ -1,8 +1,9 @@
 package com.bouchov.quiz.entities;
 
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 public class QuizAnswer extends BasicEntity {
@@ -13,6 +14,7 @@ public class QuizAnswer extends BasicEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private User answerer;
     private int answer;
+    @Column(name = "answer_value")
     private int value;
     private QuizAnswerStatus status;
 

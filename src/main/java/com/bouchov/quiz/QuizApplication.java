@@ -5,19 +5,21 @@ import com.bouchov.quiz.init.CategoryLoader;
 import com.bouchov.quiz.init.QuestionLoader;
 import com.bouchov.quiz.init.QuizLoader;
 import com.bouchov.quiz.init.UserLoader;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import javax.transaction.Transactional;
 import java.util.Set;
 
 @SpringBootApplication
 @EnableScheduling
+@EnableCaching
 public class QuizApplication {
     private final Logger logger = LoggerFactory.getLogger(QuizApplication.class);
 

@@ -6,6 +6,8 @@ import com.bouchov.quiz.protocol.QuizResultBean;
 import com.bouchov.quiz.protocol.ResponseBean;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -19,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
@@ -45,7 +46,7 @@ class QuizServiceImpl implements QuizService, DisposableBean, InitializingBean {
             QuizResultRepository quizResultRepository,
             QuestionRepository questionRepository,
             ThreadPoolTaskScheduler quizScheduler,
-            ScheduledTaskService taskService) {
+            ScheduledTaskService taskService, EntityManager entityManager) {
         this.quizParticipantRepository = quizParticipantRepository;
         this.quizAnswerRepository = quizAnswerRepository;
         this.quizResultRepository = quizResultRepository;

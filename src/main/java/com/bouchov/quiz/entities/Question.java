@@ -3,10 +3,11 @@ package com.bouchov.quiz.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToOne;
 
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class Question extends BasicEntity {
     private Category category;
     private String text;
     private int answer;
+    @Column(name = "question_value")
     private int value;
     private String optionsJson;
 

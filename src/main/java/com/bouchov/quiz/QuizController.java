@@ -3,6 +3,7 @@ package com.bouchov.quiz;
 import com.bouchov.quiz.entities.*;
 import com.bouchov.quiz.protocol.*;
 import com.bouchov.quiz.services.QuizService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -11,7 +12,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpSession;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
