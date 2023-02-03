@@ -1,10 +1,7 @@
 package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.*;
-import com.bouchov.quiz.init.CategoryLoader;
-import com.bouchov.quiz.init.QuestionLoader;
-import com.bouchov.quiz.init.QuizLoader;
-import com.bouchov.quiz.init.UserLoader;
+import com.bouchov.quiz.init.*;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Set;
 
@@ -30,7 +28,8 @@ public class QuizApplication {
                             ClubRepository clubRepository,
                             EnterClubRequestRepository enterClubRepository,
                             QuizRepository quizRepository,
-                            QuestionRepository questionRepository) {
+                            QuestionRepository questionRepository,
+                            PasswordEncoder encoder) {
         return (evt) -> {
             logger.info("initialize server");
             User admin = userRepository.findByLogin("admin").orElse(null);
@@ -47,7 +46,7 @@ public class QuizApplication {
             admin.setClubs(Set.of(club));
             userRepository.save(admin);
 
-            UserLoader userLoader = new UserLoader();
+            UserLoader userLoader = new UserLoader(encoder);
             userLoader.load(userRepository, enterClubRepository, club);
             CategoryLoader categoryLoader = new CategoryLoader();
             categoryLoader.load(categoryRepository);

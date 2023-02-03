@@ -3,12 +3,9 @@ package com.bouchov.quiz;
 import com.bouchov.quiz.entities.Category;
 import com.bouchov.quiz.entities.CategoryRepository;
 import com.bouchov.quiz.protocol.CategoryBean;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,14 +13,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/categories")
 class CategoryController extends AbstractController {
-    private final HttpSession session;
     private final CategoryRepository categoryRepository;
 
     @Autowired
-    CategoryController(
-            HttpSession session,
-            CategoryRepository categoryRepository) {
-        this.session = session;
+    CategoryController(CategoryRepository categoryRepository) {
         this.categoryRepository = categoryRepository;
     }
 
@@ -43,8 +36,8 @@ class CategoryController extends AbstractController {
     }
 
     @PostMapping("/add")
+    @Secured("ROLE_ADMIN")
     public CategoryBean addCategory(@RequestParam String name) {
-        checkAdmin(session);
         Category category = categoryRepository.findByName(name).orElse(null);
         if (category == null) {
             category = new Category();

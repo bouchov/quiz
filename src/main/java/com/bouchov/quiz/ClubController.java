@@ -4,15 +4,12 @@ import com.bouchov.quiz.entities.*;
 import com.bouchov.quiz.protocol.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
+import java.security.Principal;
+import java.util.*;
 
 @RestController
 @RequestMapping("/club")
@@ -34,19 +31,22 @@ class ClubController extends AbstractController {
     }
 
     @GetMapping("/{clubId}")
-    public ClubBean selectClub(@PathVariable Long clubId) {
+    public ClubBean selectClub(
+            Principal principal,
+            @PathVariable Long clubId) {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ClubNotFoundException(clubId));
         session.setAttribute(SessionAttributes.CLUB_ID, club.getId());
-        return getUser(session, userRepository)
+        return getUser(principal, userRepository)
                 .map(user -> new ClubBean(club, isOwner(club, user)))
                 .orElseGet(() -> new ClubBean(club));
     }
 
     @PostMapping("/list")
-    public PageBean<ClubBean> listClubs(@RequestBody ClubFilterBean filter) {
-        checkAuthorization(session);
-        User user = getUser(session, userRepository).orElseThrow();
+    public PageBean<ClubBean> listClubs(
+            Principal principal,
+            @RequestBody ClubFilterBean filter) {
+        User user = getUser(principal, userRepository).orElseThrow();
         PageRequest pageable = toPageable(filter, Sort.by("name"));
         Page<Club> page;
         if (filter.getName() == null || filter.getName().isEmpty()) {
@@ -61,9 +61,10 @@ class ClubController extends AbstractController {
     }
 
     @PostMapping("/create")
-    public ClubBean create(@RequestBody ClubBean bean) {
-        checkAuthorization(session);
-        User user = getUser(session, userRepository).orElseThrow();
+    public ClubBean create(
+            Principal principal,
+            @RequestBody ClubBean bean) {
+        User user = getUser(principal, userRepository).orElseThrow();
         Club club = clubRepository.save(new Club(
                 bean.getName(),
                 IdGenerator.generate(),
@@ -75,8 +76,9 @@ class ClubController extends AbstractController {
     }
 
     @PostMapping("/enter")
-    public ClubRequestBean enter(@RequestBody ClubBean bean) {
-        checkAuthorization(session);
+    public ClubRequestBean enter(
+            Principal principal,
+            @RequestBody ClubBean bean) {
         Club club;
         if (bean.getId() != null) {
             club = clubRepository.findById(bean.getId()).orElseThrow((() -> new ClubNotFoundException(bean.getId())));
@@ -88,7 +90,7 @@ class ClubController extends AbstractController {
             throw new ClubNotFoundException("empty parameters");
         }
         EnterClubStatus status;
-        User user = getUser(session, userRepository).orElseThrow();
+        User user = getUser(principal, userRepository).orElseThrow();
         if (user.getClubs().contains(club)) {
             status = EnterClubStatus.ACCEPTED;
         } else {
@@ -142,9 +144,10 @@ class ClubController extends AbstractController {
     }
 
     @PostMapping("/requests")
-    public PageBean<EnterClubRequestBean> requests(@RequestBody EnterClubRequestFilterBean filter) {
-        checkAuthorization(session);
-        User user = getUser(session, userRepository).orElseThrow();
+    public PageBean<EnterClubRequestBean> requests(
+            Principal principal,
+            @RequestBody EnterClubRequestFilterBean filter) {
+        User user = getUser(principal, userRepository).orElseThrow();
         Club club = getClub(session, clubRepository).orElseThrow();
         if (isOwner(club, user) == null) {
             throw new ClubNotFoundException("user not an owner of club");

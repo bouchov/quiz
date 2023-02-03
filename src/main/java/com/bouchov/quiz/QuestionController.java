@@ -1,22 +1,18 @@
 package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.*;
-import com.bouchov.quiz.protocol.PageBean;
-import com.bouchov.quiz.protocol.QuestionBean;
-import com.bouchov.quiz.protocol.QuestionFilterBean;
-import com.bouchov.quiz.protocol.UpdateResultBean;
+import com.bouchov.quiz.protocol.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.*;
 
 @RestController
@@ -50,15 +46,14 @@ class QuestionController extends AbstractController {
     }
 
     @PostMapping("/create")
-    public QuestionBean add(
+    public QuestionBean add(Principal principal,
             @RequestBody QuestionBean jsonQuestion)
             throws JsonProcessingException {
-        checkAuthorization(session);
         Category category = getCategory(jsonQuestion);
 
         validate(jsonQuestion);
 
-        User user = getUser(session, userRepository).orElseThrow();
+        User user = getUser(principal, userRepository).orElseThrow();
         Club club = getClub(session, clubRepository).orElseThrow(ClubNotFoundException::new);
         if (!user.equals(club.getOwner())) {
             throw new InvalidQuestionParameterException("clubId - user is not owner");
@@ -130,10 +125,10 @@ class QuestionController extends AbstractController {
 
     @PostMapping("{questionId}/edit")
     public QuestionBean edit(
+            Principal principal,
             @PathVariable Long questionId,
             @RequestBody QuestionBean jsonQuestion)
             throws JsonProcessingException {
-        checkAuthorization(session);
         Question entity = questionRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(questionId));
         Category category = getCategory(jsonQuestion);
@@ -144,7 +139,7 @@ class QuestionController extends AbstractController {
         }
         validate(jsonQuestion);
 
-        User user = getUser(session, userRepository).orElseThrow();
+        User user = getUser(principal, userRepository).orElseThrow();
         if (!user.equals(entity.getClub().getOwner())) {
             throw new InvalidQuestionParameterException("clubId - user is not owner");
         }
@@ -161,10 +156,11 @@ class QuestionController extends AbstractController {
 
     @GetMapping
     public List<QuestionBean> showQuestions(
+            Principal principal,
             @RequestParam(required = false) Long categoryId) {
-        checkAuthorization(session);
+        User user = getUser(principal, userRepository).orElseThrow();
         Club club = getClub(session, clubRepository).orElseThrow();
-        checkOwner(club);
+        checkOwner(user, club);
         ArrayList<QuestionBean> questions = new ArrayList<>();
         if (categoryId != null) {
             Category category = categoryRepository.findById(categoryId)
@@ -183,10 +179,10 @@ class QuestionController extends AbstractController {
 
     @PostMapping
     public UpdateResultBean addQuestions(
+            Principal principal,
             @RequestBody List<QuestionBean> jsonQuestions)
             throws JsonProcessingException {
-        checkAuthorization(session);
-        User user = getUser(session, userRepository).orElseThrow();
+        User user = getUser(principal, userRepository).orElseThrow();
         Club club = getClub(session, clubRepository).orElseThrow(ClubNotFoundException::new);
         if (!user.equals(club.getOwner())) {
             throw new InvalidQuestionParameterException("clubId - user is not owner");
@@ -234,11 +230,12 @@ class QuestionController extends AbstractController {
 
     @PostMapping("/list")
     public PageBean<QuestionBean> listQuestions(
+            Principal principal,
             @RequestBody QuestionFilterBean filter) {
-        checkAuthorization(session);
         Sort sort = Sort.by("id");
         Club club = getClub(session, clubRepository).orElseThrow(ClubNotFoundException::new);
-        checkOwner(club);
+        User user = getUser(principal, userRepository).orElseThrow();
+        checkOwner(user, club);
         Page<Question> page;
         if (filter.getCategoryId() != null) {
             Category category = categoryRepository.findById(filter.getCategoryId()).orElse(null);
@@ -266,8 +263,7 @@ class QuestionController extends AbstractController {
         return bean;
     }
 
-    private void checkOwner(Club club) {
-        User user = getUser(session, userRepository).orElseThrow();
+    private void checkOwner(User user, Club club) {
         if (!user.equals(club.getOwner())) {
             throw new ClubNotFoundException("user is not the owner of club " + club.getId());
         }

@@ -1,33 +1,38 @@
 package com.bouchov.quiz;
 
 import com.bouchov.quiz.entities.*;
-import com.bouchov.quiz.protocol.QuizBean;
-import com.bouchov.quiz.protocol.QuizResultBean;
-import com.bouchov.quiz.protocol.SessionBean;
-import com.bouchov.quiz.protocol.UserBean;
+import com.bouchov.quiz.protocol.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.security.Principal;
+import java.util.*;
 
 @RestController
 @RequestMapping("/")
 class MainController extends AbstractController {
     private final UserRepository userRepository;
     private final QuizParticipantRepository quizParticipantRepository;
+    private final PasswordEncoder encoder;
     private final HttpSession session;
 
     @Autowired
     public MainController(UserRepository userRepository,
             QuizParticipantRepository quizParticipantRepository,
+            PasswordEncoder encoder,
             HttpSession session) {
         this.userRepository = userRepository;
         this.quizParticipantRepository = quizParticipantRepository;
+        this.encoder = encoder;
         this.session = session;
     }
 
@@ -47,12 +52,23 @@ class MainController extends AbstractController {
             session.invalidate();
             throw new NeedReLoginException();
         }
-        if (!Objects.equals(password, user.getPassword())) {
+        if (!encoder.matches(password, user.getPassword())) {
             throw new UserNotFoundException(login);
         }
+        login(user);
+        return new UserBean(user);
+    }
+
+    private void login(User user) {
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(user.getLogin(), null,
+                List.of(new SimpleGrantedAuthority(user.getRole().roleName())));
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(token);
+        SecurityContextHolder.setContext(context);
+
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
         session.setAttribute(SessionAttributes.USER_ID, user.getId());
         session.setAttribute(SessionAttributes.USER_ROLE, user.getRole());
-        return new UserBean(user);
     }
 
     @PostMapping("/register")
@@ -68,22 +84,18 @@ class MainController extends AbstractController {
         if (user != null) {
             throw new UserAlreadyExistsException(nickname);
         }
-        user = new User(login, nickname, password, UserRole.PLAYER);
+        user = new User(login, nickname, encoder.encode(password), UserRole.PLAYER);
         user = userRepository.save(user);
 
-        session.setAttribute(SessionAttributes.USER_ID, user.getId());
-        session.setAttribute(SessionAttributes.USER_ROLE, user.getRole());
+        login(user);
         return new UserBean(user);
     }
 
     @RequestMapping("/ping")
-    public SessionBean ping() {
-        Long userId = (Long) session.getAttribute(SessionAttributes.USER_ID);
-        if (userId == null) {
-            throw new UserNotFoundException("session expired");
-        }
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+    public SessionBean ping(Principal principal) {
+        String login = principal.getName();
+        User user = userRepository.findByLogin(login)
+                .orElseThrow(() -> new UserNotFoundException(login));
         List<QuizParticipant> participants = quizParticipantRepository.findAllByUserAndStatus(user,
                 ParticipantStatus.ACTIVE);
         List<QuizBean> games;

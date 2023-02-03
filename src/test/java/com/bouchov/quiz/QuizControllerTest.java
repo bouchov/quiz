@@ -5,14 +5,14 @@ import com.bouchov.quiz.protocol.QuizBean;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -33,8 +33,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class QuizControllerTest {
+    private static final String PWD = "test_pass";
     @Autowired
     private MockMvc mvc;
+    @Autowired
+    private PasswordEncoder encoder;
     @Autowired
     private QuizRepository quizRepository;
     private User admin;
@@ -53,7 +56,7 @@ public class QuizControllerTest {
         User u = new User(
                 UniqSource.uniqueString("login"),
                 UniqSource.uniqueString("nickname"),
-                "test",
+                encoder.encode(PWD),
                 UserRole.ADMIN);
         u.setClubs(new HashSet<>());
         admin = userRepository.save(u);
@@ -227,13 +230,25 @@ public class QuizControllerTest {
 
     private ResultActions send(String url, QuizBean bean)
             throws Exception {
+        MockHttpSession session = login();
         return mvc.perform(MockMvcRequestBuilders.post(url)
-                .sessionAttr(SessionAttributes.USER_ID, admin.getId())
-                .sessionAttr(SessionAttributes.USER_ROLE, admin.getRole())
-                .sessionAttr(SessionAttributes.CLUB_ID, club.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(bean))
-                .accept(MediaType.APPLICATION_JSON))
+                        .session(session)
+                        .sessionAttr(SessionAttributes.CLUB_ID, club.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bean))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andDo(print());
+    }
+
+    public MockHttpSession login() throws Exception {
+        return (MockHttpSession) mvc.perform(MockMvcRequestBuilders.post("/")
+                        .param("login", admin.getLogin())
+                        .param("password", PWD)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getRequest()
+                .getSession(false);
     }
 }

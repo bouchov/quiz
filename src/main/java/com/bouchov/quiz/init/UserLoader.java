@@ -3,6 +3,7 @@ package com.bouchov.quiz.init;
 import com.bouchov.quiz.entities.*;
 import com.bouchov.quiz.protocol.UserBean;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,13 +12,15 @@ import java.util.Set;
 
 public class UserLoader {
     private final String fileName;
+    private final PasswordEncoder encoder;
 
-    public UserLoader(String fileName) {
+    public UserLoader(String fileName, PasswordEncoder encoder) {
         this.fileName = fileName;
+        this.encoder = encoder;
     }
 
-    public UserLoader() {
-        this("users.json");
+    public UserLoader(PasswordEncoder encoder) {
+        this("users.json", encoder);
     }
 
     public void load(UserRepository repository,
@@ -30,12 +33,16 @@ public class UserLoader {
                 User entity = new User(
                         user.getLogin(),
                         user.getNickname(),
-                        user.getPassword(),
+                        encode(user.getPassword()),
                         user.getRole());
                 entity.setClubs(Set.of(club));
                 repository.save(entity);
                 enterClubRepository.save(new EnterClubRequest(entity, club, EnterClubStatus.ACCEPTED));
             }
         }
+    }
+
+    private String encode(String password) {
+        return encoder.encode(password);
     }
 }

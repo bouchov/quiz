@@ -2,5 +2,9 @@ package com.bouchov.quiz.entities;
 
 public enum UserRole {
     PLAYER,
-    ADMIN
+    ADMIN;
+
+    public String roleName() {
+        return "ROLE_" + name();
+    }
 }

@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -21,8 +23,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 public class QuestionControllerTest {
+    private static final String PWD = "pass";
     @Autowired
     private MockMvc mvc;
+    @Autowired
+    private PasswordEncoder encoder;
     @Autowired
     private CategoryRepository categoryRepository;
     @Autowired
@@ -46,7 +51,7 @@ public class QuestionControllerTest {
                 new User(
                         UniqSource.uniqueString("login"),
                         UniqSource.uniqueString("nickname"),
-                        UniqSource.uniqueString("pass"),
+                        encoder.encode(PWD),
                         UserRole.PLAYER));
         testClub = clubRepository.save(
                 new Club(
@@ -58,29 +63,42 @@ public class QuestionControllerTest {
         );
     }
 
-    @Test public void addQuestion() throws Exception {
-        mvc.perform(MockMvcRequestBuilders.post("/questions/create")
-                .sessionAttr(SessionAttributes.USER_ID, testUser.getId())
-                .sessionAttr(SessionAttributes.USER_ROLE, testUser.getRole())
-                .sessionAttr(SessionAttributes.CLUB_ID, testClub.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"category\":\""+ testCategory.getName() + "\",\"text\":\"question text\",\"answer\":0,\"value\":1," +
-                        "\"options\":[{\"id\":0,\"name\":\"first option\"},{\"id\":1,\"name\":\"second option\"},{\"id\":2,\"name\":\"third option\"}]}")
-                .accept(MediaType.APPLICATION_JSON))
+    public MockHttpSession login() throws Exception {
+        return (MockHttpSession) mvc.perform(MockMvcRequestBuilders.post("/")
+                        .param("login", testUser.getLogin())
+                        .param("password", PWD)
+                        .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().is2xxSuccessful());
+                .andExpect(status().isOk())
+                .andReturn()
+                .getRequest()
+                .getSession(false);
+    }
+
+    @Test
+    public void addQuestion() throws Exception {
+        MockHttpSession session = login();
+        mvc.perform(MockMvcRequestBuilders.post("/questions/create")
+                        .session(session)
+                        .sessionAttr(SessionAttributes.CLUB_ID, testClub.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"category\":\"" + testCategory.getName() + "\",\"text\":\"question text\",\"answer\":0,\"value\":1," +
+                                "\"options\":[{\"id\":0,\"name\":\"first option\"},{\"id\":1,\"name\":\"second option\"},{\"id\":2,\"name\":\"third option\"}]}")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk());
     }
 
     @Test public void addQuestions() throws Exception {
+        MockHttpSession session = login();
         mvc.perform(MockMvcRequestBuilders.post("/questions")
-                .sessionAttr(SessionAttributes.USER_ID, testUser.getId())
-                .sessionAttr(SessionAttributes.USER_ROLE, testUser.getRole())
-                .sessionAttr(SessionAttributes.CLUB_ID, testClub.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("[{\"category\":\""+ testCategory.getName() + "\",\"text\":\"question text\",\"answer\":0,\"value\":1," +
-                        "\"options\":[{\"id\":0,\"name\":\"first option\"},{\"id\":1,\"name\":\"second option\"},{\"id\":2,\"name\":\"third option\"}]}]"))
+                        .sessionAttr(SessionAttributes.CLUB_ID, testClub.getId())
+                        .session(session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("[{\"category\":\"" + testCategory.getName() + "\",\"text\":\"question text\",\"answer\":0,\"value\":1," +
+                                "\"options\":[{\"id\":0,\"name\":\"first option\"},{\"id\":1,\"name\":\"second option\"},{\"id\":2,\"name\":\"third option\"}]}]"))
                 .andDo(print())
-                .andExpect(status().is2xxSuccessful());
+                .andExpect(status().isOk());
     }
 
     @Test public void listQuestions() throws Exception {
@@ -128,14 +146,14 @@ public class QuestionControllerTest {
                         new Option(1, "op1"),
                         new Option(2, "op2")))
         ));
+        MockHttpSession session = login();
         mvc.perform(MockMvcRequestBuilders.post("/questions/list")
-                .sessionAttr(SessionAttributes.USER_ID, testUser.getId())
-                .sessionAttr(SessionAttributes.USER_ROLE, testUser.getRole())
-                .sessionAttr(SessionAttributes.CLUB_ID, testClub.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"categoryId\": \"" + testCategory.getId() + "\", \"page\": 0, \"size\": 3}")
-                .accept(MediaType.APPLICATION_JSON))
+                        .session(session)
+                        .sessionAttr(SessionAttributes.CLUB_ID, testClub.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"categoryId\": \"" + testCategory.getId() + "\", \"page\": 0, \"size\": 3}")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().is2xxSuccessful());
+                .andExpect(status().isOk());
     }
 }
